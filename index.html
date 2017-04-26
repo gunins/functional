@@ -6,9 +6,10 @@
     <script src="node_modules/requirejs/require.js"></script>
     <script>
         require.config({
-            baseUrl:'./dist'
-        })
-        require(['index'], function(index) {
+            baseUrl:'.'
+        });
+
+        require(['./dist/index'], function(main) {
 
         })
     </script>
