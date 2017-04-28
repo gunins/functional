@@ -1,6 +1,9 @@
 import {some, none} from './Option'
 import {task} from './Task'
 
+/**
+ * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
+ * */
 class Stream {
     constructor(head, ...tail) {
         this._create(head, tail.length > 0 ? stream(...tail) : none());
