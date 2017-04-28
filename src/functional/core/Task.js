@@ -3,7 +3,12 @@ let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 let toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job);
 let emptyFn = () => {
 };
-
+/**
+ * Task class is for asyns/sync jobs. You can provide 3 types on tasks
+ *      @Task((resolve,reject)=>resolve()) // resolve reject params
+ *      @Task(()=>3) synchronus function with returning value !important argumentList have to be empty
+ *      @Task(3) // Static values
+ * */
 class Task {
 
     constructor(job) {
@@ -23,9 +28,14 @@ class Task {
         });
     };
 
-    unsafeRun(success = emptyFn, error = emptyFn) {
+    /**
+     * Method running executor and return Promise.
+     * @param resolve executed when resolved
+     * @param reject executed when rejected
+     * */
+    unsafeRun(resolve = emptyFn, reject = emptyFn) {
         let task = this._task();
-        task.then(success).catch(error)
+        task.then(resolve).catch(reject)
         return task;
     };
 
