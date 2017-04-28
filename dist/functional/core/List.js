@@ -13,7 +13,7 @@ class List {
     //Private Method
     _create(head, tail) {
         this.head = head !== undefined ? __Option_js.some(head) : __Option_js.none();
-        this.tail = tail && tail.copy ? tail.copy() : __Option_js.none();
+        this.tail = tail && tail.isList && tail.isList() ? tail.copy() : __Option_js.none();
         return this;
     };
 
@@ -30,6 +30,37 @@ class List {
         } else {
             return list;
         }
+    };
+
+    //private method
+    _map(fn, i = 0) {
+        let {head, tail} = this;
+        let empty = List.empty();
+        return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? __Option_js.none() : tail._map(fn, i + 1)) : empty;
+    };
+
+    //private method
+    _take(count, i = 1) {
+        let {head, tail} = this;
+        let empty = List.empty();
+        return head.isSome() ? empty._create(head.get(), (tail.isSome && !tail.isSome()) || count <= i ? __Option_js.none() : tail._take(count, i + 1)) : empty;
+    }
+
+    //private method
+    _flatMap(fn, i = 0) {
+        let {head, tail} = this,
+            list = head.isSome() ? fn(head.get(), i) : List.empty();
+        return tail.isSome && !tail.isSome() ? list : list.concat(tail._flatMap(fn, i));
+
+    };
+
+    //private method
+    _filter(fn, list = List.empty()) {
+        let {head, tail} = this,
+            value = head.get(),
+            comparison = fn(value);
+        let outList = comparison ? list.insert(value) : list;
+        return tail.isList && tail.isList() ? tail._filter(fn, outList) : outList.reverse();
     }
 
     getOrElse(obj) {
@@ -59,8 +90,8 @@ class List {
     };
 
     reverse() {
-        let {head} = this;
-        let empty = List.empty();
+        let {head} = this,
+            empty = List.empty();
         if (!head.isSome()) {
             return empty;
         } else {
@@ -69,9 +100,6 @@ class List {
 
     };
 
-    isList() {
-        return this.toString() === '[object List]';
-    }
 
     foldLeft(a, fn) {
         let func = fn || a,
@@ -88,25 +116,45 @@ class List {
 
     foldRight(a, fn) {
         return this.reverse().foldLeft(a, fn);
-    }
+    };
 
-    map(fn, i = 0) {
-        let {head, tail} = this;
-        let empty = List.empty();
-        return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? __Option_js.none() : tail.map(fn, i + 1)) : empty;
-    }
-
-    flatMap(fn, i = 0) {
+    find(fn) {
         let {head, tail} = this,
-            list = head.isSome() ? fn(head.get(), i) : List.empty();
-        return tail.isSome && !tail.isSome() ? list : list.concat(tail.flatMap(fn, i));
+            value = head.get(),
+            comparison = fn(value);
 
-    }
+        return comparison ? value : tail.isList && tail.isList() ? tail.find(fn) : __Option_js.none();
+    };
+
+
+    filter(fn) {
+        return this._filter(fn);
+    };
+
+    map(fn) {
+        return this._map(fn);
+    };
+
+    flatMap(fn) {
+        return this._flatMap(fn);
+    };
 
     size() {
         let count = 0;
         return this.map(() => count++);
-    }
+    };
+
+    take(count) {
+        return this._take(count);
+    };
+
+    toString() {
+        return '[object List]'
+    };
+
+    isList() {
+        return this.toString() === '[object List]';
+    };
 
     toArray() {
         let array = [];
@@ -118,9 +166,6 @@ class List {
         return list();
     }
 
-    toString() {
-        return '[object List]'
-    }
 
 }
 let list = (...fns) => new List(...fns);

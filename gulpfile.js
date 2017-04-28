@@ -66,7 +66,7 @@ gulp.task('rollup', ['clean'], () => {
 gulp.task('test', ['rollup'], () => {
     return gulp.src([
         './test/functional/**/*.js'
-    ], {read: false}).pipe(mocha({reporter: 'nyan'}));
+    ], {read: false}).pipe(mocha({reporter: 'list'}));
 
 });
 

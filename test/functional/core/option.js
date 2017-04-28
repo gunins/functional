@@ -1,6 +1,6 @@
 let {Some, None, some, none} = require('../../../dist/functional/core/Option'),
     {expect} = require('chai');
-describe('Option Tests', () => {
+describe('Option Tests: ', () => {
     it('Testing Class Some None', () => {
         let a = new Some(3),
             b = new None(3);
