@@ -67,7 +67,7 @@ class List {
         let head = this.head,
             tail = this.tail,
             result = head.getOrElse(obj);
-        return result.isSome() ? result : tail.getOrElse(obj)
+        return result.isSome && result.isSome() ? result : tail.getOrElse(obj)
     };
 
     insert(head) {
@@ -81,9 +81,8 @@ class List {
     concat(...lists) {
         let empty = List.empty();
         [this].concat(lists).forEach(list => {
-            list.map(record => {
+            list.forEach(record => {
                 empty = empty.insert(record);
-                return record;
             });
         });
         return empty.reverse();
@@ -134,6 +133,14 @@ class List {
     map(fn) {
         return this._map(fn);
     };
+
+    forEach(fn) {
+        return this.map(item => {
+            fn(item);
+            return item;
+        })
+
+    }
 
     flatMap(fn) {
         return this._flatMap(fn);

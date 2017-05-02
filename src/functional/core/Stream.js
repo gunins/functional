@@ -28,17 +28,30 @@ class Stream {
         let empty = List.empty();
         return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? none() : tail._map(fn, i + 1)) : empty;
     };
+    toString() {
+        return '[object Stream]'
+    };
 
     copy() {
         return this.map(a => a);
     };
-
+    /**
+     * FROM stream(1,2,3) RETURNING stream(fn(1),fn(2),fn(3));
+     * */
     map(fn) {
         return this._map(fn);
     };
 
-    toString() {
-        return '[object Stream]'
+    flatMap(fn){
+
+    };
+
+    size(){
+
+    };
+
+    unsafeRun(){
+
     };
 
     isStream() {

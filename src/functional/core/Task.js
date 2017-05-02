@@ -11,21 +11,79 @@ let emptyFn = () => {
  * */
 class Task {
 
-    constructor(job) {
-        this._create(job);
+    constructor(job, parent) {
+        this._parent = none();
+        this._children = none();
+        this._create(job, parent);
     }
 
     //private function.
-    _create(job) {
-        this._task = this._setPromise(job !== undefined ? some(toFunction(job)) : none());
+    _create(job, parent) {
+        this._setParent(parent);
+        this._task = this._setPromise(job !== undefined ? some(toFunction(job)) : none(), parent);
         return this;
     };
 
-    _setPromise(job) {
-        return () => new Promise((resolve, reject) => {
+    _setPromise(job, parent) {
+        return (data) => new Promise((resolve, reject) => {
             let fn = job.getOrElse((_, reject) => reject('Task Empty'));
-            return (fn.length === 0) ? resolve(fn()) : fn(resolve, reject);
+            return (fn.length === 0) ? resolve(fn(data)) : fn(resolve, reject, data);
+        }).then(data => {
+            return new Promise((resolve, reject) => resolve(data));
         });
+    };
+
+    _setParent(parent) {
+        this._parent = parent && parent.isTask && parent.isTask() ? some(parent) : none();
+    };
+
+    _setChildren(children) {
+        this._children = children && children.isTask && children.isTask() ? some(children) : none();
+    };
+
+    _triggerUp(resolve, reject) {
+        return this._parent.getOrElse({_triggerUp: () => this._run(resolve, reject)})._triggerUp(resolve, reject);
+    };
+
+
+    _triggerDown(resolve, reject, data) {
+        return this._children.getOrElse({
+            _run: () => {
+                resolve(data);
+            }
+        })._run(resolve, reject, data);
+
+    };
+
+    _run(resolve, reject, resp) {
+        let job = this._task(resp);
+        job.then((data) => {
+            this._triggerDown(resolve, reject, data);
+        }).catch(reject);
+        return job;
+
+    };
+
+    _map(fn) {
+        let job = task(fn, this);
+        this._setChildren(job);
+        return job;
+    };
+
+    map(fn) {
+        return this._map(fn);
+    };
+
+    flatMap(fn) {
+        // return fn();
+    };
+
+    isTask() {
+        return this.toString() === '[object Task]';
+    }
+
+    toString() {
+        return '[object Task]'
     };
 
     /**
@@ -34,9 +92,7 @@ class Task {
      * @param reject executed when rejected
      * */
     unsafeRun(resolve = emptyFn, reject = emptyFn) {
-        let task = this._task();
-        task.then(resolve).catch(reject)
-        return task;
+        return this._triggerUp(resolve, reject);
     };
 
     static empty() {

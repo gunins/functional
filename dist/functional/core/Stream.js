@@ -4,6 +4,9 @@
 	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = global['functional/core/Stream'].js || {}),global.__Option_js,global.__Task_js));
 }(this, (function (exports,__Option_js,__Task_js) { 'use strict';
 
+/**
+ * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
+ * */
 class Stream {
     constructor(head, ...tail) {
         this._create(head, tail.length > 0 ? stream(...tail) : __Option_js.none());
@@ -28,17 +31,30 @@ class Stream {
         let empty = List.empty();
         return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? __Option_js.none() : tail._map(fn, i + 1)) : empty;
     };
+    toString() {
+        return '[object Stream]'
+    };
 
     copy() {
         return this.map(a => a);
     };
-
+    /**
+     * FROM stream(1,2,3) RETURNING stream(fn(1),fn(2),fn(3));
+     * */
     map(fn) {
         return this._map(fn);
     };
 
-    toString() {
-        return '[object Stream]'
+    flatMap(fn){
+
+    };
+
+    size(){
+
+    };
+
+    unsafeRun(){
+
     };
 
     isStream() {

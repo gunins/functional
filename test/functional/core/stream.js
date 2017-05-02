@@ -1,7 +1,9 @@
 let {Stream, stream} = require('../../../dist/functional/core/Stream'),
-    {expect} = require('chai');
+    {expect} = require('chai'),
+    {spy} = require('sinon');
+
 describe('Stream Tests', () => {
-    describe('Testing Stream Constructor',()=>{
+    it('Testing Stream Constructor',()=>{
 
     })
 
