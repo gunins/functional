@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', './Option.js'], factory) :
-	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = global['functional/core/Task'].js || {}),global.__Option_js));
-}(this, (function (exports,__Option_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('../utils/clone.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', './Option.js', '../utils/clone.js'], factory) :
+	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = global['functional/core/Task'].js || {}),global.__Option_js,global.___utils_clone_js));
+}(this, (function (exports,__Option_js,___utils_clone_js) { 'use strict';
 
 let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 let toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job);
@@ -39,31 +39,27 @@ class Task {
     };
 
     _setParent(parent) {
-        this._parent = parent && parent.isTask && parent.isTask() ? __Option_js.some(parent) : __Option_js.none();
+        this._parent = parent && parent.isTask && parent.isTask() ? __Option_js.some(parent._triggerUp.bind(parent)) : __Option_js.none();
     };
 
     _setChildren(children) {
-        this._children = children && children.isTask && children.isTask() ? __Option_js.some(children) : __Option_js.none();
+        this._children = children && children.isTask && children.isTask() ? __Option_js.some(children._run.bind(children)) : __Option_js.none();
     };
 
     _triggerUp(resolve, reject) {
-        return this._parent.getOrElse({_triggerUp: () => this._run(resolve, reject)})._triggerUp(resolve, reject);
+        return this._parent.getOrElse(() => this._run(resolve, reject))(resolve, reject);
     };
 
 
     _triggerDown(resolve, reject, data) {
-        return this._children.getOrElse({
-            _run: () => {
-                resolve(data);
-            }
-        })._run(resolve, reject, data);
+        return this._children.getOrElse(() =>resolve(data))(resolve, reject, data);
 
     };
 
     _run(resolve, reject, resp) {
         let job = this._task(resp);
         job.then((data) => {
-            this._triggerDown(resolve, reject, data);
+            this._triggerDown(resolve, reject, ___utils_clone_js.clone(data));
         }).catch(reject);
         return job;
 

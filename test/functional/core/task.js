@@ -72,8 +72,9 @@ describe('Task Tests: ', () => {
 
     it('test map task', (done) => {
         let a = task((resolve) => resolve(3)).map((res,rej, d) => {
-            return res(d + 1)
+             res(d + 1)
         });
+
         a.unsafeRun(resolve => {
             expect(resolve).to.be.eql(4);
             done()

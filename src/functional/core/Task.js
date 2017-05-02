@@ -1,4 +1,6 @@
 import {some, none} from './Option';
+import {clone} from '../utils/clone';
+
 let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 let toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job);
 let emptyFn = () => {
@@ -34,31 +36,27 @@ class Task {
     };
 
     _setParent(parent) {
-        this._parent = parent && parent.isTask && parent.isTask() ? some(parent) : none();
+        this._parent = parent && parent.isTask && parent.isTask() ? some(parent._triggerUp.bind(parent)) : none();
     };
 
     _setChildren(children) {
-        this._children = children && children.isTask && children.isTask() ? some(children) : none();
+        this._children = children && children.isTask && children.isTask() ? some(children._run.bind(children)) : none();
     };
 
     _triggerUp(resolve, reject) {
-        return this._parent.getOrElse({_triggerUp: () => this._run(resolve, reject)})._triggerUp(resolve, reject);
+        return this._parent.getOrElse(() => this._run(resolve, reject))(resolve, reject);
     };
 
 
     _triggerDown(resolve, reject, data) {
-        return this._children.getOrElse({
-            _run: () => {
-                resolve(data);
-            }
-        })._run(resolve, reject, data);
+        return this._children.getOrElse(() =>resolve(data))(resolve, reject, data);
 
     };
 
     _run(resolve, reject, resp) {
         let job = this._task(resp);
         job.then((data) => {
-            this._triggerDown(resolve, reject, data);
+            this._triggerDown(resolve, reject, clone(data));
         }).catch(reject);
         return job;
 
