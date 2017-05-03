@@ -43,10 +43,13 @@ describe('List Tests: ', () => {
         let b = a.insert(1);
         let c = b.insert(2);
         let d = b.map(i => i + 3);
-        expect(a.size() === 0);
-        expect(b.size() === 1);
-        expect(c.size() === 2);
-        expect(d.size() === 2);
+
+        expect(a.size()).to.be.eql(0);
+        expect(b.size()).to.be.eql(1);
+        expect(c.size()).to.be.eql(2);
+        expect(d.size()).to.be.eql(1);
+
+
         let testB = [1],
             testC = [2, 1],
             testD = [4];

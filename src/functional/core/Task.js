@@ -1,10 +1,12 @@
+import {List} from './List';
 import {some, none} from './Option';
 import {clone} from '../utils/clone';
 
-let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
-let toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job);
-let emptyFn = () => {
-};
+
+let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply),
+    toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job),
+    emptyFn = () => {
+    };
 /**
  * Task class is for asyns/sync jobs. You can provide 3 types on tasks
  *      @Task((resolve,reject)=>resolve()) // resolve reject params
@@ -15,7 +17,10 @@ class Task {
 
     constructor(job, parent) {
         this._parent = none();
-        this._children = none();
+        this._children = List.empty();
+        this._resolvers = List.empty();
+        this._rejecters = List.empty();
+        this._uuid = Symbol('uuid');
         this._create(job, parent);
     }
 
@@ -26,13 +31,19 @@ class Task {
         return this;
     };
 
-    _setPromise(job, parent) {
+    _setPromise(job) {
         return (data) => new Promise((resolve, reject) => {
             let fn = job.getOrElse((_, reject) => reject('Task Empty'));
-            return (fn.length === 0) ? resolve(fn(data)) : fn(resolve, reject, data);
+            return (fn.length === 0) ? resolve(fn(clone(data))) : fn(resolve, reject, clone(data));
         }).then(data => {
-            return new Promise((resolve, reject) => resolve(data));
-        });
+            return new Promise((resolve) => {
+                this._resolvers.forEach(fn => fn(data));
+                resolve(clone(data))
+            });
+        }).catch(data => new Promise((resolve, reject) => {
+            this._rejecters.forEach(fn => fn(clone(data)));
+            reject(clone(data))
+        }));
     };
 
     _setParent(parent) {
@@ -40,24 +51,29 @@ class Task {
     };
 
     _setChildren(children) {
-        this._children = children && children.isTask && children.isTask() ? some(children._run.bind(children)) : none();
+        this._children = children && children.isTask && children.isTask() ? this._children.insert(children._run.bind(children)) : this._children;
     };
 
-    _triggerUp(resolve, reject) {
-        return this._parent.getOrElse(() => this._run(resolve, reject))(resolve, reject);
+    _triggerUp(resolve, reject, uuids = []) {
+        let allIds = clone(uuids);
+        allIds.push(this._uuid);
+        return this._parent.getOrElse(() => this._run(resolve, reject, allIds))(resolve, reject, allIds);
     };
 
 
-    _triggerDown(resolve, reject, data) {
-        return this._children.getOrElse(() =>resolve(data))(resolve, reject, data);
-
+    _triggerDown(resolve, reject, uuids, data, final) {
+        let finalData = uuids.indexOf(this._uuid) === 0 ? data : final;
+        this._children.map(child => child(resolve, reject, uuids, data, finalData)).getOrElse(() => {
+            resolve(clone(finalData));
+        });
     };
 
-    _run(resolve, reject, resp) {
+    _run(resolve, reject, uuids, resp, final) {
         let job = this._task(resp);
         job.then((data) => {
-            this._triggerDown(resolve, reject, clone(data));
-        }).catch(reject);
+            this._triggerDown(resolve, reject, uuids, data, final);
+        }).catch(data => reject(clone(data)));
+
         return job;
 
     };
@@ -76,6 +92,23 @@ class Task {
         // return fn();
     };
 
+    forEach(fn) {
+        return this.map((res, rej, d) => {
+            fn(d);
+            res(d);
+        });
+    };
+
+    resolve(fn) {
+        this._resolvers = this._resolvers.insert(fn);
+        return this;
+    };
+
+    reject(fn) {
+        this._rejecters = this._rejecters.insert(fn);
+        return this;
+    }
+
     isTask() {
         return this.toString() === '[object Task]';
     }
@@ -84,14 +117,30 @@ class Task {
         return '[object Task]'
     };
 
+    clear() {
+        this._resolvers = List.empty();
+        this._rejecters = List.empty();
+        return this;
+    }
+
     /**
      * Method running executor and return Promise.
      * @param resolve executed when resolved
      * @param reject executed when rejected
      * */
     unsafeRun(resolve = emptyFn, reject = emptyFn) {
-        return this._triggerUp(resolve, reject);
+        return new Promise((res, rej) => {
+            this._triggerUp(res, rej);
+        }).then(data => {
+            resolve(data);
+            return data;
+        }).catch(data => {
+            console.log(data, 'reject');
+            reject(data);
+            return data;
+        })
     };
+
 
     static empty() {
         return task();

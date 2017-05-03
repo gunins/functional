@@ -63,11 +63,8 @@ class List {
         return tail.isList && tail.isList() ? tail._filter(fn, outList) : outList.reverse();
     }
 
-    getOrElse(obj) {
-        let head = this.head,
-            tail = this.tail,
-            result = head.getOrElse(obj);
-        return result.isSome && result.isSome() ? result : tail.getOrElse(obj)
+    getOrElse(fn) {
+        return this.size() > 0 ? this.map(a => a) : list(fn())
     };
 
     insert(head) {
@@ -148,7 +145,8 @@ class List {
 
     size() {
         let count = 0;
-        return this.map(() => count++);
+        this.forEach(() => count++);
+        return count;
     };
 
     take(count) {
