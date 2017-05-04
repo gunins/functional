@@ -46,12 +46,15 @@ describe('Task Tests: ', () => {
             }),
             res = spy(),
             rej = spy();
-        a.unsafeRun(resolve => {
-            res()
-        }, reject => {
-            rej();
-            expect(reject).to.be.eql('Task Error');
-        });
+
+        a.unsafeRun()
+            .then(data => {
+                res()
+            })
+            .catch(reject => {
+                rej();
+                expect(reject).to.be.eql('Task Error');
+            });
 
         setTimeout(() => {
             expect(res.notCalled).to.be.true;
@@ -63,9 +66,8 @@ describe('Task Tests: ', () => {
 
     it('test empty task', (done) => {
         let a = task();
-        a.unsafeRun(resolve => {
-        }, reject => {
-            expect(reject).to.be.eql('Task Empty');
+        a.unsafeRun().then(resolve => {
+            expect(resolve).to.be.undefined;
             done();
         });
     });
@@ -104,14 +106,13 @@ describe('Task Tests: ', () => {
             expect(d).to.be.eql(6);
             callback();
             res(d);
+            expect(callback.callCount).to.be.eql(5);
+            done();
         });
 
         a.unsafeRun(resolve => {
             callback();
             expect(resolve).to.be.eql(4);
-            expect(callback.callCount).to.be.eql(5);
-            done();
-
         });
     });
 
@@ -139,7 +140,7 @@ describe('Task Tests: ', () => {
         });
     });
 
-    it('test multi map +forEach task', (done) => {
+    it('test multi map + forEach task', (done) => {
         let a = task((resolve) => resolve(3)).map((res, rej, d) => {
             res(d + 1)
         });
@@ -155,24 +156,24 @@ describe('Task Tests: ', () => {
             expect(d).to.be.eql(6);
         });
 
-        a.unsafeRun(resolve => {
+        a.unsafeRun().then(resolve => {
             expect(resolve).to.be.eql(4);
             done();
-
-        });
+        }).catch(error => {
+            console.log(error, 'error');
+        })
     });
     it('test empty static task', (done) => {
         let a = Task.empty();
-        a.unsafeRun(() => {
-        }, error => {
-            expect(error).to.be.eql('Task Empty');
-            done();
-        });
+        a.unsafeRun()
+            .then(success => {
+                expect(success).to.be.undefined;
+                done();
+            });
     });
     it('test reject task', (done) => {
         let a = task((_, reject) => reject('rejected'));
-        a.unsafeRun(() => {
-        }, error => {
+        a.unsafeRun().catch(error => {
             expect(error).to.be.eql('rejected');
             done();
         });
@@ -180,16 +181,17 @@ describe('Task Tests: ', () => {
 
     it('test reject map', (done) => {
         let callback = spy();
-        let a = task((_, reject) => reject('rejected')).map((res) => {
-            callback();
-            res(3)
-        });
-        a.unsafeRun(() => {
-        }, error => {
-            expect(error).to.be.eql('rejected');
-            expect(callback.notCalled).to.be.true;
-            done();
-        });
+        let a = task((_, reject) => reject('rejected'))
+            .map((res) => {
+                callback();
+                res(3)
+            });
+        a.unsafeRun()
+            .catch(error => {
+                expect(error).to.be.eql('rejected');
+                expect(callback.notCalled).to.be.true;
+                done();
+            });
     });
 
     it('test reject belowmap', (done) => {
@@ -204,24 +206,27 @@ describe('Task Tests: ', () => {
             rej(d)
         });
 
-        a.unsafeRun(() => {
-        }, error => {
-            expect(error).to.be.eql(2);
-            expect(callback.calledOnce).to.be.true;
-            done();
-        });
+        a.unsafeRun()
+            .catch(error => {
+                expect(error).to.be.eql(2);
+                expect(callback.calledOnce).to.be.true;
+                done();
+            });
     });
 
     it('test resolver', (done) => {
         let callback = spy();
-        task((resolve) => resolve(1)).resolve(data => {
-            callback();
-            expect(data).to.be.eql(1);
-        }).unsafeRun().then(data => {
-            expect(data).to.be.eql(1);
-            expect(callback.calledOnce).to.be.true;
-            done();
-        });
+        task((resolve) => resolve(1))
+            .resolve(data => {
+                callback();
+                expect(data).to.be.eql(1);
+            })
+            .unsafeRun()
+            .then(data => {
+                expect(data).to.be.eql(1);
+                expect(callback.calledOnce).to.be.true;
+                done();
+            });
     });
     it('test clear resolver', (done) => {
         let callback = spy();
@@ -231,11 +236,12 @@ describe('Task Tests: ', () => {
                 expect(data).to.be.eql(1);
             })
             .clear()
-            .unsafeRun().then(data => {
-            expect(data).to.be.eql(1);
-            expect(callback.notCalled).to.be.true;
-            done();
-        });
+            .unsafeRun()
+            .then(data => {
+                expect(data).to.be.eql(1);
+                expect(callback.notCalled).to.be.true;
+                done();
+            });
     });
 
     it('test multiple resolver', (done) => {
@@ -244,19 +250,23 @@ describe('Task Tests: ', () => {
             .resolve(data => {
                 callback();
                 expect(data).to.be.eql(1);
-            }).map((res, rej, d) => {
-            res(d + 1);
-        }).resolve(data => {
-            callback();
-            expect(data).to.be.eql(2);
-        }).unsafeRun().then(data => {
-            expect(data).to.be.eql(2);
-            expect(callback.calledTwice).to.be.true;
-            done();
-        });
+            })
+            .map((res, rej, d) => {
+                res(d + 1);
+            })
+            .resolve(data => {
+                callback();
+                expect(data).to.be.eql(2);
+            })
+            .unsafeRun()
+            .then(data => {
+                expect(data).to.be.eql(2);
+                expect(callback.calledTwice).to.be.true;
+                done();
+            });
     });
 
-    it('test complex resolver', (done) => {
+    it('test complex resolver', async () => {
         let callback = spy();
         let triggerOne = false;
         let triggerTwo = false;
@@ -266,67 +276,96 @@ describe('Task Tests: ', () => {
                 expect(data).to.be.eql(1);
             });
 
-        let b = a.map((res, rej, d) => {
-            res(d + 1);
-        }).resolve(data => {
-            if (!triggerOne) {
-                triggerOne = true;
-                expect(callback.calledOnce).to.be.true;
-            } else if (!triggerTwo) {
-                triggerTwo = true;
-                expect(callback.calledTwice).to.be.true;
-            }
-            callback();
-            expect(data).to.be.eql(2);
-        });
+        let b = a
+            .map((res, rej, d) => {
+                res(d + 1);
+            })
+            .resolve(data => {
+                if (!triggerOne) {
+                    triggerOne = true;
+                    expect(callback.calledOnce).to.be.true;
+                } else if (!triggerTwo) {
+                    triggerTwo = true;
+                    expect(callback.calledThrice).to.be.true;
+                }
+                callback();
+                expect(data).to.be.eql(2);
+
+            });
+        console.log('\nstart');
+        let dataA = await  a.unsafeRun();
+        console.log('run 1');
+        expect(dataA).to.be.eql(1);
+        expect(callback.calledOnce).to.be.true;
+
+        let dataB = await  a.unsafeRun();
+        console.log('run 2');
+        expect(dataB).to.be.eql(1);
+        expect(callback.calledThrice).to.be.true;
 
 
-        a.unsafeRun(data => {
-            expect(data).to.be.eql(1);
-            expect(callback.calledTwice).to.be.true;
-        });
-
-        a.unsafeRun(data => {
-            expect(data).to.be.eql(1);
-            expect(callback.calledThrice).to.be.true;
-        }, err=>{
-            console.log(err,'error');
-        });
-
-        b.unsafeRun().then(data => {
-            expect(data).to.be.eql(2);
-            done();
-        });
+        let dataC = await  b.unsafeRun();
+        console.log('run 3');
+        expect(dataC).to.be.eql(2);
+        expect(callback.callCount).to.be.eql(5);
+        console.log('finish');
     });
 
     it('test rejecter', (done) => {
         let callback = spy();
-        task((_, reject) => reject(1)).reject(data => {
+        task((_, reject) => reject(1))
+            .reject(data => {
+                callback();
+                expect(data).to.be.eql(1);
+            })
+            .unsafeRun()
+            .catch(data => {
+                expect(data).to.be.eql(1);
+                expect(callback.calledOnce).to.be.true;
+                done();
+            });
+    });
+    it('test multiple rejecter', (done) => {
+        let callback = spy();
+        task((resolve, reject) => resolve(1))
+            .reject(data => {
+                callback();
+                expect(data).to.be.eql(1);
+            })
+            .map((res, rej, d) => {
+                rej(d + 1)
+
+            })
+            .reject(data => {
+                callback();
+                expect(data).to.be.eql(2);
+            })
+            .unsafeRun()
+            .catch(data => {
+                expect(data).to.be.eql(2);
+                expect(callback.calledOnce).to.be.true;
+                done();
+            });
+    });
+  /*  it('copy basic test', done => {
+        let callback = spy();
+        let taskA = task({a: 'a', b: 'b'});
+        let taskB = taskA.map((res,rej,data)=>{
             callback();
-            expect(data).to.be.eql(1);
-        }).unsafeRun(() => {
-        }, data => {
-            expect(data).to.be.eql(1);
+            data.c ='c'
+            res(data);
+        });
+        let taskC = taskB.copy();
+        // let taskD = taskA.copy();
+
+
+        taskC.unsafeRun().then(data => {
+            console.log(data, 'data');
+            // expect(data).to.be.eql({a: 'a', b: 'b'});
             expect(callback.calledOnce).to.be.true;
             done();
-        });
-    });
-    /*it('test multiple rejecter', (done) => {
-        let callback = spy();
-        task((_, reject) => resolve(1))/!*.reject(data => {
-            callback();
-            expect(data).to.be.eql(1);
-        })*!/.map((res,rej,d)=>{
-            rej(d+1)
-        })/!*.reject(data => {
-            callback();
-            expect(data).to.be.eql(2);
-        })*!/.unsafeRun(() => {
-        }, data => {
-            // expect(data).to.be.eql(2);
-            // expect(callback.calledOnce).to.be.true;
-            done();
-        });
+        })
+
     });*/
 
 

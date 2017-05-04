@@ -17,9 +17,13 @@ class Task {
 
     constructor(job, parent) {
         this._parent = none();
+        this._topRef = none();
         this._children = List.empty();
         this._resolvers = List.empty();
         this._rejecters = List.empty();
+        this._resolve = none();
+        this._reject = none();
+        this._bottomRef = none();
         this._uuid = Symbol('uuid');
         this._create(job, parent);
     }
@@ -27,55 +31,66 @@ class Task {
     //private function.
     _create(job, parent) {
         this._setParent(parent);
-        this._task = this._setPromise(job !== undefined ? some(toFunction(job)) : none(), parent);
+        this._task = job !== undefined ? some(toFunction(job)) : none();
         return this;
     };
 
     _setPromise(job) {
-        return (data) => new Promise((resolve, reject) => {
-            let fn = job.getOrElse((_, reject) => reject('Task Empty'));
-            return (fn.length === 0) ? resolve(fn(clone(data))) : fn(resolve, reject, clone(data));
-        }).then(data => {
-            return new Promise((resolve) => {
-                this._resolvers.forEach(fn => fn(data));
-                resolve(clone(data))
-            });
-        }).catch(data => new Promise((resolve, reject) => {
-            this._rejecters.forEach(fn => fn(clone(data)));
-            reject(clone(data))
-        }));
-    };
-
-    _setParent(parent) {
-        this._parent = parent && parent.isTask && parent.isTask() ? some(parent._triggerUp.bind(parent)) : none();
-    };
-
-    _setChildren(children) {
-        this._children = children && children.isTask && children.isTask() ? this._children.insert(children._run.bind(children)) : this._children;
-    };
-
-    _triggerUp(resolve, reject, uuids = []) {
-        let allIds = clone(uuids);
-        allIds.push(this._uuid);
-        return this._parent.getOrElse(() => this._run(resolve, reject, allIds))(resolve, reject, allIds);
-    };
-
-
-    _triggerDown(resolve, reject, uuids, data, final) {
-        let finalData = uuids.indexOf(this._uuid) === 0 ? data : final;
-        this._children.map(child => child(resolve, reject, uuids, data, finalData)).getOrElse(() => {
-            resolve(clone(finalData));
+        return (data, res) => new Promise((resolve, reject) => {
+            let out = clone(data),
+                fn = job.getOrElse((resolve) => resolve(out));
+            if (res) {
+                return (fn.length === 0) ? resolve(fn(out)) : fn(resolve, reject, out);
+            } else {
+                return reject(out);
+            }
         });
     };
 
-    _run(resolve, reject, uuids, resp, final) {
-        let job = this._task(resp);
-        job.then((data) => {
-            this._triggerDown(resolve, reject, uuids, data, final);
-        }).catch(data => reject(clone(data)));
+    _setParent(parent) {
+        if (parent && parent.isTask && parent.isTask()) {
+            this._parent = some(parent._triggerUp.bind(parent));
+            this._topRef = some(parent._getTopRef.bind(parent));
+        }
+    };
 
-        return job;
+    _setChildren(children) {
+        if (children && children.isTask && children.isTask()) {
+            this._children = this._children.insert(children._run.bind(children));
+            this._bottomRef = some(children._getBottomRef.bind(this));
+        }
 
+    };
+
+    _resolveRun(data) {
+        this._resolvers.forEach(fn => fn(data));
+        this._resolve.getOrElse(emptyFn)(clone(data));
+        this._resolve = none();
+        this._triggerDown(data, true);
+        return clone(data);
+    };
+
+    _rejectRun(data) {
+        this._rejecters.forEach(fn => fn(clone(data)));
+        this._reject.getOrElse(emptyFn)(clone(data));
+        this._reject = none();
+        this._triggerDown(data, false);
+        return clone(data);
+    };
+
+    _triggerUp() {
+        return this._parent.getOrElse(() => this._run())();
+    };
+
+
+    _triggerDown(data, resolve) {
+        this._children.map(child => child(data, resolve));
+    };
+
+    _run(resp, resolve = true) {
+        return this._setPromise(this._task)(resp, resolve)
+            .then(this._resolveRun.bind(this))
+            .catch(this._rejectRun.bind(this));
     };
 
     _map(fn) {
@@ -84,12 +99,43 @@ class Task {
         return job;
     };
 
+    _copyJob(parent) {
+        let tasksRef = this._task.get();
+        let job = task(tasksRef, parent);
+        if (parent) {
+            parent._setChildren(job);
+        }
+    };
+
+    _getTopRef(uuid) {
+        return this._topRef.getOrElse((uuid) => this._copy(uuid))(uuid);
+    };
+
+    _getBottomRef(uuid, parent) {
+        return this._bottomRef.getOrElse((uuid, job) => job)(this._copyJob(uuid, parent));
+    }
+
+    _copy(uuid, parent) {
+        return this._getBottomRef(parent);
+    };
+
+    copy() {
+        return this._getTopRef(this._uuid);
+    };
+
+    _flatMap(fn) {
+        return this.map(fn)
+    }
+
     map(fn) {
         return this._map(fn);
     };
 
-    flatMap(fn) {
-        // return fn();
+
+    flatMap(joined) {
+        joined._setParent(this)
+        this._setChildren(joined);
+        return joined;
     };
 
     forEach(fn) {
@@ -130,15 +176,16 @@ class Task {
      * */
     unsafeRun(resolve = emptyFn, reject = emptyFn) {
         return new Promise((res, rej) => {
-            this._triggerUp(res, rej);
-        }).then(data => {
-            resolve(data);
-            return data;
-        }).catch(data => {
-            console.log(data, 'reject');
-            reject(data);
-            return data;
-        })
+            this._resolve = some((data) => {
+                resolve(data);
+                res(data);
+            });
+            this._reject = some((data) => {
+                reject(data);
+                rej(data);
+            });
+            this._triggerUp();
+        });
     };
 
 
