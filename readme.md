@@ -1,6 +1,6 @@
 ## Library for working with pull based async Tasks [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
-! Curently this library is on development stage, possibly API will change later.
+! Curently this library is on development stage, po.
 
 ### Why This Library
 
@@ -25,7 +25,7 @@ This library usng [**UMD**](https://github.com/umdjs/umd) modules, can be used o
 Create Task and apply functor, and returning promise with data. every `.map` method returning new task. all returned data is imutable. have to call resolve after any combination finished.
 
 ```javascript
-    import {{Task, task}} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks/src/core/Task';
     //Initial task
       let a = task((resolve, reject) => resolve(3))
       //apply functor to next step. All data is imutable
@@ -44,7 +44,7 @@ Create Task and apply functor, and returning promise with data. every `.map` met
 Using async es6 functions
     
 ```javascript
-    import {{Task, task}} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks/src/core/Task';
     async ()=>{
     //Initial task
       let a = task((resolve) => resolve(3))
@@ -63,7 +63,7 @@ Using async es6 functions
 Combining Tasks
 
 ```javascript
-    import {{Task, task}} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks/src/core/Task';
 
    let taskA = task({a: 'a', b: 'b'});
    let taskB = task((res, rej, data) => {
@@ -82,7 +82,7 @@ Combining Tasks
 Subscribe for changes using resolve and reject
 
 ```javascript
-    import {{Task, task}} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks/src/core/Task';
     
     task((_, resolve) => resolve(1))
             .resolve(data => {
@@ -187,7 +187,7 @@ Trampolined computation producing an A that may include asynchronous steps. Arbi
 Usage
 
 ```javascript
-    import {{Task, task}} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks/src/core/Task';
     //Initial task
       let a = task((_, resolve, reject) => resolve(3))
       //apply functor to next step. All data is imutable
