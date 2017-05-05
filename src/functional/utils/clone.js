@@ -1,4 +1,3 @@
-import {some, none} from '../core/Option';
 import {list} from '../core/List';
 
 let pair = (guard, action) => {

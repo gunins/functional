@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Option.js'), require('../core/List.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', '../core/Option.js', '../core/List.js'], factory) :
-	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = global['functional/utils/clone'].js || {}),global.___core_Option_js,global.___core_List_js));
-}(this, (function (exports,___core_Option_js,___core_List_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/List.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', '../core/List.js'], factory) :
+	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = global['functional/utils/clone'].js || {}),global.___core_List_js));
+}(this, (function (exports,___core_List_js) { 'use strict';
 
 let pair = (guard, action) => {
         return {guard, action}

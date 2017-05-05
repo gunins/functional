@@ -1,6 +1,6 @@
 ## Library for working with pull based async Tasks [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
-! Curently this library is on development stage, API possible to change.
+! Curently this library is on development stage, possibly API will change later.
 
 ### Why This Library
 
