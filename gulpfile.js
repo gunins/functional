@@ -1,8 +1,8 @@
 const gulp = require('gulp'),
+    bump = require('gulp-bump'),
     rollup = require('rollup-stream'),
     source = require('vinyl-source-stream'),
     through = require('through2'),
-    pathNode = require('path'),
     del = require('del'),
     mocha = require('gulp-mocha'),
     fs = require('fs');
@@ -68,6 +68,24 @@ gulp.task('test', ['rollup'], () => {
         './test/functional/**/*.js'
     ], {read: false}).pipe(mocha({reporter: 'list'}));
 
+});
+
+gulp.task('bump:patch', ['test'], function() {
+    gulp.src('./*.json')
+        .pipe(bump({type: 'patch'}))
+        .pipe(gulp.dest('./'));
+});
+
+gulp.task('bump:minor', function() {
+    gulp.src('./*.json')
+        .pipe(bump({type: 'minor'}))
+        .pipe(gulp.dest('./'));
+});
+
+gulp.task('bump:major', function() {
+    gulp.src('./*.json')
+        .pipe(bump({type: 'major'}))
+        .pipe(gulp.dest('./'));
 });
 
 gulp.task('default', ['rollup']);

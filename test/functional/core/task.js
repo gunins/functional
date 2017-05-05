@@ -347,26 +347,98 @@ describe('Task Tests: ', () => {
                 done();
             });
     });
-  /*  it('copy basic test', done => {
+    it('test copy', async () => {
         let callback = spy();
+
         let taskA = task({a: 'a', b: 'b'});
-        let taskB = taskA.map((res,rej,data)=>{
+        let taskB = taskA.map((res, rej, data) => {
             callback();
-            data.c ='c'
+            data.c = 'c'
             res(data);
         });
+
         let taskC = taskB.copy();
-        // let taskD = taskA.copy();
 
+        let taskD = taskA.copy();
 
-        taskC.unsafeRun().then(data => {
-            console.log(data, 'data');
-            // expect(data).to.be.eql({a: 'a', b: 'b'});
-            expect(callback.calledOnce).to.be.true;
-            done();
+        let taskE = taskB.map((res, rej, data) => {
+            callback();
+            data.e = 'e'
+            res(data);
+        });
+
+        let taskF = taskD.map((res, rej, data) => {
+            callback();
+            data.d = 'd'
+            res(data);
         })
 
-    });*/
+        let dataA = await taskC.unsafeRun()
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+        expect(callback.calledOnce).to.be.true;
+        callback();
+
+        let dataB = await  taskF.unsafeRun()
+        expect(dataB).to.be.eql({a: 'a', b: 'b', d: 'd'});
+        expect(callback.calledThrice).to.be.true;
+
+        let dataC = await  taskE.unsafeRun()
+        expect(dataC).to.be.eql({a: 'a', b: 'b', c: 'c', e: 'e'});
+        expect(callback.callCount).to.be.eql(5);
+
+    });
+    it('test throught', async () => {
+        let callback = spy();
+
+        let taskA = task({a: 'a', b: 'b'});
+        let taskB = task((res, rej, data) => {
+            expect(data).to.be.eql({a: 'a', b: 'b'});
+            callback();
+            data.c = 'c'
+            res(data);
+        });
+        let taskC = taskA.throught(taskB);
+        let dataA = await taskC.unsafeRun();
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+        expect(callback.calledOnce).to.be.true;
+    });
+
+    it('test throught complex', async () => {
+        let callback = spy();
+
+        let taskA = task({a: 'a', b: 'b'});
+        let innerTask = taskA.resolve(data=>{
+            callback();
+            expect(data).to.be.eql({a: 'a', b: 'b'});
+        });
+
+        let taskB = task((res, rej, data) => {
+            expect(data).to.be.eql({a: 'a', b: 'b'});
+            callback();
+            data.c = 'c'
+            res(data);
+        });
+
+        let taskC = taskA.throught(taskB);
+
+        let dataA = await taskC.unsafeRun();
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+        expect(callback.calledTwice).to.be.true;
+
+        let dataB = await taskA.unsafeRun();
+        expect(dataB).to.be.eql({a: 'a', b: 'b'});
+        expect(callback.callCount).to.be.eql(4);
+
+
+        let dataC = await innerTask.unsafeRun();
+        expect(dataC).to.be.eql({a: 'a', b: 'b'});
+        expect(callback.callCount).to.be.eql(6);
+
+        let dataD = await taskC.unsafeRun();
+        expect(dataD).to.be.eql({a: 'a', b: 'b', c: 'c'});
+        expect(callback.callCount).to.be.eql(8);
+
+    });
 
 
 });

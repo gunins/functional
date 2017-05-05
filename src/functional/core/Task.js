@@ -18,6 +18,7 @@ class Task {
     constructor(job, parent) {
         this._parent = none();
         this._topRef = none();
+        this._topParent = none();
         this._children = List.empty();
         this._resolvers = List.empty();
         this._rejecters = List.empty();
@@ -51,13 +52,18 @@ class Task {
         if (parent && parent.isTask && parent.isTask()) {
             this._parent = some(parent._triggerUp.bind(parent));
             this._topRef = some(parent._getTopRef.bind(parent));
+            this._topParent = some(parent._addParent.bind(parent));
         }
+    };
+
+    _addParent(parent) {
+        this._topParent.getOrElse((parent) => this._setParent(parent))(parent)
     };
 
     _setChildren(children) {
         if (children && children.isTask && children.isTask()) {
             this._children = this._children.insert(children._run.bind(children));
-            this._bottomRef = some(children._getBottomRef.bind(this));
+            this._bottomRef = some(children._getBottomRef.bind(children));
         }
 
     };
@@ -100,42 +106,42 @@ class Task {
     };
 
     _copyJob(parent) {
-        let tasksRef = this._task.get();
-        let job = task(tasksRef, parent);
+        let job = task(this._task.get(), parent);
         if (parent) {
             parent._setChildren(job);
         }
+        return job;
     };
 
-    _getTopRef(uuid) {
-        return this._topRef.getOrElse((uuid) => this._copy(uuid))(uuid);
+    _getTopRef(uuid, parent) {
+        return this._topRef.getOrElse((uuid, parent) => this._copy(uuid, parent))(uuid, parent);
     };
 
-    _getBottomRef(uuid, parent) {
-        return this._bottomRef.getOrElse((uuid, job) => job)(this._copyJob(uuid, parent));
+    _getBottomRef(uuid, parent, goNext = false) {
+        let copyJob = goNext ? parent : this._copyJob(parent);
+        let next = goNext || this._uuid === uuid ? true : false;
+        return this._bottomRef.getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
-    _copy(uuid, parent) {
-        return this._getBottomRef(parent);
+    _copy(uuid) {
+        return this._getBottomRef(uuid);
     };
 
     copy() {
         return this._getTopRef(this._uuid);
     };
 
-    _flatMap(fn) {
-        return this.map(fn)
-    }
 
     map(fn) {
         return this._map(fn);
     };
 
 
-    flatMap(joined) {
-        joined._setParent(this)
-        this._setChildren(joined);
-        return joined;
+    throught(joined) {
+        let clone = joined.copy();
+        clone._addParent(this);
+        this._setChildren(clone);
+        return clone;
     };
 
     forEach(fn) {
