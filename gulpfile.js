@@ -88,5 +88,5 @@ gulp.task('bump:major', function() {
         .pipe(gulp.dest('./'));
 });
 
-gulp.task('default', ['rollup']);
+gulp.task('default', ['test']);
 
