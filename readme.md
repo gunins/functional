@@ -247,5 +247,9 @@ Static methods
 
 **empty():** Create empty task
 
+### TODO:
 
+Tasks for fetch requests (post, get, delete, put) etc.
+
+Streams.
    
