@@ -1,29 +1,30 @@
 {
-    "name": "functional_tasks",
-    "description": "Library for working with pull based async Tasks",
-    "version": "0.0.2",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/gunins/functional"
-    },
-    "dependencies": {
-        "requirejs": "^2.3.3"
-    },
-    "devDependencies": {
-        "chai": "^3.5.0",
-        "del": "^2.2.2",
-        "gulp": "^3.9.1",
-        "gulp-bump": "^2.7.0",
-        "gulp-clean": "^0.3.2",
-        "gulp-mocha": "^4.3.0",
-        "mocha": "^3.3.0",
-        "rollup-plugin-multi-entry": "^2.0.1",
-        "rollup-plugin-node-resolve": "^3.0.0",
-        "rollup-stream": "^1.19.0",
-        "sinon": "^2.1.0",
-        "vinyl-source-stream": "^1.1.0"
-    },
-    "scripts": {
-        "test": "gulp"
-    }
+  "name": "functional_tasks",
+  "description": "Library for working with pull based async Tasks",
+  "version": "0.0.3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gunins/functional"
+  },
+  "dependencies": {
+    "requirejs": "^2.3.3"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-bump": "^2.7.0",
+    "gulp-clean": "^0.3.2",
+    "gulp-git": "^2.2.0",
+    "gulp-mocha": "^4.3.0",
+    "mocha": "^3.3.0",
+    "rollup-plugin-multi-entry": "^2.0.1",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-stream": "^1.19.0",
+    "sinon": "^2.1.0",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "scripts": {
+    "test": "gulp"
+  }
 }
