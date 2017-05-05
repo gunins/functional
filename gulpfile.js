@@ -1,5 +1,8 @@
 const gulp = require('gulp'),
     bump = require('gulp-bump'),
+    git = require('gulp-git'),
+    filter = require('gulp-filter'),
+    tag_version = require('gulp-tag-version'),
     rollup = require('rollup-stream'),
     source = require('vinyl-source-stream'),
     through = require('through2'),
@@ -71,31 +74,36 @@ gulp.task('test', ['rollup'], () => {
 
 });
 
-gulp.task('bump:patch', ['test'], () => {
-    gulp.src('./*.json')
-        .pipe(bump({type: 'patch'}))
-        .pipe(gulp.dest('./'));
-});
+let inc = (importance) => gulp.src(['./package.json', './bower.json'])
+// bump the version number in those files
+    .pipe(bump({type: importance}))
+    // save it back to filesystem
+    .pipe(gulp.dest('./'))
+    // commit the changed version number
+    .pipe(git.commit('bumps package version'))
 
-gulp.task('bump:minor', () => {
-    gulp.src('./*.json')
-        .pipe(bump({type: 'minor'}))
-        .pipe(gulp.dest('./'));
-});
+    // read only one file to get the version number
+    .pipe(filter('package.json'))
+    // **tag it in the repository**
+    .pipe(tag_version());
 
-gulp.task('bump:major', () => {
-    gulp.src('./*.json')
-        .pipe(bump({type: 'major'}))
-        .pipe(gulp.dest('./'));
-});
 
-gulp.task('publish', ['bump:patch'], (cb) => {
+gulp.task('publish', ['test', 'bump:patch'], (cb) => {
+    exec('git push --tags', (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        cb(err);
+    });
     exec('npm publish ./', (err, stdout, stderr) => {
         console.log(stdout);
         console.log(stderr);
         cb(err);
     });
 });
+
+gulp.task('bump:patch', () => inc('patch'));
+gulp.task('bump:feature', () => inc('minor'));
+gulp.task('bump:release', () => inc('major'));
 
 gulp.task('default', ['test']);
 
