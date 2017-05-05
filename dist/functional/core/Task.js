@@ -5,7 +5,7 @@
 }(this, (function (exports,__List_js,__Option_js,___utils_clone_js) { 'use strict';
 
 let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
-let toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job);
+let toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job);
 let emptyFn = () => {
     };
 /**
@@ -40,9 +40,9 @@ class Task {
     _setPromise(job) {
         return (data, res) => new Promise((resolve, reject) => {
             let out = ___utils_clone_js.clone(data),
-                fn = job.getOrElse((resolve) => resolve(out));
+                fn = job.getOrElse((_, resolve) => resolve(out));
             if (res) {
-                return (fn.length === 0) ? resolve(fn(out)) : fn(resolve, reject, out);
+                return (fn.length <= 1) ? resolve(fn(out)) : fn(out, resolve, reject);
             } else {
                 return reject(out);
             }
@@ -138,7 +138,7 @@ class Task {
     };
 
 
-    throught(joined) {
+    through(joined) {
         let clone$$1 = joined.copy();
         clone$$1._addParent(this);
         this._setChildren(clone$$1);
@@ -146,7 +146,7 @@ class Task {
     };
 
     forEach(fn) {
-        return this.map((res, rej, d) => {
+        return this.map((d, res) => {
             fn(d);
             res(d);
         });

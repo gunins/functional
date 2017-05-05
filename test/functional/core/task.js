@@ -3,7 +3,7 @@ let {Task, task} = require('../../../dist/functional/core/Task'),
     {spy} = require('sinon');
 describe('Task Tests: ', () => {
     it('test task success', async () => {
-        let a = new Task((resolve) => resolve(3));
+        let a = new Task((_, resolve) => resolve(3));
         let b = await a.unsafeRun();
         expect(b).to.be.eql(3);
     });
@@ -19,7 +19,7 @@ describe('Task Tests: ', () => {
     });
 
     it('test task success delay', (done) => {
-        let resolver = (resolve) => setTimeout(() => resolve(3), 50);
+        let resolver = (_, resolve) => setTimeout(() => resolve(3), 50);
         let a = task(resolver);
         setTimeout(() => {
             a.unsafeRun(resolve => {
@@ -29,7 +29,7 @@ describe('Task Tests: ', () => {
         }, 100)
     });
 
-    it('test syncronus function', async () => {
+    it('test synchronous function', async () => {
         let res = spy(),
             resolver = () => {
                 res();
@@ -41,7 +41,7 @@ describe('Task Tests: ', () => {
     });
 
     it('test task reject', (done) => {
-        let a = task((res, rej) => {
+        let a = task((_, res, rej) => {
                 rej('Task Error');
             }),
             res = spy(),
@@ -74,7 +74,7 @@ describe('Task Tests: ', () => {
 
     it('test map task', (done) => {
         let callback = spy();
-        let a = task((resolve) => resolve(3)).map((res, rej, d) => {
+        let a = task((_, resolve) => resolve(3)).map((d, res, rej) => {
             callback();
             res(d + 1)
         });
@@ -86,23 +86,38 @@ describe('Task Tests: ', () => {
         });
     });
 
+    it('test synchronous map task', (done) => {
+        let callback = spy();
+        let a = task((_, resolve) => resolve(3))
+            .map((d) => {
+                callback();
+                return d + 1
+            });
+
+        a.unsafeRun(resolve => {
+            expect(resolve).to.be.eql(4);
+            expect(callback.calledOnce).to.be.true;
+            done()
+        });
+    });
+
     it('test multi map task', (done) => {
         let callback = spy();
-        let a = task((resolve) => resolve(3)).map((res, rej, d) => {
+        let a = task((_, resolve) => resolve(3)).map((d, res, rej) => {
             callback();
             res(d + 1)
         });
 
-        let b = a.map((res, rej, d) => {
+        let b = a.map((d, res, rej) => {
             callback();
 
             res(d + 1);
-        }).map((res, rej, d) => {
+        }).map((d, res, rej) => {
             callback();
             res(d + 1);
         });
 
-        b.map((res, rej, d) => {
+        b.map((d, res, rej) => {
             expect(d).to.be.eql(6);
             callback();
             res(d);
@@ -117,7 +132,7 @@ describe('Task Tests: ', () => {
     });
 
     it('test forEach task', (done) => {
-        let a = task((resolve) => resolve(3)).forEach((d) => {
+        let a = task((_, resolve) => resolve(3)).forEach((d) => {
             expect(d).to.be.eql(3);
         });
 
@@ -128,9 +143,9 @@ describe('Task Tests: ', () => {
     });
 
     it('test forEach + map task', (done) => {
-        let a = task((resolve) => resolve(3)).forEach((d) => {
+        let a = task((_, resolve) => resolve(3)).forEach((d) => {
             expect(d).to.be.eql(3);
-        }).map((res, rej, d) => {
+        }).map((d, res, rej) => {
             res(d + 1)
         });
 
@@ -141,13 +156,13 @@ describe('Task Tests: ', () => {
     });
 
     it('test multi map + forEach task', (done) => {
-        let a = task((resolve) => resolve(3)).map((res, rej, d) => {
+        let a = task((_, resolve) => resolve(3)).map((d, res, rej) => {
             res(d + 1)
         });
 
-        let b = a.map((res, rej, d) => {
+        let b = a.map((d, res, rej) => {
             res(d + 1);
-        }).map((res, rej, d) => {
+        }).map((d, res, rej) => {
             expect(d).to.be.eql(5);
             res(d + 1);
         });
@@ -172,7 +187,7 @@ describe('Task Tests: ', () => {
             });
     });
     it('test reject task', (done) => {
-        let a = task((_, reject) => reject('rejected'));
+        let a = task((_, resolve, reject) => reject('rejected'));
         a.unsafeRun().catch(error => {
             expect(error).to.be.eql('rejected');
             done();
@@ -181,7 +196,7 @@ describe('Task Tests: ', () => {
 
     it('test reject map', (done) => {
         let callback = spy();
-        let a = task((_, reject) => reject('rejected'))
+        let a = task((_, resolve, reject) => reject('rejected'))
             .map((res) => {
                 callback();
                 res(3)
@@ -196,12 +211,12 @@ describe('Task Tests: ', () => {
 
     it('test reject belowmap', (done) => {
         let callback = spy();
-        let a = task((resolve) => resolve(1)).map((res, rej, d) => {
+        let a = task((_, resolve) => resolve(1)).map((d, res, rej) => {
             callback();
             res(d + 1)
-        }).map((res, rej, d) => {
+        }).map((d, res, rej) => {
             rej(d)
-        }).map((res, rej, d) => {
+        }).map((d, res, rej) => {
             callback();
             rej(d)
         });
@@ -216,7 +231,7 @@ describe('Task Tests: ', () => {
 
     it('test resolver', (done) => {
         let callback = spy();
-        task((resolve) => resolve(1))
+        task((_, resolve) => resolve(1))
             .resolve(data => {
                 callback();
                 expect(data).to.be.eql(1);
@@ -230,7 +245,7 @@ describe('Task Tests: ', () => {
     });
     it('test clear resolver', (done) => {
         let callback = spy();
-        task((resolve) => resolve(1))
+        task((_, resolve) => resolve(1))
             .resolve(data => {
                 callback();
                 expect(data).to.be.eql(1);
@@ -246,12 +261,12 @@ describe('Task Tests: ', () => {
 
     it('test multiple resolver', (done) => {
         let callback = spy();
-        task((resolve) => resolve(1))
+        task((_, resolve) => resolve(1))
             .resolve(data => {
                 callback();
                 expect(data).to.be.eql(1);
             })
-            .map((res, rej, d) => {
+            .map((d, res, rej) => {
                 res(d + 1);
             })
             .resolve(data => {
@@ -270,14 +285,14 @@ describe('Task Tests: ', () => {
         let callback = spy();
         let triggerOne = false;
         let triggerTwo = false;
-        let a = task((resolve) => resolve(1))
+        let a = task((_, resolve) => resolve(1))
             .resolve(data => {
                 callback();
                 expect(data).to.be.eql(1);
             });
 
         let b = a
-            .map((res, rej, d) => {
+            .map((d, res, rej) => {
                 res(d + 1);
             })
             .resolve(data => {
@@ -313,7 +328,7 @@ describe('Task Tests: ', () => {
 
     it('test rejecter', (done) => {
         let callback = spy();
-        task((_, reject) => reject(1))
+        task((_, resolve, reject) => reject(1))
             .reject(data => {
                 callback();
                 expect(data).to.be.eql(1);
@@ -327,12 +342,12 @@ describe('Task Tests: ', () => {
     });
     it('test multiple rejecter', (done) => {
         let callback = spy();
-        task((resolve, reject) => resolve(1))
+        task((_, resolve, reject) => resolve(1))
             .reject(data => {
                 callback();
                 expect(data).to.be.eql(1);
             })
-            .map((res, rej, d) => {
+            .map((d, res, rej) => {
                 rej(d + 1)
 
             })
@@ -351,7 +366,7 @@ describe('Task Tests: ', () => {
         let callback = spy();
 
         let taskA = task({a: 'a', b: 'b'});
-        let taskB = taskA.map((res, rej, data) => {
+        let taskB = taskA.map((data, res, rej) => {
             callback();
             data.c = 'c'
             res(data);
@@ -361,13 +376,13 @@ describe('Task Tests: ', () => {
 
         let taskD = taskA.copy();
 
-        let taskE = taskB.map((res, rej, data) => {
+        let taskE = taskB.map((data, res, rej) => {
             callback();
             data.e = 'e'
             res(data);
         });
 
-        let taskF = taskD.map((res, rej, data) => {
+        let taskF = taskD.map((data, res, rej) => {
             callback();
             data.d = 'd'
             res(data);
@@ -387,39 +402,39 @@ describe('Task Tests: ', () => {
         expect(callback.callCount).to.be.eql(5);
 
     });
-    it('test throught', async () => {
+    it('test through', async () => {
         let callback = spy();
 
         let taskA = task({a: 'a', b: 'b'});
-        let taskB = task((res, rej, data) => {
+        let taskB = task((data, res, rej) => {
             expect(data).to.be.eql({a: 'a', b: 'b'});
             callback();
             data.c = 'c'
             res(data);
         });
-        let taskC = taskA.throught(taskB);
+        let taskC = taskA.through(taskB);
         let dataA = await taskC.unsafeRun();
         expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
         expect(callback.calledOnce).to.be.true;
     });
 
-    it('test throught complex', async () => {
+    it('test through complex', async () => {
         let callback = spy();
 
         let taskA = task({a: 'a', b: 'b'});
-        let innerTask = taskA.resolve(data=>{
+        let innerTask = taskA.resolve(data => {
             callback();
             expect(data).to.be.eql({a: 'a', b: 'b'});
         });
 
-        let taskB = task((res, rej, data) => {
+        let taskB = task((data, res, rej) => {
             expect(data).to.be.eql({a: 'a', b: 'b'});
             callback();
             data.c = 'c'
             res(data);
         });
 
-        let taskC = taskA.throught(taskB);
+        let taskC = taskA.through(taskB);
 
         let dataA = await taskC.unsafeRun();
         expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});

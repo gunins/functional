@@ -87,13 +87,15 @@ let inc = (importance) => gulp.src(['./package.json', './bower.json'])
     // **tag it in the repository**
     .pipe(tag_version());
 
-
-gulp.task('publish', ['test', 'bump:patch'], (cb) => {
+gulp.task('pushTags', ['test', 'bump:patch'], (cb) => {
     exec('git push --tags', (err, stdout, stderr) => {
         console.log(stdout);
         console.log(stderr);
         cb(err);
     });
+});
+
+gulp.task('publish', ['test', 'bump:patch', 'pushTags'], (cb) => {
     exec('npm publish ./', (err, stdout, stderr) => {
         console.log(stdout);
         console.log(stderr);

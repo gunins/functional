@@ -4,7 +4,7 @@ import {clone} from '../utils/clone';
 
 
 let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply),
-    toFunction = (job) => isFunction(job) ? job : (resolve) => resolve(job),
+    toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job),
     emptyFn = () => {
     };
 /**
@@ -39,9 +39,9 @@ class Task {
     _setPromise(job) {
         return (data, res) => new Promise((resolve, reject) => {
             let out = clone(data),
-                fn = job.getOrElse((resolve) => resolve(out));
+                fn = job.getOrElse((_, resolve) => resolve(out));
             if (res) {
-                return (fn.length === 0) ? resolve(fn(out)) : fn(resolve, reject, out);
+                return (fn.length <= 1) ? resolve(fn(out)) : fn(out, resolve, reject);
             } else {
                 return reject(out);
             }
@@ -137,7 +137,7 @@ class Task {
     };
 
 
-    throught(joined) {
+    through(joined) {
         let clone = joined.copy();
         clone._addParent(this);
         this._setChildren(clone);
@@ -145,7 +145,7 @@ class Task {
     };
 
     forEach(fn) {
-        return this.map((res, rej, d) => {
+        return this.map((d, res) => {
             fn(d);
             res(d);
         });
