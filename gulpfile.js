@@ -5,7 +5,8 @@ const gulp = require('gulp'),
     through = require('through2'),
     del = require('del'),
     mocha = require('gulp-mocha'),
-    fs = require('fs');
+    fs = require('fs'),
+    exec = require('child_process').exec;
 
 //function for taking streams and returning streams;
 let chain = (cb) => {
@@ -70,22 +71,30 @@ gulp.task('test', ['rollup'], () => {
 
 });
 
-gulp.task('bump:patch', ['test'], function() {
+gulp.task('bump:patch', ['test'], () => {
     gulp.src('./*.json')
         .pipe(bump({type: 'patch'}))
         .pipe(gulp.dest('./'));
 });
 
-gulp.task('bump:minor', function() {
+gulp.task('bump:minor', () => {
     gulp.src('./*.json')
         .pipe(bump({type: 'minor'}))
         .pipe(gulp.dest('./'));
 });
 
-gulp.task('bump:major', function() {
+gulp.task('bump:major', () => {
     gulp.src('./*.json')
         .pipe(bump({type: 'major'}))
         .pipe(gulp.dest('./'));
+});
+
+gulp.task('publish', ['bump:patch'], (cb) => {
+    exec('npm publish ./', (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        cb(err);
+    });
 });
 
 gulp.task('default', ['test']);
