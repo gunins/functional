@@ -1,6 +1,11 @@
 /**
  * Created by guntars on 25/04/2017.
  */
-import { square, diag } from './functional/async/Fetch';
-console.log(square(11)); // 121
-console.log(diag(4, 3)); // 5
+import {fetchTask} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package.json'})
+        .through(fetchTask)
+        .unsafeRun();
+    console.log(getData);
+})()

@@ -20,6 +20,7 @@ let pair = (guard, action) => {
     isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]',
     isArray = (obj) => Object.prototype.toString.call(obj) === '[object Array]',
     isObject = (obj) => Object.prototype.toString.call(obj) === '[object Object]',
+    isOther = (obj) => !isSimple(obj) && !isDate(obj) && !isArray(obj) && !isObject(obj),
 
 // Cloning actions, for different types
     cloneSimple = (simple) => () => simple,
@@ -30,15 +31,17 @@ let pair = (guard, action) => {
     },
     cloneArray = (arr) => (fn) => arr.map(fn),
     cloneObj = (obj) => (fn) => objCopy(obj)(fn),
+    cloneOther = (obj) => () => obj,
 
 // Define functors, with guards and actions
     simpleFunctor = pair(isSimple, cloneSimple),
     arrayFunctor = pair(isArray, cloneArray),
     dateFunctor = pair(isDate, cloneDate),
     objectFunctor = pair(isObject, cloneObj),
+    otherFunctor = pair(isOther, cloneOther),
 
 //take all functors in a list.
-    functors = list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor),
+    functors = list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor, otherFunctor),
     getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj),
     clone = (obj) => getFunctor(obj)(children => clone(children));
 

@@ -406,15 +406,16 @@ describe('Task Tests: ', () => {
         let callback = spy();
 
         let taskA = task({a: 'a', b: 'b'});
-        let taskB = task((data, res, rej) => {
+        let taskB = task((data, res) => {
             expect(data).to.be.eql({a: 'a', b: 'b'});
             callback();
-            data.c = 'c'
-            res(data);
-        });
+            res(Object.assign(data, {c: 'c'}));
+        })
+            .map(data => Object.assign(data, {d: 'd'}));
+
         let taskC = taskA.through(taskB);
         let dataA = await taskC.unsafeRun();
-        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c', d: 'd'});
         expect(callback.calledOnce).to.be.true;
     });
 

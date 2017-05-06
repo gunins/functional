@@ -3,6 +3,5 @@ let {square} = require('../../../dist/functional/async/Fetch'),
 
 describe('Async Fetch Tests', () => {
     it('Testing method "text"', () => {
-        expect(square(11) === 121);
     });
 });

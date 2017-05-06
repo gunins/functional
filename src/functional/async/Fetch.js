@@ -1,3 +1,14 @@
-export const sqrt = Math.sqrt;
-export const square = (x) => x * x;
-export const diag = (x, y) => sqrt(square(x) + square(y));
+import {task} from '../core/Task';
+let load = (opt) => fetch(opt.uri, Object.assign({
+    method:  'get',
+    headers: {
+        'Accept':       'application/json, text/plain, */*',
+        'Content-Type': 'application/json'
+    }
+}, opt))
+
+
+let fetchTask = task(async opt => await load(opt))
+    .map(response => response.json());
+
+export {fetchTask}

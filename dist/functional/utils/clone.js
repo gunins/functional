@@ -20,6 +20,7 @@ let isSimple = (obj) => typeof obj == 'boolean' || null == obj || 'object' != ty
 let isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]';
 let isArray = (obj) => Object.prototype.toString.call(obj) === '[object Array]';
 let isObject = (obj) => Object.prototype.toString.call(obj) === '[object Object]';
+let isOther = (obj) => !isSimple(obj) && !isDate(obj) && !isArray(obj) && !isObject(obj);
 let cloneSimple = (simple) => () => simple;
 let cloneDate = (date) => () => {
         let copy = new Date();
@@ -28,11 +29,13 @@ let cloneDate = (date) => () => {
     };
 let cloneArray = (arr) => (fn) => arr.map(fn);
 let cloneObj = (obj) => (fn) => objCopy(obj)(fn);
+let cloneOther = (obj) => () => obj;
 let simpleFunctor = pair(isSimple, cloneSimple);
 let arrayFunctor = pair(isArray, cloneArray);
 let dateFunctor = pair(isDate, cloneDate);
 let objectFunctor = pair(isObject, cloneObj);
-let functors = ___core_List_js.list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor);
+let otherFunctor = pair(isOther, cloneOther);
+let functors = ___core_List_js.list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
 let getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj);
 let clone = (obj) => getFunctor(obj)(children => clone(children));
 

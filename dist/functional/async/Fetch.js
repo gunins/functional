@@ -1,16 +1,22 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = global['functional/async/Fetch'].js || {})));
-}(this, (function (exports) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Task.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', '../core/Task.js'], factory) :
+	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = global['functional/async/Fetch'].js || {}),global.___core_Task_js));
+}(this, (function (exports,___core_Task_js) { 'use strict';
 
-const sqrt = Math.sqrt;
-const square = (x) => x * x;
-const diag = (x, y) => sqrt(square(x) + square(y));
+let load = (opt) => fetch(opt.uri, Object.assign({
+    method:  'get',
+    headers: {
+        'Accept':       'application/json, text/plain, */*',
+        'Content-Type': 'application/json'
+    }
+}, opt));
 
-exports.sqrt = sqrt;
-exports.square = square;
-exports.diag = diag;
+
+let fetchTask = ___core_Task_js.task(async opt => await load(opt))
+    .map(response => response.json());
+
+exports.fetchTask = fetchTask;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

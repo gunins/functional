@@ -58,7 +58,10 @@ class Task {
     };
 
     _addParent(parent) {
-        this._topParent.getOrElse((parent) => this._setParent(parent))(parent);
+        this._topParent.getOrElse((parent) => {
+            parent._setChildren(this);
+            this._setParent(parent);
+        })(parent);
     };
 
     _setChildren(children) {
@@ -141,7 +144,6 @@ class Task {
     through(joined) {
         let clone$$1 = joined.copy();
         clone$$1._addParent(this);
-        this._setChildren(clone$$1);
         return clone$$1;
     };
 
