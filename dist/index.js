@@ -9,7 +9,7 @@
  */
 (async () => {
     let getData = await __functional_core_Task_js.task({uri: './package.json'})
-        .through(__functional_async_Fetch_js.fetchTask)
+        .through(__functional_async_Fetch_js.get)
         .unsafeRun();
     console.log(getData);
 })();

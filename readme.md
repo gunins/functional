@@ -247,9 +247,85 @@ Static methods
 
 **empty():** Create empty task
 
-### TODO:
+### Async Fetch
 
-Tasks for fetch requests (post, get, delete, put) etc.
+Tasks for fetch API 
 
-Streams.
-   
+Get Example 
+
+```javascript
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+
+    let getData = task({uri: './package'})
+        .through(get)
+        .unsafeRun().then(data=>console.log(data));
+
+```
+
+ES6 async example
+
+```javascript
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package'})
+        .through(get)
+        .unsafeRun();
+    console.log(getData);
+})()
+
+```
+
+Get example.
+
+```javascript
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package', body:{a:1, b:2}})
+        .through(get)
+        .unsafeRun();
+    console.log(getData);
+})()
+
+```
+
+Post example.
+
+```javascript
+import {post} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package', body:{a:1, b:2}})
+        .through(post)
+        .unsafeRun();
+    console.log(getData);
+})()
+
+```
+There also available put and delete.
+
+Example, to combining tasks, with post
+
+
+```javascript
+import {post} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let base =  task({uri: './package'}); 
+    
+    let setParams =  task(opt => Object.assign(opt, {
+                      body: {a: 1, b: 2}
+                  }));
+    
+    let getData = await task()
+                    .through(base)
+                    .through(setParams)
+                    .through(get)
+                    .unsafeRun();
+    
+    console.log(getData);
+})()
+
+```
