@@ -372,14 +372,22 @@ describe('Task Tests: ', () => {
             res(data);
         });
 
+        let taskN = taskB.map(data => {
+            data.n = 'n';
+            callback();
+            expect(data).to.be.eql({a: 'a', b: 'b', c: 'c', n: 'n'});
+            return data;
+        });
+
         let taskC = taskB.copy();
 
         let taskD = taskA.copy();
 
-        let taskE = taskB.map((data, res, rej) => {
+        let taskE = taskB.map(data => {
             callback();
+            expect(data).to.be.eql({a: 'a', b: 'b', c: 'c'});
             data.e = 'e'
-            res(data);
+            return data;
         });
 
         let taskF = taskD.map((data, res, rej) => {
@@ -399,7 +407,12 @@ describe('Task Tests: ', () => {
 
         let dataC = await  taskE.unsafeRun()
         expect(dataC).to.be.eql({a: 'a', b: 'b', c: 'c', e: 'e'});
-        expect(callback.callCount).to.be.eql(5);
+        expect(callback.callCount).to.be.eql(6);
+
+        let dataN = await taskN.unsafeRun();
+        expect(dataN).to.be.eql({a: 'a', b: 'b', c: 'c', n: 'n'});
+        expect(callback.callCount).to.be.eql(9);
+
 
     });
     it('test through', async () => {
