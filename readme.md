@@ -322,7 +322,7 @@ import {task} from './functional/core/Task';
     let getData = await task()
                     .through(base)
                     .through(setParams)
-                    .through(get)
+                    .through(post)
                     .unsafeRun();
     
     console.log(getData);
