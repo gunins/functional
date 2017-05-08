@@ -86,7 +86,7 @@
     require(['./index'], (samples) => {
         'use strict';
         /*import request and addId tasks, using require*/
-        let {request, addId} = samples;
+        let {request, addId, task} = samples;
 
         /*Just simple template for js arrays*/
         let templateInner = data => `<li>${data.id} <strong>Name:</strong> <span>${data.Name}</span> <strong>Price: </strong><span>${data.Price}</span></li>`;
@@ -110,26 +110,30 @@
             .map(data => templateOuter(data))
             .resolve(data => resultContainer.innerHTML = data);
 
-
-        /*apply filter for products on request, after apply template */
-        let resProducts = request()
-                .map(data => data.products)
-                .through(applyTemplate),
-                /*apply filter for items on request, after apply template*/
-            resItems = request()
-                .map(data => data.items)
-                .through(applyTemplate);
+        let filter = filterKey => data => data[filterKey];
 
         products.addEventListener('click', async () => {
-            /*run products, when button clicked*/
-            let res = await resProducts.unsafeRun();
+            /*Create new request*/
+            let res = await request()
+            /*filtering returning data*/
+                .map(filter('products'))
+                /*applying data to next task*/
+                .through(applyTemplate)
+                /*run products, when button clicked*/
+                .unsafeRun();
             /*Just show result as promise*/
             console.log(res);
         });
 
         items.addEventListener('click', async () => {
-            /*run Items, when button clicked*/
-            let res = await resItems.unsafeRun();
+            /*Create new request*/
+            let res = await request()
+            /*filtering returning data*/
+                .map(filter('items'))
+                /*applying data to next task*/
+                .through(applyTemplate)
+                /*run products, when button clicked*/
+                .unsafeRun();
             /*Just show result as promise*/
             console.log(res);
 

@@ -9,4 +9,4 @@ let request = () => task({uri: './products.json'}).through(get).copy();
 /*create new task, with function to apply new Id on each item*/
 let addId = task((data) => data.map(item => Object.assign(item, {id: count++})))
 
-export {request, addId}
+export {request, addId, task}

@@ -526,6 +526,7 @@ let addId = task((data) => data.map(item => Object.assign(item, {id: count++})))
 
 exports.request = request;
 exports.addId = addId;
+exports.task = task;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
