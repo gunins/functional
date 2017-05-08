@@ -1,6 +1,8 @@
 let {Task, task} = require('../../../dist/functional/core/Task'),
     {expect} = require('chai'),
-    {spy} = require('sinon');
+    {spy} = require('sinon'),
+    assign = Object.assign;
+
 describe('Task Tests: ', () => {
     it('test task success', async () => {
         let a = new Task((_, resolve) => resolve(3));
@@ -368,15 +370,14 @@ describe('Task Tests: ', () => {
         let taskA = task({a: 'a', b: 'b'});
         let taskB = taskA.map((data, res, rej) => {
             callback();
-            data.c = 'c'
-            res(data);
+            res(assign(data, {c: 'c'}));
         });
 
         let taskN = taskB.map(data => {
-            data.n = 'n';
+            let out = assign(data, {n: 'n'});
             callback();
-            expect(data).to.be.eql({a: 'a', b: 'b', c: 'c', n: 'n'});
-            return data;
+            expect(out).to.be.eql({a: 'a', b: 'b', c: 'c', n: 'n'});
+            return out;
         });
 
         let taskC = taskB.copy();
@@ -386,14 +387,12 @@ describe('Task Tests: ', () => {
         let taskE = taskB.map(data => {
             callback();
             expect(data).to.be.eql({a: 'a', b: 'b', c: 'c'});
-            data.e = 'e'
-            return data;
+            return assign(data, {e: 'e'});
         });
 
         let taskF = taskD.map((data, res, rej) => {
             callback();
-            data.d = 'd'
-            res(data);
+            res(assign(data, {d: 'd'}));
         })
 
         let dataA = await taskC.unsafeRun()
@@ -422,9 +421,9 @@ describe('Task Tests: ', () => {
         let taskB = task((data, res) => {
             expect(data).to.be.eql({a: 'a', b: 'b'});
             callback();
-            res(Object.assign(data, {c: 'c'}));
+            res(assign(data, {c: 'c'}));
         })
-            .map(data => Object.assign(data, {d: 'd'}));
+            .map(data => assign(data, {d: 'd'}));
 
         let taskC = taskA.through(taskB);
         let dataA = await taskC.unsafeRun();
@@ -444,8 +443,7 @@ describe('Task Tests: ', () => {
         let taskB = task((data, res, rej) => {
             expect(data).to.be.eql({a: 'a', b: 'b'});
             callback();
-            data.c = 'c'
-            res(data);
+            res(assign(data, {c: 'c'}));
         });
 
         let taskC = taskA.through(taskB);
