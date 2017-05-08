@@ -33,27 +33,27 @@
     ],
     "items": [
         {
-            "Name": "CheeseA",
+            "Name": "Box",
             "Price": 2.50,
             "Location": "Refrigerated foods"
         },
         {
-            "Name": "CrispsA",
+            "Name": "Computer",
             "Price": 3,
             "Location": "the Snack isle"
         },
         {
-            "Name": "PizzaA",
+            "Name": "Car",
             "Price": 4,
             "Location": "Refrigerated foods"
         },
         {
-            "Name": "ChocolateA",
+            "Name": "Fireplace",
             "Price": 1.50,
             "Location": "the Snack isle"
         },
         {
-            "Name": "Self-raising flourA",
+            "Name": "Bag",
             "Price": 1.50,
             "Location": "Home baking"
         }
