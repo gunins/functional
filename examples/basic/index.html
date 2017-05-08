@@ -4,24 +4,91 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <script src="../../node_modules/requirejs/require.js"></script>
+    <script>
+        'use strict';
+
+        require.config({
+            baseUrl: './dist'
+        });
+    </script>
+    <style>
+        .half {
+            width: 50%;
+            float: left;
+        }
+
+        .clear {
+            clear: both;
+        }
+    </style>
 
 </head>
 <body>
+<h3>Example, for pulling items, and display Products and items separatelly.</h3>
+<div class="half">
+    <h4>List of Items</h4>
+    <div class="itemsList"></div>
+</div>
+<div class="half">
+    <h4>List of products</h4>
+    <div class="productList"></div>
+</div>
+<div class="clear"></div>
+<script>
+    require(['./index'], (samples) => {
+        'use strict';
+
+        /*Just simple tamplate for js arrays*/
+        let tempateInner = data => `<li>${data.id} <strong>Name:</strong> <span>${data.Name}</span> <strong>Price: </strong><span>${data.Price}</span></li>`;
+        let templateOuter = data => `<ul>${data}</ul>`;
+
+        let {response, resolveData} = samples;
+
+        let applyData = (selector, data) => document.querySelector(selector).innerHTML = data;
+        /*Initialise rest call*/
+        let getItems = response();
+
+        let applyTemplate =
+            resolveData
+            /*Apply inner template*/
+                .map(data => data.map(item => tempateInner(item)))
+                /*joining data and convert to string*/
+                .map(data => data.join(''))
+                /*apply outer template*/
+                .map(data => templateOuter(data));
+
+        /*Filter items from rest call*/
+        getItems.map(data => data.items)
+        /*apply template on result array*/
+            .through(applyTemplate)
+            /*Apply parsed string to dom element*/
+            .resolve(data => applyData('.productList', data));
+
+        /*Filter products from rest call*/
+        getItems.map(data => data.products)
+        /*apply template on result array*/
+            .through(applyTemplate)
+            /*Apply parsed string to dom element*/
+            .resolve(data => applyData('.itemsList', data));
+
+        getItems.unsafeRun();
+
+    });
+</script>
+
+<h3>Example for getting items on request by clicking button</h3>
 <p>
     <button class="products">Products</button>
     <button class="items">Items</button>
-    <span class="count"></span>
 </p>
 <div class="result"></div>
 <script>
-    'use strict';
-
-    require.config({
-        baseUrl: './dist'
-    });
-
-
     require(['./index'], (samples) => {
+        'use strict';
+
+        /*Just simple tamplate for js arrays*/
+        let tempateInner = data => `<li>${data.id} <strong>Name:</strong> <span>${data.Name}</span> <strong>Price: </strong><span>${data.Price}</span></li>`;
+        let templateOuter = data => `<ul>${data}</ul>`;
 
         /*
          * just basic dom selectors, for DOM manipulation
@@ -31,19 +98,25 @@
         let resultContainer = document.querySelector('.result');
 
         /*import required tasks, using require*/
-        let {basicGet, applyTemplate} = samples;
+        let {response, resolveData} = samples;
 
         /*subscribe to apply template on resultContainer*/
-        applyTemplate.resolve(data => resultContainer.innerHTML = data);
-
+        let applyTemplate = resolveData
+        /*Apply inner template*/
+            .map(data => data.map(item => tempateInner(item)))
+            /*joining data and convert to string*/
+            .map(data => data.join(''))
+            /*apply outer template*/
+            .map(data => templateOuter(data))
+            .resolve(data => resultContainer.innerHTML = data);
 
 
         /*apply filter for products on response, after apply template */
-        let resProducts = basicGet()
+        let resProducts = response()
                 .map(data => data.products)
                 .through(applyTemplate),
                 /*apply filter for items on response, after apply template*/
-            resItems = basicGet()
+            resItems = response()
                 .map(data => data.items)
                 .through(applyTemplate);
 

@@ -517,28 +517,15 @@ let put = postBase.copy()
         ))
         .through(fetchTask);
 
-/*Just simple tamplate for js arrays*/
-let tempateInner = data => `<li>${data.id} <strong>Name:</strong> <span>${data.Name}</span> <strong>Price: </strong><span>${data.Price}</span></li>`;
-let templateOuter = data => `<ul>${data}</ul>`;
-/*Generate id on any new request*/
-let addId = () => {
-    let count = 0;
-    return (data) => data.map(item => Object.assign(item, {id: count++}))
-};
-let newId = addId();
-
 /*define uri for rest request and return data also added shortcut for copy. Because this task required new every time initialised. */
-let basicGet = () => task({uri: './products.json'}).through(get).copy();
-let applyTemplate = task(newId)
-    /*Apply inner template*/
-        .map(data => data.map(item => tempateInner(item)))
-        /*joining data and convert to string*/
-        .map(data => data.join(''))
-        /*apply outer template*/
-        .map(data => templateOuter(data));
+let count = 0;
+let response = () => task({uri: './products.json'}).through(get).copy();
 
-exports.basicGet = basicGet;
-exports.applyTemplate = applyTemplate;
+/*create new task, with function to apply new Id on each item*/
+let resolveData = task((data) => data.map(item => Object.assign(item, {id: count++})));
+
+exports.response = response;
+exports.resolveData = resolveData;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
