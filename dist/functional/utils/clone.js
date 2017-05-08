@@ -29,11 +29,13 @@ let cloneDate = (date) => () => {
     };
 let cloneArray = (arr) => (fn) => arr.map(fn);
 let cloneObj = (obj) => (fn) => objCopy(obj)(fn);
+let cloneOther = (obj) => () => obj;
 let simpleFunctor = pair(isSimple, cloneSimple);
 let arrayFunctor = pair(isArray, cloneArray);
 let dateFunctor = pair(isDate, cloneDate);
 let objectFunctor = pair(isObject, cloneObj);
-let functors = ___core_List_js.list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor);
+let otherFunctor = pair(isOther, cloneOther);
+let functors = ___core_List_js.list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
 let getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj);
 let clone = (obj) => getFunctor(obj)(children => clone(children));
 

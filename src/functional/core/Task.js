@@ -110,6 +110,10 @@ class Task {
 
     _copyJob(parent) {
         let job = task(this._task.get(), parent);
+        job._resolvers = this._resolvers;
+        job._rejecters= this._rejecters;
+
+
         if (parent) {
             parent._setChildren(job);
         }

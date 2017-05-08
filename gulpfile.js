@@ -9,7 +9,9 @@ const gulp = require('gulp'),
     del = require('del'),
     mocha = require('gulp-mocha'),
     fs = require('fs'),
-    exec = require('child_process').exec;
+    exec = require('child_process').exec,
+    watch = require('gulp-watch'),
+    resolve = require('rollup-plugin-node-resolve');
 
 //function for taking streams and returning streams;
 let chain = (cb) => {
@@ -57,6 +59,7 @@ let rollupStream = (srcDir) => chain((chunk) => {
 gulp.task('clean', () => {
     return del([
         './dist',
+        './examples/basic/dist',
         './target'
     ]);
 });
@@ -67,7 +70,34 @@ gulp.task('rollup', ['clean'], () => {
         .pipe(gulp.dest('./dist'));
 });
 
-gulp.task('test', ['rollup'], () => {
+let sampleRollup = () => {
+    return rollup({
+        entry:      `./examples/basic/src/index.js`,
+        format:     'umd',
+        moduleName: 'index',
+        plugins:    [
+            resolve({
+                jsnext:               true,
+                browser:              true,
+                main:                 true,
+                customResolveOptions: {
+                    moduleDirectory: './src'
+                }
+            }),
+        ]
+    })
+        .pipe(source(`./index.js`))
+        .pipe(gulp.dest(`./examples/basic/dist`));
+}
+
+gulp.task('sampleRolluo', () => sampleRollup());
+
+gulp.task('watchBasic', ['clean', 'rollup'], () => {
+    return watch('./examples/basic/src/**/*.js', {ignoreInitial: false}, () => sampleRollup());
+});
+
+
+gulp.task('test', ['rollup', 'sampleRolluo'], () => {
     return gulp.src([
         './test/functional/**/*.js'
     ], {read: false}).pipe(mocha({reporter: 'list'}));

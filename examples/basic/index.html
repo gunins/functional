@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../../node_modules/requirejs/require.js"></script>
+
+</head>
+<body>
+<p>
+    <button class="products">Products</button>
+    <button class="items">Items</button>
+    <span class="count"></span>
+</p>
+<div class="result"></div>
+<script>
+    'use strict';
+
+    require.config({
+        baseUrl: './dist'
+    });
+
+
+    require(['./index'], (samples) => {
+
+        /*
+         * just basic dom selectors, for DOM manipulation
+         * */
+        let products = document.querySelector('.products');
+        let items = document.querySelector('.items');
+        let resultContainer = document.querySelector('.result');
+
+        /*import required tasks, using require*/
+        let {basicGet, applyTemplate} = samples;
+
+        /*subscribe to apply template on resultContainer*/
+        applyTemplate.resolve(data => resultContainer.innerHTML = data);
+
+
+
+        /*apply filter for products on response, after apply template */
+        let resProducts = basicGet()
+                .map(data => data.products)
+                .through(applyTemplate),
+                /*apply filter for items on response, after apply template*/
+            resItems = basicGet()
+                .map(data => data.items)
+                .through(applyTemplate);
+
+        products.addEventListener('click', async () => {
+            /*run products, when button clicked*/
+            let res = await resProducts.unsafeRun();
+            /*Just show result as promise*/
+            console.log(res);
+        });
+
+        items.addEventListener('click', async () => {
+            /*run Items, when button clicked*/
+            let res = await resItems.unsafeRun();
+            /*Just show result as promise*/
+            console.log(res);
+
+        });
+
+    });
+</script>
+</body>
+</html>

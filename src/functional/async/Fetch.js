@@ -2,8 +2,8 @@ import {task} from '../core/Task';
 let load = async (opt) => {
         let res = await fetch(opt.uri, Object.assign({
             headers: {
-                'Accept':       'application/json, text/plain, */*',
-                'Content-Type': 'application/json'
+                'Accept':                      'application/json, text/plain, */*',
+                'Content-Type':                'application/json'
             }
         }, opt));
         return res.json();
