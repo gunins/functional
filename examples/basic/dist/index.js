@@ -519,13 +519,13 @@ let put = postBase.copy()
 
 /*define uri for rest request and return data also added shortcut for copy. Because this task required new every time initialised. */
 let count = 0;
-let response = () => task({uri: './products.json'}).through(get).copy();
+let request = () => task({uri: './products.json'}).through(get).copy();
 
 /*create new task, with function to apply new Id on each item*/
-let resolveData = task((data) => data.map(item => Object.assign(item, {id: count++})));
+let addId = task((data) => data.map(item => Object.assign(item, {id: count++})));
 
-exports.response = response;
-exports.resolveData = resolveData;
+exports.request = request;
+exports.addId = addId;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
