@@ -19,15 +19,11 @@
         }
     </style>
     <script>
-
         function waitUntilInstalled(registration) {
             return new Promise((resolve, reject) => {
-                if (registration.installing) {
-                    // If the current registration represents the "installing" service worker, then wait
-                    // until the installation step (during which the resources are pre-fetched) completes
-                    // to display the file list.
-                    registration.installing.addEventListener('statechange', function(e) {
-                        console.log(e.target.state, 'state');
+                let {installing} = registration;
+                if (installing) {
+                    installing.addEventListener('statechange', (e) => {
                         if (e.target.state == 'activated') {
                             resolve();
                         } else if (e.target.state == 'redundant') {
@@ -35,9 +31,8 @@
                         }
                     });
                 } else {
-                    // Otherwise, if this isn't the "installing" service worker, then installation must have been
-                    // completed during a previous visit to this page, and the resources are already pre-fetched.
-                    // So we can show the list of files right away.
+                    //TODO: Need to check if delay is necessary.
+//                    setTimeout(resolve, 200);
                     resolve();
                 }
             });
@@ -53,7 +48,8 @@
             require(['./index'], (samples) => {
                 /*import request and addId tasks, using require*/
                 let {request, task} = samples;
-                request.resolve(data => resultContainer.innerHTML = data);
+                /*subscribe to updates on request*/
+
                 /*
                  * just basic dom selectors, for DOM manipulation
                  * */
@@ -61,26 +57,35 @@
                 let items = document.querySelector('.items');
                 let resultContainer = document.querySelector('.result');
 
-                products.addEventListener('click', async () => {
+                let applyData = (selector, data) => document.querySelector(selector).innerHTML = data;
+
+                task({body: {filter: 'items'}})
+                    .through(request)
+                    .resolve(data => applyData('.itemsList', data))
+                    .unsafeRun();
+
+                task({body: {filter: 'products'}})
+                    .through(request)
+                    .resolve(data => applyData('.productList', data))
+                    .unsafeRun();
+
+                 request.resolve(data => resultContainer.innerHTML = data);
+
+                products.addEventListener('click', () => {
                     /*Create new request*/
-                    let res = await task({body: {filter: 'products'}})
+                    task({body: {filter: 'products'}})
                         .through(request)
                         .unsafeRun();
-                    /*Just show result as promise*/
                 });
 
-                items.addEventListener('click', async () => {
-                    /*Create new request*/
-                    let res = await task({body: {filter: 'items'}})
+                items.addEventListener('click', () => {
+                    task({body: {filter: 'items'}})
                         .through(request)
                         .unsafeRun();
-                    /*Just show result as promise*/
-
-
                 });
 
             });
-        }
+        };
 
         if ('serviceWorker' in navigator) {
             (async () => {
@@ -90,23 +95,27 @@
             })()
         } else {
             // The current browser doesn't support service workers.
-            var aElement = document.createElement('a');
-            aElement.href = 'http://www.chromium.org/blink/serviceworker/service-worker-faq';
-            aElement.textContent = 'unavailable';
-            document.querySelector('#status').appendChild(aElement);
+            alert('Service Worker not available!');
         }
     </script>
 </head>
 <body>
-<div id="status"></div>
+<h3>Example, for pulling items, and display Products and items separatelly.</h3>
+<div class="half">
+    <h4>List of Items</h4>
+    <div class="itemsList"></div>
+</div>
+<div class="half">
+    <h4>List of products</h4>
+    <div class="productList"></div>
+</div>
+<div class="clear"></div>
 <h3>Example for getting items on request by clicking button</h3>
 <p>
     <button class="products">Products</button>
     <button class="items">Items</button>
 </p>
 <div class="result"></div>
-<script>
 
-</script>
 </body>
 </html>
