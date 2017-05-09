@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Worker custom fetch</title>
+    <script src="../../node_modules/requirejs/require.js"></script>
+    <script>
+        'use strict';
+
+    </script>
+    <style>
+        .half {
+            width: 50%;
+            float: left;
+        }
+
+        .clear {
+            clear: both;
+        }
+    </style>
+    <script>
+
+        function waitUntilInstalled(registration) {
+            return new Promise((resolve, reject) => {
+                if (registration.installing) {
+                    // If the current registration represents the "installing" service worker, then wait
+                    // until the installation step (during which the resources are pre-fetched) completes
+                    // to display the file list.
+                    registration.installing.addEventListener('statechange', function(e) {
+                        console.log(e.target.state, 'state');
+                        if (e.target.state == 'activated') {
+                            resolve();
+                        } else if (e.target.state == 'redundant') {
+                            reject();
+                        }
+                    });
+                } else {
+                    // Otherwise, if this isn't the "installing" service worker, then installation must have been
+                    // completed during a previous visit to this page, and the resources are already pre-fetched.
+                    // So we can show the list of files right away.
+                    resolve();
+                }
+            });
+        }
+
+        function startApp() {
+            'use strict';
+            console.log('App Started');
+            require.config({
+                baseUrl: './dist'
+            });
+
+            require(['./index'], (samples) => {
+                /*import request and addId tasks, using require*/
+                let {request, task} = samples;
+                request.resolve(data => resultContainer.innerHTML = data);
+                /*
+                 * just basic dom selectors, for DOM manipulation
+                 * */
+                let products = document.querySelector('.products');
+                let items = document.querySelector('.items');
+                let resultContainer = document.querySelector('.result');
+
+                products.addEventListener('click', async () => {
+                    /*Create new request*/
+                    let res = await task({body: {filter: 'products'}})
+                        .through(request)
+                        .unsafeRun();
+                    /*Just show result as promise*/
+                });
+
+                items.addEventListener('click', async () => {
+                    /*Create new request*/
+                    let res = await task({body: {filter: 'items'}})
+                        .through(request)
+                        .unsafeRun();
+                    /*Just show result as promise*/
+
+
+                });
+
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            (async () => {
+                let registration = await navigator.serviceWorker.register('./worker.js', {scope: './'})
+                await waitUntilInstalled(registration)
+                startApp()
+            })()
+        } else {
+            // The current browser doesn't support service workers.
+            var aElement = document.createElement('a');
+            aElement.href = 'http://www.chromium.org/blink/serviceworker/service-worker-faq';
+            aElement.textContent = 'unavailable';
+            document.querySelector('#status').appendChild(aElement);
+        }
+    </script>
+</head>
+<body>
+<div id="status"></div>
+<h3>Example for getting items on request by clicking button</h3>
+<p>
+    <button class="products">Products</button>
+    <button class="items">Items</button>
+</p>
+<div class="result"></div>
+<script>
+
+</script>
+</body>
+</html>

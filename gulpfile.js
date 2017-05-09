@@ -11,7 +11,8 @@ const gulp = require('gulp'),
     fs = require('fs'),
     exec = require('child_process').exec,
     watch = require('gulp-watch'),
-    resolve = require('rollup-plugin-node-resolve');
+    resolve = require('rollup-plugin-node-resolve'),
+    babili = require("gulp-babili");
 
 //function for taking streams and returning streams;
 let chain = (cb) => {
@@ -70,11 +71,11 @@ gulp.task('rollup', ['clean'], () => {
         .pipe(gulp.dest('./dist'));
 });
 
-let sampleRollup = () => {
+let sampleRollup = (name, file = 'index') => {
     return rollup({
-        entry:      `./examples/basic/src/index.js`,
+        entry:      `./examples/${name}/src/${file}.js`,
         format:     'umd',
-        moduleName: 'index',
+        moduleName: file,
         plugins:    [
             resolve({
                 jsnext:               true,
@@ -86,18 +87,23 @@ let sampleRollup = () => {
             }),
         ]
     })
-        .pipe(source(`./index.js`))
-        .pipe(gulp.dest(`./examples/basic/dist`));
+        .pipe(source(`./${file}.js`))
+        .pipe(gulp.dest(`./examples/${name}/dist`));
 }
 
-gulp.task('sampleRolluo', () => sampleRollup());
+let examples = () => {
+    sampleRollup('basic');
+    sampleRollup('workers');
+    sampleRollup('workers', 'worker')
+};
+gulp.task('sampleRollup', examples);
 
-gulp.task('watchBasic', ['clean', 'rollup'], () => {
-    return watch('./examples/basic/src/**/*.js', {ignoreInitial: false}, () => sampleRollup());
+gulp.task('watch', ['clean', 'rollup'], () => {
+    return watch('./examples/**/*.js', {ignoreInitial: false}, examples);
 });
 
 
-gulp.task('test', ['rollup', 'sampleRolluo'], () => {
+gulp.task('test', ['rollup', 'sampleRollup'], () => {
     return gulp.src([
         './test/functional/**/*.js'
     ], {read: false}).pipe(mocha({reporter: 'list'}));
@@ -123,6 +129,17 @@ gulp.task('pushTags', ['test', 'bump:patch'], (cb) => {
         console.log(stderr);
         cb(err);
     });
+});
+
+gulp.task('compress', () => {
+    gulp.src('examples/**/dist/*.js', {base: "./"})
+        .pipe(babili({
+            mangle: {
+                keepClassNames: true
+            }
+        }))
+        .pipe(gulp.dest("."));
+
 });
 
 gulp.task('publish', ['test', 'bump:patch', 'pushTags'], (cb) => {

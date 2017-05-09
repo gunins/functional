@@ -1,11 +1,11 @@
 import {task} from '../core/Task';
 let load = async (opt) => {
-        let res = await fetch(opt.uri, Object.assign({
-            headers: {
-                'Accept':                      'application/json, text/plain, */*',
-                'Content-Type':                'application/json'
-            }
-        }, opt));
+        let res = await fetch(opt.uri, Object.assign({}, opt, {
+            headers: Object.assign({
+                'Accept':       'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            }, opt && opt.headers ? opt.headers : {})
+        }));
         return res.json();
     },
     str = obj => Object.keys(obj)

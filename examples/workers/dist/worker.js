@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.index = global.index || {})));
+	(factory((global.worker = global.worker || {})));
 }(this, (function (exports) { 'use strict';
 
 let some = (value) => new Some(value);
@@ -517,15 +517,34 @@ let put = postBase.copy()
         ))
         .through(fetchTask);
 
-/*define uri for rest request and return data also added shortcut for copy. Because this task required new every time initialised. */
-let count = 0;
-let request = () => task({uri: './products.json'}).through(get).copy();
+let request = task(data => Object.assign({uri: './products.json', headers: {'X-Local-Response': 'yes'}}, data))
+    .through(get);
 
-/*create new task, with function to apply new Id on each item*/
+let count = 0;
 let addId = task((data) => data.map(item => Object.assign(item, {id: count++})));
+/*Just simple template for js arrays*/
+let templateInner = data => `<li>${data.id} <strong>Name:</strong> <span>${data.Name}</span> <strong>Price: </strong><span>${data.Price}</span></li>`;
+let templateOuter = data => `<ul>${data}</ul>`;
+
+
+let responseInit = {
+    status:     200,
+    statusText: 'OK',
+    headers:    {
+        'Content-Type':     'application/json',
+        'X-Local-Response': 'yes'
+    }
+};
+
+let applyTemplate = addId
+/*Apply inner template*/
+    .map(data => data.map(item => templateInner(item)))
+    .map(data => data.join(''))
+    .map(data => templateOuter(data))
+    .map(responseBody => new Response(JSON.stringify(responseBody), responseInit));
 
 exports.request = request;
-exports.addId = addId;
+exports.applyTemplate = applyTemplate;
 exports.task = task;
 
 Object.defineProperty(exports, '__esModule', { value: true });
