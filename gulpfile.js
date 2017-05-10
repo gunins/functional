@@ -71,10 +71,10 @@ gulp.task('rollup', ['clean'], () => {
         .pipe(gulp.dest('./dist'));
 });
 
-let sampleRollup = (name, file = 'index') => {
+let sampleRollup = (name, file = 'index', format = 'umd') => {
     return rollup({
         entry:      `./examples/${name}/src/${file}.js`,
-        format:     'umd',
+        format:     format,
         moduleName: file,
         plugins:    [
             resolve({
