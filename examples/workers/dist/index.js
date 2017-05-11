@@ -10,49 +10,67 @@ let none = () => new None();
 class Some {
     constructor(value) {
         this.value = value;
-    }
+    };
 
     isSome() {
-        return true
+        return ['[object Some]'].indexOf(this.toString()) !== -1
+    };
+
+    isOption() {
+        return ['[object Some]', '[object None]'].indexOf(this.toString()) !== -1;
     }
 
     get() {
         return this.value;
+    };
+
+    map(fn) {
+        return this.isSome() ? some(fn(this.get())) : none();
+    };
+
+    flatMap(fn) {
+        let out = fn(this.get());
+        if (out.isOption) {
+            return out;
+        }else{
+            throw new ReferenceError('Must return an Option');
+        }
+
     }
 
     set(value) {
         return some(value);
-    }
+    };
 
     isEmpty() {
         return this.value ? false : true;
-    }
+    };
 
     getOrElse(defaultVal) {
         return this.isSome() ? this.value : defaultVal
-    }
+    };
 
     toString() {
         return '[object Some]';
-    }
+    };
 }
 
 class None extends Some {
     constructor() {
         super();
-    }
+    };
 
     isSome() {
         return false;
-    }
+    };
 
     set(value) {
         return none();
-    }
+    };
 
     toString() {
         return '[object None]';
-    }
+    };
 
 }
 
@@ -239,11 +257,13 @@ let objCopy = obj => {
             return copy;
         }
     };
+let isList = (obj) => obj && obj.isList && obj.isList();
+let isTask = (obj) => obj && obj.isTask && obj.isTask();
 let isSimple = (obj) => typeof obj == 'boolean' || null == obj || 'object' != typeof obj;
 let isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]';
 let isArray = (obj) => Object.prototype.toString.call(obj) === '[object Array]';
 let isObject = (obj) => Object.prototype.toString.call(obj) === '[object Object]';
-let isOther = (obj) => !isSimple(obj) && !isDate(obj) && !isArray(obj) && !isObject(obj);
+let isOther = (obj) => !isSimple(obj) && !isDate(obj) && !isArray(obj) && !isObject(obj) && !isList(obj) && !isTask(obj);
 let cloneSimple = (simple) => () => simple;
 let cloneDate = (date) => () => {
         let copy = new Date();
@@ -252,13 +272,14 @@ let cloneDate = (date) => () => {
     };
 let cloneArray = (arr) => (fn) => arr.map(fn);
 let cloneObj = (obj) => (fn) => objCopy(obj)(fn);
-let cloneOther = (obj) => () => obj;
 let simpleFunctor = pair(isSimple, cloneSimple);
 let arrayFunctor = pair(isArray, cloneArray);
 let dateFunctor = pair(isDate, cloneDate);
 let objectFunctor = pair(isObject, cloneObj);
-let otherFunctor = pair(isOther, cloneOther);
-let functors = list(simpleFunctor, arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
+let listFunctor = pair(isList, cloneSimple);
+let taskFunctor = pair(isTask, cloneSimple);
+let otherFunctor = pair(isOther, cloneSimple);
+let functors = list(taskFunctor, listFunctor, simpleFunctor, arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
 let getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj);
 let clone = (obj) => getFunctor(obj)(children => clone(children));
 
@@ -367,10 +388,20 @@ class Task {
         return job;
     };
 
+    _flatMap(fn) {
+        return this._map(fn)
+            .map((responseTask, res, rej) => {
+                if (!(responseTask.isTask && responseTask.isTask())) {
+                    rej('flatMap has to return task');
+                }
+                responseTask.unsafeRun().then(res).catch(rej);
+            });
+    };
+
     _copyJob(parent) {
         let job = task(this._task.get(), parent);
         job._resolvers = this._resolvers;
-        job._rejecters= this._rejecters;
+        job._rejecters = this._rejecters;
 
 
         if (parent) {
@@ -402,6 +433,9 @@ class Task {
         return this._map(fn);
     };
 
+    flatMap(fn) {
+        return this._flatMap(fn)
+    };
 
     through(joined) {
         let clone$$1 = joined.copy();

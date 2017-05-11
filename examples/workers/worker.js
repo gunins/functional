@@ -6,37 +6,53 @@ require.config({
     baseUrl: './dist'
 });
 
+let CACHE_VERSION = 1,
+    CURRENT_CACHES = {
+        prefetch: `window-cache-v ${CACHE_VERSION}`
+    };
+urlsToPrefetch = [
+    '../../node_modules/requirejs/require.js',
+    './dist/index.js',
+    './products.json'
+];
 
-let applyFetch = () => {
+let fetchEvent = () => {
     },
     resolver = (resp) => {
-        let {request, applyTemplate} = resp;
-        return (event) => {
-            console.log('Handling fetch event for', event.request.url);
-            if (event.request.headers.has('X-Local-Request')) {
-                let {searchParams} = new URL(event.request.url);
-                let filter = searchParams.get('filter');
-
-                event.respondWith(request.copy()
-                    .map(data => data[filter])
-                    .through(applyTemplate)
-                    .unsafeRun()
-                );
-            }
-        }
+        console.log('require initialised', resp);
+        return fn => fn(resp)
     }
 
-require(['./worker'], (resp) => applyFetch = resolver(resp));
+require(['./worker'], (resp) => fetchEvent = resolver(resp));
 
-self.addEventListener('install', (e) => {
-    console.log('Install event:', e);
+self.addEventListener('install', (event) => {
+    console.log('Install event:', event);
+    event.waitUntil(
+        caches.open(CURRENT_CACHES.prefetch)
+            .then(cache => cache.addAll(urlsToPrefetch)
+                .then(() => self.skipWaiting()))
+            .catch(error => console.error('Pre-fetching failed:', error)));
 });
 
-self.addEventListener('activate', (e) => {
-    console.log('Activate event:', e);
+self.addEventListener('activate', (event) => {
+    console.log('Activate event:', event);
     self.clients.claim();
-
+    let expectedCacheNames = Object.keys(CURRENT_CACHES).map(key => CURRENT_CACHES[key]);
+    event.waitUntil(
+        caches.keys()
+            .then(cacheNames => Promise.all(
+                cacheNames.map(cacheName => {
+                    if (expectedCacheNames.indexOf(cacheName) === -1) {
+                        console.log('Deleting out of date cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            )));
 });
 
-self.addEventListener('fetch', (event) => applyFetch(event))
+self.addEventListener('fetch', event => fetchEvent(res => {
+    let {response} = res;
+    console.log('Handling fetch event for', event.request.url);
+    event.respondWith(response(event).unsafeRun());
+}))
 

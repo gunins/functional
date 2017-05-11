@@ -1,7 +1,12 @@
 import {task} from 'functional/core/Task';
 import {get} from 'functional/async/Fetch';
-let request = task(data => Object.assign({uri: './products.json', headers: {'X-Local-Response': 'yes'}}, data))
-    .through(get);
+let data = false;
+let request = opt => data ? task(data) : task(opt => Object.assign({
+    uri:     './products.json',
+    headers: {'X-Local-Response': 'yes'}
+}, opt))
+    .through(get)
+    .resolve(resp => data = resp);
 
 let count = 0;
 let addId = task((data) => data.map(item => Object.assign(item, {id: count++})));
@@ -24,11 +29,25 @@ let applyTemplate = addId
     .map(data => data.map(item => templateInner(item)))
     .map(data => data.join(''))
     .map(data => templateOuter(data))
-    .map(responseBody => new Response(JSON.stringify(responseBody), responseInit))
+    .map(responseBody => new Response(JSON.stringify(responseBody), responseInit));
 
 
+let customResponse = task(event => new URL(event.request.url))
+    .map(uri => uri.searchParams)
+    .map(searchParams => searchParams.get('filter'))
+    .flatMap(filter => request().copy().map(out => out[filter]))
+    .through(applyTemplate);
 
-export {request, applyTemplate, task}
+
+let standardResponse = task(async event => {
+    let response = await caches.match(event.request);
+    return response || await fetch(event.request);
+})
+
+let response = event => task(event).flatMap(event => task(event).through(event.request.headers.has('X-Local-Request') ? customResponse : standardResponse));
+
+
+export {response};
 
 
 

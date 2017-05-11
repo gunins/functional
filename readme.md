@@ -128,6 +128,10 @@ Usage
 **(some(@value)|none()).getOrElse(@defaultValue)** Returning value if is Some, else use default Value;
 
 **(some(@value)|none()).isSome()** Returning true if `some` false is `none`
+
+**(some(@value)|none()).map()** Building new option by applying functor.
+
+**(some(@value)|none()).flatMap()** Building new option by applying functor  **returning value must be a Option**
  
 ### List
  
@@ -229,7 +233,9 @@ synchronous functions no need extra params, and will take return value.
   
 **copy():** Returns new task, of copy of sequence with all steps.
 
-**map(fn):** Returning new task, with applied functor/
+**map(fn):** Returning new task, with applied functor
+
+**flatMap(fn):** apply functor and must return new task
 
 **through(Task):** adding another task in sequence
 

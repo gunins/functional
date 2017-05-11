@@ -109,10 +109,20 @@ class Task {
         return job;
     };
 
+    _flatMap(fn) {
+        return this._map(fn)
+            .map((responseTask, res, rej) => {
+                if (!(responseTask.isTask && responseTask.isTask())) {
+                    rej('flatMap has to return task');
+                }
+                responseTask.unsafeRun().then(res).catch(rej);
+            });
+    };
+
     _copyJob(parent) {
         let job = task(this._task.get(), parent);
         job._resolvers = this._resolvers;
-        job._rejecters= this._rejecters;
+        job._rejecters = this._rejecters;
 
 
         if (parent) {
@@ -144,6 +154,9 @@ class Task {
         return this._map(fn);
     };
 
+    flatMap(fn) {
+        return this._flatMap(fn)
+    };
 
     through(joined) {
         let clone$$1 = joined.copy();

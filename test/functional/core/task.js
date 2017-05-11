@@ -414,6 +414,31 @@ describe('Task Tests: ', () => {
 
 
     });
+
+    it('test flatMap', async () => {
+        let callback = spy();
+        let taskA = task({a: 'a', b: 'b'});
+        let taskB = task((data, res) => {
+            expect(data).to.be.eql({a: 'a', b: 'b'});
+            callback();
+            res(assign(data, {c: 'c'}));
+        }).map(data => assign(data, {d: 'd'}));
+
+        let taskC = taskA.flatMap(data => task(data).through(taskB));
+        let outputA = await taskC.unsafeRun();
+        expect(outputA).to.be.eql({a: 'a', b: 'b', c: 'c', d: 'd'});
+        expect(callback.calledOnce).to.be.true
+    });
+
+    it('test throw flatMap if not returning task', () => {
+        let taskA = task({a: 'a', b: 'b'});
+
+        let taskC = taskA.flatMap(data => data);
+        taskC.unsafeRun().catch(err => {
+            expect(err).to.be.eql('flatMap has to return task');
+        });
+    });
+
     it('test through', async () => {
         let callback = spy();
 
