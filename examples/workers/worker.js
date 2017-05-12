@@ -2,6 +2,7 @@
  * Created by guntars on 09/05/2017.
  */
 importScripts('../../node_modules/requirejs/require.js');
+// importScripts('../../target/require.js');
 require.config({
     baseUrl: './dist'
 });
@@ -12,6 +13,7 @@ let CACHE_VERSION = 1,
     };
 urlsToPrefetch = [
     '../../node_modules/requirejs/require.js',
+    // '../../target/require.js',
     './dist/index.js',
     './products.json'
 ];

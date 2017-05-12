@@ -131,16 +131,21 @@ gulp.task('pushTags', ['test', 'bump:patch'], (cb) => {
     });
 });
 
-gulp.task('compress', () => {
-    gulp.src('examples/**/dist/*.js', {base: "./"})
-        .pipe(babili({
-            mangle: {
-                keepClassNames: true
-            }
-        }))
-        .pipe(gulp.dest("."));
+gulp.task('compress', () => gulp.src('examples/**/dist/*.js', {base: "./"})
+    .pipe(babili({
+        mangle: {
+            keepClassNames: true
+        }
+    }))
+    .pipe(gulp.dest(".")));
 
-});
+gulp.task('compressRequire', () => gulp.src('./node_modules/requirejs/require.js')
+    .pipe(babili({
+        mangle: {
+            keepClassNames: true
+        }
+    }))
+    .pipe(gulp.dest("./target")));
 
 gulp.task('publish', ['test', 'bump:patch', 'pushTags'], (cb) => {
     exec('npm publish ./', (err, stdout, stderr) => {
