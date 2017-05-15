@@ -4,13 +4,13 @@ describe('List Tests: ', () => {
     it('Testing List Constructor', () => {
         let a = new List(1, 2, 3);
         let {head, tail} = a;
-        expect(head.get() === 1);
+        expect(head.get()).to.be.eql(1);
 
-        expect(tail.head.get() === 2);
+        expect(tail.head.get()).to.be.eql(2);
 
-        expect(tail.tail.head.get() === 3);
+        expect(tail.tail.head.get()).to.be.eql(3);
 
-        expect(!tail.tail.tail.isSome());
+        expect(!tail.tail.tail.isSome()).to.be.true;
 
 
     });

@@ -4,6 +4,7 @@ import {task} from './Task'
 /**
  * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
  * */
+let setTask = (fn) => fn && fn.isTask && fn.isTask() ? fn : task(fn);
 class Stream {
     constructor(head, ...tail) {
         this._create(head, tail.length > 0 ? stream(...tail) : none());
@@ -11,30 +12,38 @@ class Stream {
 
     //private function.
     _create(head, tail) {
-        this.head = head !== undefined ? some(head) : none();
-        this.tail = tail && tail.isStream && tail.isStream() ? this._setTail(tail) : none();
+        this.head = head !== undefined ? some(setTask(head)) : none();
+        this.tail = tail && tail.isStream && tail.isStream() ? tail.copy() : none();
         return this;
     };
 
-    _setTail(tail) {
-        return new Promise(resolve=>{
-
-        })
-    }
-
     //private method
-    _map(fn, i = 0) {
+    async _map(fn) {
         let {head, tail} = this;
-        let empty = List.empty();
-        return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? none() : tail._map(fn, i + 1)) : empty;
+        let empty = Stream.empty();
+        if (head.isSome()) {
+            let applyHead = await head.get().map(fn).unsafeRun();
+            return empty._create(applyHead, tail.isSome && !tail.isSome() ? none() : tail._map(fn));
+        } else {
+            return empty;
+        }
     };
-    toString() {
-        return '[object Stream]'
+
+    insert(head) {
+        return Stream.empty()._create(setTask(head), this.head ? this : none());
+    };
+
+    _copy() {
+        let {head, tail} = this;
+        let empty = Stream.empty();
+        return head.isSome() ? empty._create(head.get(), tail.isSome && !tail.isSome() ? none() : tail._copy()) : empty;
+
     };
 
     copy() {
-        return this.map(a => a);
-    };
+        return this._copy();
+    }
+
     /**
      * FROM stream(1,2,3) RETURNING stream(fn(1),fn(2),fn(3));
      * */
@@ -42,20 +51,43 @@ class Stream {
         return this._map(fn);
     };
 
-    flatMap(fn){
+    flatMap(fn) {
 
     };
 
-    size(){
+    foldLeft() {
+    };
+
+    foldRight() {
+    };
+
+    reverse() {
+    };
+
+    concat() {
+    };
+
+    toArray() {
+    };
+
+    size() {
 
     };
 
-    unsafeRun(){
+    unsafeRun() {
 
     };
 
     isStream() {
         return this.toString() === '[object Stream]';
+    };
+
+    toString() {
+        return '[object Stream]'
+    };
+
+    static empty() {
+        return stream();
     };
 }
 
