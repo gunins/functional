@@ -83,9 +83,6 @@ class Stream {
 
     };
 
-    copy() {
-        return this._copy();
-    };
 
     async _run() {
         let {head, tail} = this;
@@ -104,6 +101,11 @@ class Stream {
         return empty;
 
     };
+
+    copy() {
+        return this._copy();
+    };
+
 
     /**
      * FROM stream(1,2,3) RETURNING stream(task(1),task(2),task(3));
@@ -184,7 +186,6 @@ class Stream {
 
     async unsafeRun() {
         return await this._run();
-        ;
     }
 
 

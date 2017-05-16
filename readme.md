@@ -253,6 +253,85 @@ Static methods
 
 **empty():** Create empty task
 
+### Stream
+
+Async computation including list of tasks.
+
+Usage
+
+```javascript
+    import {stream, Stream} from 'functional_tasks/src/core/Stream';
+    import {task} from 'functional_tasks/src/core/Task';
+
+    //Initial task
+      let a = stream(task((_, resolve, reject) => resolve(3)))
+            task((_,resolve) => {
+                resolve(4)
+            });
+           // get result each task is asynhronus, and will return value
+            a.toArray()
+            .then(data => {
+                // use data and data to be eql [3,4]
+            });
+
+
+```
+
+**new Stream(...Task|fn|obj|value):**  Create Stream with sequence. 
+**new(..Task|fn|obj|value):** create Stream, without new operator.
+
+Function is same as Task
+```javascript
+    (data, resolve, reject) => {
+    // data is returning data from previous task;
+    // resolve called, when async task is finished
+    // reject called if error
+        resolve(data + 1)
+    }    
+
+```
+synchronous functions no need extra params, and will take return value. 
+
+```javascript
+    (data) => {
+    // data is returning data from previous task;
+     return (data + 1)
+    }    
+
+```
+  
+**copy():** Returns new Stream, of copy of sequence with all steps.
+
+**map(fn):** Returning new stream with applied functor for all tasks.
+
+**through(Task):** Returning new stream adding another task in each task
+
+**resolve(fn):**  Returning new stream adding subscribe on each task.
+
+**reject(fn):**  Returning new stream  adding error on each task.
+
+**isStream():** return if is Stream
+
+**reverse()** Changing compilation order for stream.
+
+**foldLeft(initial,fn)** Apply functors from Left to right, and return Promise.
+
+**foldRight(initial,fn)** Apply functors from Right to left, and return Promise.
+
+**size()** Return size of stream.
+
+**concat(...streams)** Combine multiple streams in one.
+
+**toArray()** Convert stream to array, Return Promise
+
+**toList()** Convert stream to synchronous List and returning Promise.
+
+**unsafeRun(resolve,reject):** run tasks and returning Promise as end result (synchronous List) Alias .toList().
+
+Static methods
+
+**empty():** Create empty Stream
+
 ### Async Fetch
 
 Tasks for fetch API 
