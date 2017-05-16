@@ -171,5 +171,13 @@ describe('Stream Tests: ', () => {
         expect(await b.toArray()).to.eql([1, 2, 3, 4, 'd', 6, 'c']);
     });
 
+    it('testing unsafeRun', async () => {
+        let cb = spy();
+        let a = stream(1, task(2), 3);
+        let b = a.map(a=>cb());
+        await b.unsafeRun();
+        expect(cb.callCount).to.be.eql(3)
+    });
+
 
 });

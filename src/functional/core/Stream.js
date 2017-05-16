@@ -145,7 +145,12 @@ class Stream {
 
     async toList() {
         return await this._run();
+    };
+
+    async unsafeRun(){
+        return await this._run();;
     }
+
 
     toString() {
         return '[object Stream]'
