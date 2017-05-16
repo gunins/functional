@@ -10,9 +10,6 @@
 let setTask = (fn) => fn && fn.isTask && fn.isTask() ? fn : __Task_js.task(fn);
 class Stream {
     constructor(head, ...tail) {
-        this._resolve = __Option_js.none();
-        this._reject = __Option_js.none();
-
         this._create(head, tail.length > 0 ? stream(...tail) : __Option_js.none());
     }
 
@@ -38,12 +35,29 @@ class Stream {
         }
     };
 
-    //private method
-    _map(fn) {
+    _applyMethod(method, fn) {
         let {head, tail} = this;
         let empty = Stream.empty();
-        return head.isSome() ? empty._create(head.get().map(fn), tail.isSome && !tail.isSome() ? __Option_js.none() : tail._map(fn)) : empty;
+        return head.isSome() ? empty._create(head.get()[method](fn), tail.isSome && !tail.isSome() ? __Option_js.none() : tail._applyMethod(method, fn)) : empty;
+    }
 
+    //private method
+    _map(fn) {
+        return this._applyMethod('map', fn);
+    };
+
+    //private method
+    _through(_task) {
+        return this._applyMethod('through', _task);
+    };
+
+    //private method
+    _resolve(fn) {
+        return this._applyMethod('resolve', fn);
+    }; //private method
+
+    _reject(fn) {
+        return this._applyMethod('reject', fn);
     };
 
     _forEach(fn) {
@@ -51,6 +65,7 @@ class Stream {
         if (head.isSome()) {
             fn(head.get().copy());
         }
+        
 
         if (tail && tail.isStream && tail.isStream()) {
             tail._forEach(fn);
@@ -134,6 +149,26 @@ class Stream {
         return count;
     };
 
+    through(_task) {
+        return this._through(_task);
+    };
+
+    resolve(fn) {
+        return this._resolve(fn);
+    };
+
+    reject(fn) {
+        return this._reject(fn);
+    }
+
+    repeat() {
+
+    };
+
+    zip() {
+
+    };
+
     isStream() {
         return this.toString() === '[object Stream]';
     };
@@ -147,8 +182,9 @@ class Stream {
         return await this._run();
     };
 
-    async unsafeRun(){
+    async unsafeRun() {
         return await this._run();
+        
     }
 
 

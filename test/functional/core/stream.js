@@ -174,10 +174,33 @@ describe('Stream Tests: ', () => {
     it('testing unsafeRun', async () => {
         let cb = spy();
         let a = stream(1, task(2), 3);
-        let b = a.map(a=>cb());
+        let b = a.map(a => cb());
         await b.unsafeRun();
         expect(cb.callCount).to.be.eql(3)
     });
+    it('Testing through', async () => {
+        let cb = spy();
+        let a = stream(1, task(2), 3);
+        let b = task(a => {
+            cb();
+            return a;
+        });
+        let c = task(a => a + 1);
+
+        let end = await a.through(b).through(c).toArray();
+        expect(cb.callCount).to.be.eql(3);
+        expect(end).to.be.eql([2, 3, 4]);
+    });
+
+    it('Testing resolve', async () => {
+        let cb = spy();
+        let a = stream(1, task(2), 3);
+        let c = a.resolve(d=>cb());
+
+        await c.toArray();
+        expect(cb.callCount).to.be.eql(3);
+    });
+
 
 
 });

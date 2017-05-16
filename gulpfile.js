@@ -60,7 +60,7 @@ let rollupStream = (srcDir) => chain((chunk) => {
 gulp.task('clean', () => {
     return del([
         './dist',
-        './examples/basic/dist',
+        './examples/**/dist',
         './target'
     ]);
 });
@@ -72,7 +72,7 @@ gulp.task('rollup', ['clean'], () => {
 });
 
 let sampleRollup = (name, file = 'index', format = 'umd') => {
-    return rollup({
+    let roll = rollup({
         entry:      `./examples/${name}/src/${file}.js`,
         format:     format,
         moduleName: file,
@@ -87,14 +87,16 @@ let sampleRollup = (name, file = 'index', format = 'umd') => {
             }),
         ]
     })
-        .pipe(source(`./${file}.js`))
+    roll.on('error', (err) => console.log(err));
+    return roll.pipe(source(`./${file}.js`))
         .pipe(gulp.dest(`./examples/${name}/dist`));
 }
 
 let examples = () => {
     sampleRollup('basic');
     sampleRollup('workers');
-    sampleRollup('workers', 'worker')
+    sampleRollup('workers', 'worker');
+    sampleRollup('stream');
 };
 gulp.task('sampleRollup', examples);
 
