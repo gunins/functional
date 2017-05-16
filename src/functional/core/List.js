@@ -159,7 +159,7 @@ class List {
 
     toArray() {
         let array = [];
-        this.map(item => array.push(item));
+        this.forEach(item => array.push(item));
         return array;
     }
 

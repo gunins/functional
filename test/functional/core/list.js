@@ -38,7 +38,7 @@ describe('List Tests: ', () => {
         })
 
     });
-    it('testing empty, insert', () => {
+    it('testing empty, insert, size', () => {
         let a = List.empty();
         let b = a.insert(1);
         let c = b.insert(2);
@@ -83,13 +83,13 @@ describe('List Tests: ', () => {
         let a = list(1, 2, 3);
         let b = a.reverse();
         expect(b.toArray()).to.eql([3, 2, 1]);
-    })
+    });
 
     it('testing concat', () => {
         let a = list(1, 2, 3);
         let b = a.concat(list(4, 'd'), list(6, 'c'));
         expect(b.toArray()).to.eql([1, 2, 3, 4, 'd', 6, 'c']);
-    })
+    });
     it('testing flatMap', () => {
         let a = list(list(1, 2), list(3, 4), list(5, 6));
         let b = a.flatMap(a => a);
