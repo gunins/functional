@@ -149,7 +149,7 @@ gulp.task('compressRequire', () => gulp.src('./node_modules/requirejs/require.js
     }))
     .pipe(gulp.dest("./target")));
 
-gulp.task('publish', ['test', 'bump:patch', 'pushTags'], (cb) => {
+gulp.task('publish', ['pushTags'], (cb) => {
     exec('npm publish ./', (err, stdout, stderr) => {
         console.log(stdout);
         console.log(stderr);
