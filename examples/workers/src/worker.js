@@ -32,20 +32,19 @@ let applyTemplate = addId
     .map(responseBody => new Response(JSON.stringify(responseBody), responseInit));
 
 
-let customResponse = task(event => new URL(event.request.url))
+let customResponse = evt => task(evt).map(e => new URL(e.request.url))
     .map(uri => uri.searchParams)
     .map(searchParams => searchParams.get('filter'))
-    .flatMap(filter => request().copy().map(out => out[filter]))
+    .flatMap(filter => request().map(out => out[filter]))
     .through(applyTemplate);
 
 
-let standardResponse = task(async event => {
-    let response = await caches.match(event.request);
-    return response || await fetch(event.request);
-})
+let standardResponse = evt => task(evt).map(async e => {
+    let response = await caches.match(e.request);
+    return response || await fetch(e.request);
+});
 
-let response = event => task(event).flatMap(event => task(event).through(event.request.headers.has('X-Local-Request') ? customResponse : standardResponse));
-
+let response = event => event.request.headers.has('X-Local-Request') ? customResponse(event) : standardResponse(event);
 
 export {response};
 

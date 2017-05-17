@@ -492,5 +492,23 @@ describe('Task Tests: ', () => {
 
     });
 
+    it('Test empty task through map', async () => {
+        let taskA = task({a: 'a', b: 'b'});
+        let taskB = task(d => assign(d, {c: 'c'}));
+
+
+        let taskC = taskA.through(task().through(taskB));
+
+        let taskD = taskC.flatMap(d => task(assign(d, {d: 'd'})))
+
+        let dataA = await taskC.unsafeRun();
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+
+        let dataB = await taskD.unsafeRun();
+        expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c', d: 'd'});
+
+
+    })
+
 
 });
