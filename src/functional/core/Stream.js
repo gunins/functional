@@ -47,6 +47,12 @@ class Stream {
     };
 
     //private method
+    //TODO: probably has to flattening stream.
+    _flatMap(fn) {
+        return this._applyMethod('flatMap', fn);
+    };
+
+    //private method
     _through(_task) {
         return this._applyMethod('through', _task);
     };
@@ -114,6 +120,9 @@ class Stream {
         return this._map(fn);
     };
 
+    flatMap(fn) {
+        return this._flatMap(fn);
+    };
 
     async foldLeft(initial, fn) {
         let list = await this.toList();

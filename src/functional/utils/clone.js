@@ -16,13 +16,11 @@ let pair = (guard, action) => {
     },
 
 //Guards
-    isList = (obj) => obj && obj.isList && obj.isList(),
-    isTask = (obj) => obj && obj.isTask && obj.isTask(),
     isSimple = (obj) => typeof obj == 'boolean' || null == obj || 'object' != typeof obj,
     isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]',
     isArray = (obj) => Object.prototype.toString.call(obj) === '[object Array]',
-    isObject = (obj) => Object.prototype.toString.call(obj) === '[object Object]',
-    isOther = (obj) => !isSimple(obj) && !isDate(obj) && !isArray(obj) && !isObject(obj) && !isList(obj) && !isTask(obj),
+    isObject = (obj) => (!!obj) && (obj.constructor === Object),
+    isOther = (obj) => !isDate(obj) && !isArray(obj) && !isObject(obj),
 
 // Cloning actions, for different types
     //All imutable references returning same instance
@@ -36,16 +34,13 @@ let pair = (guard, action) => {
     cloneObj = (obj) => (fn) => objCopy(obj)(fn),
 
 // Define functors, with guards and actions
-    simpleFunctor = pair(isSimple, cloneSimple),
     arrayFunctor = pair(isArray, cloneArray),
     dateFunctor = pair(isDate, cloneDate),
     objectFunctor = pair(isObject, cloneObj),
-    listFunctor = pair(isList, cloneSimple),
-    taskFunctor = pair(isTask, cloneSimple),
     otherFunctor = pair(isOther, cloneSimple),
 
 //take all functors in a list.
-    functors = list(taskFunctor, listFunctor, simpleFunctor, arrayFunctor, dateFunctor, objectFunctor, otherFunctor),
+    functors = list(arrayFunctor, dateFunctor, objectFunctor, otherFunctor),
     getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj),
     clone = (obj) => getFunctor(obj)(children => clone(children));
 

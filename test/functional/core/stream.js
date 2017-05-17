@@ -121,6 +121,14 @@ describe('Stream Tests: ', () => {
         expect(!tail.tail.isSome()).to.be.true;
     });
 
+    it('testing flatMap method', async () => {
+        let a = await stream(task(1), task(2)).flatMap(d => task(d + 1));
+
+        let headTask = await a.toArray();
+        expect(headTask).to.be.eql([2, 3]);
+
+    });
+
     it('testing toList method, also async tasks', async () => {
         let a = await stream(
             task(1),
@@ -195,12 +203,11 @@ describe('Stream Tests: ', () => {
     it('Testing resolve', async () => {
         let cb = spy();
         let a = stream(1, task(2), 3);
-        let c = a.resolve(d=>cb());
+        let c = a.resolve(d => cb());
 
         await c.toArray();
         expect(cb.callCount).to.be.eql(3);
     });
-
 
 
 });

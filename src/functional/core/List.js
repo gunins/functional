@@ -9,7 +9,7 @@ class List {
     //Private Method
     _create(head, tail) {
         this.head = head !== undefined ? some(head) : none();
-        this.tail = tail && tail.isList && tail.isList() ? tail.copy() : none();
+        this.tail = tail && tail.isList && tail.isList() && tail.head.isSome && tail.head.isSome() ? tail.copy() : none();
         return this;
     };
 
