@@ -58,6 +58,27 @@ describe('List Tests: ', () => {
         expect(c.toArray()).to.eql(testC);
         expect(d.toArray()).to.eql(testD)
 
+    });
+
+    it('testing empty, add, size', () => {
+        let a = List.empty();
+        let b = a.insert(1);
+        let c = b.add(2);
+        let d = c.add(3);
+
+        expect(a.size()).to.be.eql(0);
+        expect(b.size()).to.be.eql(1);
+        expect(c.size()).to.be.eql(2);
+        expect(d.size()).to.be.eql(3);
+
+
+        let testB = [1],
+            testC = [1,2],
+            testD = [1,2,3];
+
+        expect(b.toArray()).to.eql(testB);
+        expect(c.toArray()).to.eql(testC);
+        expect(d.toArray()).to.eql(testD)
 
     });
 

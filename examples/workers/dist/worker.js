@@ -141,6 +141,10 @@ class List {
         return List.empty()._create(head, this.head ? this : none());
     }
 
+    add(head){
+        return this.reverse().insert(head).reverse();
+    }
+
     copy() {
         return this.map(a => a);
     };
@@ -585,12 +589,13 @@ let customResponse = evt => task(evt).map(e => new URL(e.request.url))
     .through(applyTemplate);
 
 
-let standardResponse = evt => task(evt).map(async e => {
+let standartResponse = evt => task(evt).map(async e => {
     let response = await caches.match(e.request);
     return response || await fetch(e.request);
 });
 
-let response = event => event.request.headers.has('X-Local-Request') ? customResponse(event) : standardResponse(event);
+
+let response = event => event.request.headers.has('X-Local-Request') ? customResponse(event) : standartResponse(event);
 
 exports.response = response;
 

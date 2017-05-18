@@ -141,6 +141,10 @@ class List {
         return List.empty()._create(head, this.head ? this : none());
     }
 
+    add(head){
+        return this.reverse().insert(head).reverse();
+    }
+
     copy() {
         return this.map(a => a);
     };
@@ -573,6 +577,10 @@ class Stream {
     insert(head) {
         return Stream.empty()._create(setTask(head), this.head ? this : none());
     };
+
+    add(head){
+        return this.reverse().insert(head).reverse();
+    }
 
     _copy() {
         let {head, tail} = this;

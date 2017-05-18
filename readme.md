@@ -150,7 +150,9 @@ Usage
 **new List(...elemnts):**  Create immutable list of elements.
 **list(...elemnts):**  Create immutable list of elements without `new`.
 
-**insert():** Adding Element in to List.
+**insert(element):** Adding new Element to the beginning of an List.
+
+**add(element):** Adding new Element to the end of an List.
 
 **map(fn):** apply functor to all elements and returning new List
 
@@ -299,7 +301,10 @@ synchronous functions no need extra params, and will take return value.
     }    
 
 ```
+**insert(task):** Adding new Task to the beginning of an Stream.
   
+**add(task):** Adding new Task to the end of an Stream.
+
 **copy():** Returns new Stream, of copy of sequence with all steps.
 
 **map(fn):** Returning new stream with applied functor for all tasks.

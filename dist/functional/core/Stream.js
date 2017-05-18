@@ -82,6 +82,10 @@ class Stream {
         return Stream.empty()._create(setTask(head), this.head ? this : __Option_js.none());
     };
 
+    add(head){
+        return this.reverse().insert(head).reverse();
+    }
+
     _copy() {
         let {head, tail} = this;
         let empty = Stream.empty();

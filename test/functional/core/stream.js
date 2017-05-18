@@ -70,6 +70,28 @@ describe('Stream Tests: ', () => {
 
     });
 
+    it('testing empty, add, size', async () => {
+        let a = Stream.empty();
+        let b = a.insert(1);
+        let c = b.add(2);
+        let d = c.add(3);
+
+        expect(a.size()).to.be.eql(0);
+        expect(b.size()).to.be.eql(1);
+        expect(c.size()).to.be.eql(2);
+        expect(d.size()).to.be.eql(3);
+
+
+        let testB = [1],
+            testC = [1,2],
+            testD = [1,2,3];
+
+        expect(await b.toArray()).to.eql(testB);
+        expect(await c.toArray()).to.eql(testC);
+        expect(await d.toArray()).to.eql(testD)
+
+    });
+
     it('stream copy method', async () => {
         let initial = stream(task(1).map(a => a + 1), task({a: 2}), {b: 3});
 

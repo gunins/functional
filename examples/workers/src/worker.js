@@ -1,5 +1,6 @@
 import {task} from 'functional/core/Task';
 import {get} from 'functional/async/Fetch';
+
 let data = false;
 let request = opt => data ? task(data) : task(opt => Object.assign({
     uri:     './products.json',
@@ -39,12 +40,13 @@ let customResponse = evt => task(evt).map(e => new URL(e.request.url))
     .through(applyTemplate);
 
 
-let standardResponse = evt => task(evt).map(async e => {
+let standartResponse = evt => task(evt).map(async e => {
     let response = await caches.match(e.request);
     return response || await fetch(e.request);
 });
 
-let response = event => event.request.headers.has('X-Local-Request') ? customResponse(event) : standardResponse(event);
+
+let response = event => event.request.headers.has('X-Local-Request') ? customResponse(event) : standartResponse(event);
 
 export {response};
 

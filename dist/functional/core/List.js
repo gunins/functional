@@ -71,6 +71,10 @@ class List {
         return List.empty()._create(head, this.head ? this : __Option_js.none());
     }
 
+    add(head){
+        return this.reverse().insert(head).reverse();
+    }
+
     copy() {
         return this.map(a => a);
     };
