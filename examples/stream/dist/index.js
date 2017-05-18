@@ -74,28 +74,36 @@ class None extends Some {
 
 }
 
+//Define Private methods;
+const _create$1 = Symbol('_create');
+const _reverse = Symbol('_reverse');
+const _map$1 = Symbol('_map');
+const _take = Symbol('_take');
+const _flatMap$1 = Symbol('_flatMap');
+const _filter = Symbol('_filter');
+
 class List {
     constructor(head, ...tail) {
         // split the head and tail pass to new list
-        this._create(head, tail.length > 0 ? list(...tail) : none());
+        this[_create$1](head, tail.length > 0 ? list(...tail) : none());
     };
 
     //Private Method
-    _create(head, tail) {
+    [_create$1](head, tail) {
         this.head = head !== undefined ? some(head) : none();
         this.tail = tail && tail.isList && tail.isList() && tail.head.isSome && tail.head.isSome() ? tail.copy() : none();
         return this;
     };
 
     //Private Method
-    _reverse(list) {
+    [_reverse](list) {
         let {head, tail} = this;
         if (head.isSome()) {
             let insert = list.insert(head.get());
             if (tail.isSome && !tail.isSome()) {
                 return insert;
             } else {
-                return tail._reverse(insert);
+                return tail[_reverse](insert);
             }
         } else {
             return list;
@@ -103,34 +111,34 @@ class List {
     };
 
     //private method
-    _map(fn, i = 0) {
+    [_map$1](fn, i = 0) {
         let {head, tail} = this;
         let empty = List.empty();
-        return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? none() : tail._map(fn, i + 1)) : empty;
+        return head.isSome() ? empty[_create$1](fn(head.get(), i), tail.isSome && !tail.isSome() ? none() : tail[_map$1](fn, i + 1)) : empty;
     };
 
     //private method
-    _take(count, i = 1) {
+    [_take](count, i = 1) {
         let {head, tail} = this;
         let empty = List.empty();
-        return head.isSome() ? empty._create(head.get(), (tail.isSome && !tail.isSome()) || count <= i ? none() : tail._take(count, i + 1)) : empty;
+        return head.isSome() ? empty[_create$1](head.get(), (tail.isSome && !tail.isSome()) || count <= i ? none() : tail[_take](count, i + 1)) : empty;
     }
 
     //private method
-    _flatMap(fn, i = 0) {
+    [_flatMap$1](fn, i = 0) {
         let {head, tail} = this,
             list = head.isSome() ? fn(head.get(), i) : List.empty();
-        return tail.isSome && !tail.isSome() ? list : list.concat(tail._flatMap(fn, i));
+        return tail.isSome && !tail.isSome() ? list : list.concat(tail[_flatMap$1](fn, i));
 
     };
 
     //private method
-    _filter(fn, list = List.empty()) {
+    [_filter](fn, list = List.empty()) {
         let {head, tail} = this,
             value = head.get(),
             comparison = fn(value);
         let outList = comparison ? list.insert(value) : list;
-        return tail.isList && tail.isList() ? tail._filter(fn, outList) : outList.reverse();
+        return tail.isList && tail.isList() ? tail[_filter](fn, outList) : outList.reverse();
     }
 
     getOrElse(fn) {
@@ -138,10 +146,10 @@ class List {
     };
 
     insert(head) {
-        return List.empty()._create(head, this.head ? this : none());
+        return List.empty()[_create$1](head, this.head ? this : none());
     }
 
-    add(head){
+    add(head) {
         return this.reverse().insert(head).reverse();
     }
 
@@ -165,7 +173,7 @@ class List {
         if (!head.isSome()) {
             return empty;
         } else {
-            return this._reverse(empty);
+            return this[_reverse](empty);
         }
 
     };
@@ -198,11 +206,11 @@ class List {
 
 
     filter(fn) {
-        return this._filter(fn);
+        return this[_filter](fn);
     };
 
     map(fn) {
-        return this._map(fn);
+        return this[_map$1](fn);
     };
 
     forEach(fn) {
@@ -214,7 +222,7 @@ class List {
     }
 
     flatMap(fn) {
-        return this._flatMap(fn);
+        return this[_flatMap$1](fn);
     };
 
     size() {
@@ -224,7 +232,7 @@ class List {
     };
 
     take(count) {
-        return this._take(count);
+        return this[_take](count);
     };
 
     toString() {
@@ -292,30 +300,59 @@ let emptyFn = () => {
  *      @Task(()=>3) synchronus function with returning value !important argumentList have to be empty
  *      @Task(3) // Static values
  * */
+//Define Private methods;
+const _parent = Symbol('_parent');
+const _topRef = Symbol('_topRef');
+const _topParent = Symbol('_topParent');
+const _children = Symbol('_children');
+const _resolvers = Symbol('_resolvers');
+const _rejecters = Symbol('_rejecters');
+const _resolve = Symbol('_resolve');
+const _reject = Symbol('_reject');
+const _bottomRef = Symbol('_bottomRef');
+const _uuid = Symbol('_uuid');
+const _create = Symbol('_create');
+const _task = Symbol('_task');
+const _setPromise = Symbol('_setPromise');
+const _setParent = Symbol('_setParent');
+const _addParent = Symbol('_addParent');
+const _setChildren = Symbol('_setChildren');
+const _resolveRun = Symbol('_resolveRun');
+const _rejectRun = Symbol('_rejectRun');
+const _triggerUp = Symbol('_triggerUp');
+const _triggerDown = Symbol('_triggerDown');
+const _run = Symbol('_run');
+const _map = Symbol('_map');
+const _flatMap = Symbol('_flatMap');
+const _copyJob = Symbol('_copyJob');
+const _getTopRef = Symbol('_getTopRef');
+const _getBottomRef = Symbol('_getBottomRef');
+const _copy = Symbol('_copy');
+
 class Task {
 
     constructor(job, parent) {
-        this._parent = none();
-        this._topRef = none();
-        this._topParent = none();
-        this._children = List.empty();
-        this._resolvers = List.empty();
-        this._rejecters = List.empty();
-        this._resolve = none();
-        this._reject = none();
-        this._bottomRef = none();
-        this._uuid = Symbol('uuid');
-        this._create(job, parent);
+        this[_parent] = none();
+        this[_topRef] = none();
+        this[_topParent] = none();
+        this[_children] = List.empty();
+        this[_resolvers] = List.empty();
+        this[_rejecters] = List.empty();
+        this[_resolve] = none();
+        this[_reject] = none();
+        this[_bottomRef] = none();
+        this[_uuid] = Symbol('uuid');
+        this[_create](job, parent);
     }
 
     //private function.
-    _create(job, parent) {
-        this._setParent(parent);
-        this._task = job !== undefined ? some(toFunction(job)) : none();
+    [_create](job, parent) {
+        this[_setParent](parent);
+        this[_task] = job !== undefined ? some(toFunction(job)) : none();
         return this;
     };
 
-    _setPromise(job) {
+    [_setPromise](job) {
         return (data, res) => new Promise((resolve, reject) => {
             let out = clone(data),
                 fn = job.getOrElse((_, resolve) => resolve(out));
@@ -327,68 +364,68 @@ class Task {
         });
     };
 
-    _setParent(parent) {
+    [_setParent](parent) {
         if (parent && parent.isTask && parent.isTask()) {
-            this._parent = some(parent._triggerUp.bind(parent));
-            this._topRef = some(parent._getTopRef.bind(parent));
-            this._topParent = some(parent._addParent.bind(parent));
+            this[_parent] = some(parent[_triggerUp].bind(parent));
+            this[_topRef] = some(parent[_getTopRef].bind(parent));
+            this[_topParent] = some(parent[_addParent].bind(parent));
         }
     };
 
-    _addParent(parent) {
-        this._topParent.getOrElse((parent) => {
-            parent._setChildren(this);
-            this._setParent(parent);
+    [_addParent](parent) {
+        this[_topParent].getOrElse((parent) => {
+            parent[_setChildren](this);
+            this[_setParent](parent);
         })(parent);
     };
 
-    _setChildren(children) {
+    [_setChildren](children) {
         if (children && children.isTask && children.isTask()) {
-            this._children = this._children.insert(children._run.bind(children));
-            this._bottomRef = some(children._getBottomRef.bind(children));
+            this[_children] = this[_children].insert(children[_run].bind(children));
+            this[_bottomRef] = some(children[_getBottomRef].bind(children));
         }
 
     };
 
-    _resolveRun(data) {
-        this._resolvers.forEach(fn => fn(data));
-        this._resolve.getOrElse(emptyFn)(clone(data));
-        this._resolve = none();
-        this._triggerDown(data, true);
+    [_resolveRun](data) {
+        this[_resolvers].forEach(fn => fn(data));
+        this[_resolve].getOrElse(emptyFn)(clone(data));
+        this[_resolve] = none();
+        this[_triggerDown](data, true);
         return clone(data);
     };
 
-    _rejectRun(data) {
-        this._rejecters.forEach(fn => fn(clone(data)));
-        this._reject.getOrElse(emptyFn)(clone(data));
-        this._reject = none();
-        this._triggerDown(data, false);
+    [_rejectRun](data) {
+        this[_rejecters].forEach(fn => fn(clone(data)));
+        this[_reject].getOrElse(emptyFn)(clone(data));
+        this[_reject] = none();
+        this[_triggerDown](data, false);
         return clone(data);
     };
 
-    _triggerUp() {
-        return this._parent.getOrElse(() => this._run())();
+    [_triggerUp]() {
+        return this[_parent].getOrElse(() => this[_run]())();
     };
 
 
-    _triggerDown(data, resolve) {
-        this._children.map(child => child(data, resolve));
+    [_triggerDown](data, resolve) {
+        this[_children].map(child => child(data, resolve));
     };
 
-    _run(resp, resolve = true) {
-        return this._setPromise(this._task)(resp, resolve)
-            .then(this._resolveRun.bind(this))
-            .catch(this._rejectRun.bind(this));
+    [_run](resp, resolve = true) {
+        return this[_setPromise](this[_task])(resp, resolve)
+            .then(this[_resolveRun].bind(this))
+            .catch(this[_rejectRun].bind(this));
     };
 
-    _map(fn) {
+    [_map](fn) {
         let job = task(fn, this);
-        this._setChildren(job);
+        this[_setChildren](job);
         return job;
     };
 
-    _flatMap(fn) {
-        return this._map(fn)
+    [_flatMap](fn) {
+        return this[_map](fn)
             .map((responseTask, res, rej) => {
                 if (!(responseTask.isTask && responseTask.isTask())) {
                     rej('flatMap has to return task');
@@ -397,48 +434,48 @@ class Task {
             });
     };
 
-    _copyJob(parent) {
-        let job = task(this._task.get(), parent);
-        job._resolvers = this._resolvers;
-        job._rejecters = this._rejecters;
+    [_copyJob](parent) {
+        let job = task(this[_task].get(), parent);
+        job[_resolvers] = this[_resolvers];
+        job[_rejecters] = this[_rejecters];
 
 
         if (parent) {
-            parent._setChildren(job);
+            parent[_setChildren](job);
         }
         return job;
     };
 
-    _getTopRef(uuid, parent) {
-        return this._topRef.getOrElse((uuid, parent) => this._copy(uuid, parent))(uuid, parent);
+    [_getTopRef](uuid, parent) {
+        return this[_topRef].getOrElse((uuid, parent) => this[_copy](uuid, parent))(uuid, parent);
     };
 
-    _getBottomRef(uuid, parent, goNext = false) {
-        let copyJob = goNext ? parent : this._copyJob(parent);
-        let next = goNext || this._uuid === uuid ? true : false;
-        return this._bottomRef.getOrElse((uuid, job) => job)(uuid, copyJob, next);
+    [_getBottomRef](uuid, parent, goNext = false) {
+        let copyJob = goNext ? parent : this[_copyJob](parent);
+        let next = goNext || this[_uuid] === uuid ? true : false;
+        return this[_bottomRef].getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
-    _copy(uuid) {
-        return this._getBottomRef(uuid);
+    [_copy](uuid) {
+        return this[_getBottomRef](uuid);
     };
 
     copy() {
-        return this._getTopRef(this._uuid);
+        return this[_getTopRef](this[_uuid]);
     };
 
 
     map(fn) {
-        return this._map(fn);
+        return this[_map](fn);
     };
 
     flatMap(fn) {
-        return this._flatMap(fn)
+        return this[_flatMap](fn)
     };
 
     through(joined) {
         let clone$$1 = joined.copy();
-        clone$$1._addParent(this);
+        clone$$1[_addParent](this);
         return clone$$1;
     };
 
@@ -450,12 +487,12 @@ class Task {
     };
 
     resolve(fn) {
-        this._resolvers = this._resolvers.insert(fn);
+        this[_resolvers] = this[_resolvers].insert(fn);
         return this;
     };
 
     reject(fn) {
-        this._rejecters = this._rejecters.insert(fn);
+        this[_rejecters] = this[_rejecters].insert(fn);
         return this;
     }
 
@@ -468,8 +505,8 @@ class Task {
     };
 
     clear() {
-        this._resolvers = List.empty();
-        this._rejecters = List.empty();
+        this[_resolvers] = List.empty();
+        this[_rejecters] = List.empty();
         return this;
     }
 
@@ -480,15 +517,15 @@ class Task {
      * */
     unsafeRun(resolve = emptyFn, reject = emptyFn) {
         return new Promise((res, rej) => {
-            this._resolve = some((data) => {
+            this[_resolve] = some((data) => {
                 resolve(data);
                 res(data);
             });
-            this._reject = some((data) => {
+            this[_reject] = some((data) => {
                 reject(data);
                 rej(data);
             });
-            this._triggerUp();
+            this[_triggerUp]();
         });
     };
 
@@ -504,65 +541,77 @@ let task = (...tasks) => new Task(...tasks);
  * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
  * */
 let setTask = (fn) => fn && fn.isTask && fn.isTask() ? fn : task(fn);
+//Define Private methods
+const _create$2 = Symbol('_create');
+const _reverse$1 = Symbol('_reverse');
+const _applyMethod = Symbol('_applyMethod');
+const _map$2 = Symbol('_map');
+const _flatMap$2 = Symbol('_flatMap');
+const _through = Symbol('_through');
+const _resolve$1 = Symbol('_resolve');
+const _reject$1 = Symbol('_reject');
+const _forEach = Symbol('_forEach');
+const _run$1 = Symbol('_run');
+
 class Stream {
     constructor(head, ...tail) {
-        this._create(head, tail.length > 0 ? stream(...tail) : none());
+        this[_create$2](head, tail.length > 0 ? stream(...tail) : none());
     }
 
     //private function.
-    _create(head, tail) {
+    [_create$2](head, tail) {
         this.head = head !== undefined ? some(setTask(head)) : none();
         this.tail = tail && tail.isStream && tail.isStream() ? tail.copy() : none();
         return this;
     };
 
     //Private Method
-    _reverse(stream) {
+    [_reverse$1](stream) {
         let {head, tail} = this;
         if (head.isSome()) {
             let insert = stream.insert(head.get());
             if (tail.isSome && !tail.isSome()) {
                 return insert;
             } else {
-                return tail._reverse(insert);
+                return tail[_reverse$1](insert);
             }
         } else {
             return stream;
         }
     };
 
-    _applyMethod(method, fn) {
+    [_applyMethod](method, fn) {
         let {head, tail} = this;
         let empty = Stream.empty();
-        return head.isSome() ? empty._create(head.get()[method](fn), tail.isSome && !tail.isSome() ? none() : tail._applyMethod(method, fn)) : empty;
+        return head.isSome() ? empty[_create$2](head.get()[method](fn), tail.isSome && !tail.isSome() ? none() : tail[_applyMethod](method, fn)) : empty;
     }
 
     //private method
-    _map(fn) {
-        return this._applyMethod('map', fn);
+    [_map$2](fn) {
+        return this[_applyMethod]('map', fn);
     };
 
     //private method
     //TODO: probably has to flattening stream.
-    _flatMap(fn) {
-        return this._applyMethod('flatMap', fn);
+    [_flatMap$2](fn) {
+        return this[_applyMethod]('flatMap', fn);
     };
 
     //private method
-    _through(_task) {
-        return this._applyMethod('through', _task);
+    [_through](_task) {
+        return this[_applyMethod]('through', _task);
     };
 
     //private method
-    _resolve(fn) {
-        return this._applyMethod('resolve', fn);
+    [_resolve$1](fn) {
+        return this[_applyMethod]('resolve', fn);
     }; //private method
 
-    _reject(fn) {
-        return this._applyMethod('reject', fn);
+    [_reject$1](fn) {
+        return this[_applyMethod]('reject', fn);
     };
 
-    _forEach(fn) {
+    [_forEach](fn) {
         let {head, tail} = this;
         if (head.isSome()) {
             fn(head.get().copy());
@@ -570,27 +619,27 @@ class Stream {
         
 
         if (tail && tail.isStream && tail.isStream()) {
-            tail._forEach(fn);
+            tail[_forEach](fn);
         }
     }
 
     insert(head) {
-        return Stream.empty()._create(setTask(head), this.head ? this : none());
+        return Stream.empty()[_create$2](setTask(head), this.head ? this : none());
     };
 
-    add(head){
+    add(head) {
         return this.reverse().insert(head).reverse();
     }
 
     _copy() {
         let {head, tail} = this;
         let empty = Stream.empty();
-        return head.isSome() ? empty._create(head.get().copy(), tail.isSome && !tail.isSome() ? none() : tail._copy()) : empty;
+        return head.isSome() ? empty[_create$2](head.get().copy(), tail.isSome && !tail.isSome() ? none() : tail._copy()) : empty;
 
     };
 
 
-    async _run() {
+    async [_run$1]() {
         let {head, tail} = this;
         let empty = List.empty();
 
@@ -600,7 +649,7 @@ class Stream {
         }
 
         if (tail.isStream && tail.isStream()) {
-            let awaitTail = await tail._run();
+            let awaitTail = await tail[_run$1]();
             empty = empty.concat(awaitTail);
         }
 
@@ -617,11 +666,11 @@ class Stream {
      * FROM stream(1,2,3) RETURNING stream(task(1),task(2),task(3));
      * */
     map(fn) {
-        return this._map(fn);
+        return this[_map$2](fn);
     };
 
     flatMap(fn) {
-        return this._flatMap(fn);
+        return this[_flatMap$2](fn);
     };
 
     async foldLeft(initial, fn) {
@@ -640,14 +689,14 @@ class Stream {
         if (!head.isSome()) {
             return empty;
         } else {
-            return this._reverse(empty);
+            return this[_reverse$1](empty);
         }
     };
 
     concat(...streams) {
         let empty = Stream.empty();
         [this].concat(streams).forEach(stream => {
-            stream._forEach(record => {
+            stream[_forEach](record => {
                 empty = empty.insert(record);
             });
         });
@@ -656,20 +705,20 @@ class Stream {
 
     size() {
         let count = 0;
-        this._forEach(() => count++);
+        this[_forEach](() => count++);
         return count;
     };
 
     through(_task) {
-        return this._through(_task);
+        return this[_through](_task);
     };
 
     resolve(fn) {
-        return this._resolve(fn);
+        return this[_resolve$1](fn);
     };
 
     reject(fn) {
-        return this._reject(fn);
+        return this[_reject$1](fn);
     }
 
     repeat() {
@@ -690,11 +739,11 @@ class Stream {
     };
 
     async toList() {
-        return await this._run();
+        return await this[_run$1]();
     };
 
     async unsafeRun() {
-        return await this._run();
+        return await this[_run$1]();
     }
 
 

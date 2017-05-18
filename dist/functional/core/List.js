@@ -4,28 +4,36 @@
 	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = global['functional/core/List'].js || {}),global.__Option_js));
 }(this, (function (exports,__Option_js) { 'use strict';
 
+//Define Private methods;
+const _create = Symbol('_create');
+const _reverse = Symbol('_reverse');
+const _map = Symbol('_map');
+const _take = Symbol('_take');
+const _flatMap = Symbol('_flatMap');
+const _filter = Symbol('_filter');
+
 class List {
     constructor(head, ...tail) {
         // split the head and tail pass to new list
-        this._create(head, tail.length > 0 ? list(...tail) : __Option_js.none());
+        this[_create](head, tail.length > 0 ? list(...tail) : __Option_js.none());
     };
 
     //Private Method
-    _create(head, tail) {
+    [_create](head, tail) {
         this.head = head !== undefined ? __Option_js.some(head) : __Option_js.none();
         this.tail = tail && tail.isList && tail.isList() && tail.head.isSome && tail.head.isSome() ? tail.copy() : __Option_js.none();
         return this;
     };
 
     //Private Method
-    _reverse(list) {
+    [_reverse](list) {
         let {head, tail} = this;
         if (head.isSome()) {
             let insert = list.insert(head.get());
             if (tail.isSome && !tail.isSome()) {
                 return insert;
             } else {
-                return tail._reverse(insert);
+                return tail[_reverse](insert);
             }
         } else {
             return list;
@@ -33,34 +41,34 @@ class List {
     };
 
     //private method
-    _map(fn, i = 0) {
+    [_map](fn, i = 0) {
         let {head, tail} = this;
         let empty = List.empty();
-        return head.isSome() ? empty._create(fn(head.get(), i), tail.isSome && !tail.isSome() ? __Option_js.none() : tail._map(fn, i + 1)) : empty;
+        return head.isSome() ? empty[_create](fn(head.get(), i), tail.isSome && !tail.isSome() ? __Option_js.none() : tail[_map](fn, i + 1)) : empty;
     };
 
     //private method
-    _take(count, i = 1) {
+    [_take](count, i = 1) {
         let {head, tail} = this;
         let empty = List.empty();
-        return head.isSome() ? empty._create(head.get(), (tail.isSome && !tail.isSome()) || count <= i ? __Option_js.none() : tail._take(count, i + 1)) : empty;
+        return head.isSome() ? empty[_create](head.get(), (tail.isSome && !tail.isSome()) || count <= i ? __Option_js.none() : tail[_take](count, i + 1)) : empty;
     }
 
     //private method
-    _flatMap(fn, i = 0) {
+    [_flatMap](fn, i = 0) {
         let {head, tail} = this,
             list = head.isSome() ? fn(head.get(), i) : List.empty();
-        return tail.isSome && !tail.isSome() ? list : list.concat(tail._flatMap(fn, i));
+        return tail.isSome && !tail.isSome() ? list : list.concat(tail[_flatMap](fn, i));
 
     };
 
     //private method
-    _filter(fn, list = List.empty()) {
+    [_filter](fn, list = List.empty()) {
         let {head, tail} = this,
             value = head.get(),
             comparison = fn(value);
         let outList = comparison ? list.insert(value) : list;
-        return tail.isList && tail.isList() ? tail._filter(fn, outList) : outList.reverse();
+        return tail.isList && tail.isList() ? tail[_filter](fn, outList) : outList.reverse();
     }
 
     getOrElse(fn) {
@@ -68,10 +76,10 @@ class List {
     };
 
     insert(head) {
-        return List.empty()._create(head, this.head ? this : __Option_js.none());
+        return List.empty()[_create](head, this.head ? this : __Option_js.none());
     }
 
-    add(head){
+    add(head) {
         return this.reverse().insert(head).reverse();
     }
 
@@ -95,7 +103,7 @@ class List {
         if (!head.isSome()) {
             return empty;
         } else {
-            return this._reverse(empty);
+            return this[_reverse](empty);
         }
 
     };
@@ -128,11 +136,11 @@ class List {
 
 
     filter(fn) {
-        return this._filter(fn);
+        return this[_filter](fn);
     };
 
     map(fn) {
-        return this._map(fn);
+        return this[_map](fn);
     };
 
     forEach(fn) {
@@ -144,7 +152,7 @@ class List {
     }
 
     flatMap(fn) {
-        return this._flatMap(fn);
+        return this[_flatMap](fn);
     };
 
     size() {
@@ -154,7 +162,7 @@ class List {
     };
 
     take(count) {
-        return this._take(count);
+        return this[_take](count);
     };
 
     toString() {
