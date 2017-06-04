@@ -1,13 +1,13 @@
 ## Library for working with pull based async Tasks [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
-! Curently this library is on development stage, po.
+! Curently this library is on development stage.
 
 ### Why This Library
 
 This library inspired by [**fs2**](https://github.com/functional-streams-for-scala/fs2) Scala Library. Instead of pub sub concept, there introduced pull base concept.
 You can pull sequence of tasks, transform them, and returning as promise.
 
-Also, you can combine tasks together.
+Also, you can combine tasks together. Task reject use [Railway Oriented Programming](http://www.zohaib.me/railway-programming-pattern-in-elixir/).
 
 ### Installation
 
@@ -17,26 +17,29 @@ Using npm
 
 ### How it works
 
-This library usng [**UMD**](https://github.com/umdjs/umd) modules, can be used on nodejs and browser. Also if use es6 modules, can compile from source folder, using [**rollup**](https://github.com/rollup/rollup).
+This library usng [**UMD**](https://github.com/umdjs/umd) modules, can be used on nodejs and browser. Also if use es6 modules, can compile from source folder, using [**rollup**](https://github.com/rollup/rollup) or webpack.
 
 
 ### Usage examples
 
-Create Task and apply functor, and returning promise with data. every `.map` method returning new task. all returned data is imutable. have to call resolve after any combination finished.
 
 ```javascript
     import {Task, task} from 'functional_tasks/src/core/Task';
-    //Initial task
-      let a = task((resolve, reject) => resolve(3))
-      //apply functor to next step. All data is imutable
-            .map((data, resolve, reject) => {
-                //
+    //Initialse task
+    // Ignore first param, because, task is only initialised, call resolve, with number 3
+      let a = task((_, resolve, reject) => resolve(3))
+      //next step, applying new functor, taking data from previous task, and call resolve, by adding 1 to prev data.
+            .map((data, resolve) => {
+                // add 1 for 3
                 resolve(data + 1)
             });
-           // get result
+           // Until now, all tasks, waiting for execution. 
+           //By calling `unsafeRun()` all tasks are executed, and returning Promise, with result.
             a.unsafeRun()
             .then(data => {
-                // use data and data to be eql 2
+                // data returning value 4
+            }).catch(e=>{
+                // catch taiking errors, all error use [Railway Oriented Programming](http://www.zohaib.me/railway-programming-pattern-in-elixir/).
             });
 
 
@@ -49,13 +52,13 @@ Using async es6 functions
     //Initial task
       let a = task((resolve) => resolve(3))
       //apply functor to next step. All data is imutable
-            .map((res, rej, d) => {
+            .map((d, res) => {
                 res(d + 1)
             });
            // get result
        let data = await a.unsafeRun();
        
-       //use data
+       //use data and eql 4
        console.log(data)
     }
 
@@ -66,7 +69,7 @@ Combining Tasks
     import {Task, task} from 'functional_tasks/src/core/Task';
 
    let taskA = task({a: 'a', b: 'b'});
-   let taskB = task((res, rej, data) => {
+   let taskB = task((data, res) => {
             data.c = 'c'
             res(data);
         });
@@ -213,7 +216,11 @@ Usage
 **new Task(fn|obj|value):**  Create task and taking Function or object or any simple value. 
 **task(fn|obj|value):** create task, without new operator.
 
-Function always return, resolve reject, and data
+Function taking following params, data as result, from previous task, and resolve, reject methods. 
+If you not use resolve or reject, You have to return value, and value will be treated as resolve.
+
+Reject will use [Railway Oriented Programming](http://www.zohaib.me/railway-programming-pattern-in-elixir/).
+
 ```javascript
     (data, resolve, reject) => {
     // data is returning data from previous task;

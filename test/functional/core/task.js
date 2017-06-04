@@ -313,18 +313,18 @@ describe('Task Tests: ', () => {
         let dataA = await  a.unsafeRun();
         console.log('run 1');
         expect(dataA).to.be.eql(1);
-        expect(callback.calledOnce).to.be.true;
+        expect(callback.calledTwice).to.be.true;
 
         let dataB = await  a.unsafeRun();
         console.log('run 2');
         expect(dataB).to.be.eql(1);
-        expect(callback.calledThrice).to.be.true;
+        expect(callback.callCount).to.be.eql(4);
 
 
         let dataC = await  b.unsafeRun();
         console.log('run 3');
         expect(dataC).to.be.eql(2);
-        expect(callback.callCount).to.be.eql(5);
+        expect(callback.callCount).to.be.eql(6);
         console.log('finish');
     });
 

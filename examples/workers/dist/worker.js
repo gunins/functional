@@ -550,13 +550,16 @@ let str = obj => Object.keys(obj)
         .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
         .join('&');
 let fetchTask = task(opt => load(opt));
-let getBase = task(opt => Object.assign(
-        opt,
-        {
-            uri:  opt.uri + (opt.body ? '?' + str(opt.body) : ''),
-            body: undefined
-        }
-    ));
+let getBase = task(opt => {
+        let {protocol, host, uri, body} = opt;
+        return Object.assign(
+            opt,
+            {
+                uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (body ? '?' + str(body) : ''),
+                body: undefined
+            }
+        )
+    });
 let get = getBase.copy()
         .map(opt => Object.assign(
             opt,

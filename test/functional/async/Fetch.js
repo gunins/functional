@@ -19,7 +19,11 @@ describe('Async Fetch Tests', () => {
     it('Testing get method', async () => {
         fetchMock.get('http://httpbin.org/get?a=1&b=2', {hello: 'world'});
 
-        let resp = await task({uri: "http://httpbin.org/get"})
+        let resp = await task({
+            protocol: 'http',
+            host:     'httpbin.org',
+            uri:      '/get'
+        })
             .map(opt => Object.assign(opt, {
                 body: {a: 1, b: 2}
             }))
@@ -33,7 +37,11 @@ describe('Async Fetch Tests', () => {
     it('Testing del method', async () => {
         fetchMock.delete('http://httpbin.org/del?a=1&b=2', {hello: 'world'});
 
-        let resp = await task({uri: "http://httpbin.org/del"})
+        let resp = await task({
+            protocol: 'http:',
+            host:     'httpbin.org',
+            uri:      '/del'
+        })
             .map(opt => Object.assign(opt, {
                 body: {a: 1, b: 2}
             }))
@@ -75,8 +83,8 @@ describe('Async Fetch Tests', () => {
         let base = task({uri: 'http://httpbin.org/get'});
 
         let setParams = task(opt => Object.assign(opt, {
-                body: {a: 1, b: 2}
-            }));
+            body: {a: 1, b: 2}
+        }));
 
         let resp = await task()
             .through(base)

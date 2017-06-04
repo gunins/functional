@@ -14,13 +14,16 @@ let load = async (opt) => {
 
     fetchTask = task(opt => load(opt)),
 
-    getBase = task(opt => Object.assign(
-        opt,
-        {
-            uri:  opt.uri + (opt.body ? '?' + str(opt.body) : ''),
-            body: undefined
-        }
-    )),
+    getBase = task(opt => {
+        let {protocol, host, uri, body} = opt;
+        return Object.assign(
+            opt,
+            {
+                uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (body ? '?' + str(body) : ''),
+                body: undefined
+            }
+        )
+    }),
     get = getBase.copy()
         .map(opt => Object.assign(
             opt,
