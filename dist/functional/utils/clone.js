@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/List.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', '../core/List.js'], factory) :
-	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = global['functional/utils/clone'].js || {}),global.___core_List_js));
+	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = {}),global.___core_List_js));
 }(this, (function (exports,___core_List_js) { 'use strict';
 
 let pair = (guard, action) => {

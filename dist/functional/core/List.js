@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', './Option.js'], factory) :
-	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = global['functional/core/List'].js || {}),global.__Option_js));
+	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = {}),global.__Option_js));
 }(this, (function (exports,__Option_js) { 'use strict';
 
 //Define Private methods;

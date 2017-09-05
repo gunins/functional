@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('./List.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', './List.js'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = global['functional/core/Stream'].js || {}),global.__Option_js,global.__Task_js,global.__List_js));
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.__Option_js,global.__Task_js,global.__List_js));
 }(this, (function (exports,__Option_js,__Task_js,__List_js) { 'use strict';
 
 /**

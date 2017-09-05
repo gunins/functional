@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./List.js'), require('./Option.js'), require('../utils/clone.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', './List.js', './Option.js', '../utils/clone.js'], factory) :
-	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = global['functional/core/Task'].js || {}),global.__List_js,global.__Option_js,global.___utils_clone_js));
+	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = {}),global.__List_js,global.__Option_js,global.___utils_clone_js));
 }(this, (function (exports,__List_js,__Option_js,___utils_clone_js) { 'use strict';
 
 let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);

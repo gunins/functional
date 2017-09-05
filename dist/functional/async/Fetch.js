@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Task.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', '../core/Task.js'], factory) :
-	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = global['functional/async/Fetch'].js || {}),global.___core_Task_js));
+	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.___core_Task_js));
 }(this, (function (exports,___core_Task_js) { 'use strict';
 
 let load = async (opt) => {

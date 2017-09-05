@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global['functional/core/Option'] = global['functional/core/Option'] || {}, global['functional/core/Option'].js = global['functional/core/Option'].js || {})));
+	(factory((global['functional/core/Option'] = global['functional/core/Option'] || {}, global['functional/core/Option'].js = {})));
 }(this, (function (exports) { 'use strict';
 
 let some = (value) => new Some(value);
