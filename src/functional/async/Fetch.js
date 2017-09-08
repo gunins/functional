@@ -1,4 +1,5 @@
 import {task} from '../core/Task';
+
 let load = async (opt) => {
         let res = await fetch(opt.uri, Object.assign({}, opt, {
             headers: Object.assign({
@@ -19,7 +20,7 @@ let load = async (opt) => {
         return Object.assign(
             opt,
             {
-                uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (body ? '?' + str(body) : ''),
+                uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (uri.indexOf('?') === -1 && body ? '?' + str(body) : ''),
                 body: undefined
             }
         )

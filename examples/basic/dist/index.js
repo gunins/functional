@@ -555,7 +555,7 @@ let getBase = task(opt => {
         return Object.assign(
             opt,
             {
-                uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (body ? '?' + str(body) : ''),
+                uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (uri.indexOf('?') === -1 && body ? '?' + str(body) : ''),
                 body: undefined
             }
         )
