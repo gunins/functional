@@ -4,8 +4,8 @@
 	(factory((global.index = {})));
 }(this, (function (exports) { 'use strict';
 
-let some = (value) => new Some(value);
-let none = () => new None();
+const some = (value) => new Some(value);
+const none = () => new None();
 
 class Some {
     constructor(value) {
@@ -29,7 +29,7 @@ class Some {
     };
 
     flatMap(fn) {
-        let out = fn(this.get());
+        const out = fn(this.get());
         if (out.isOption) {
             return out;
         }else{
@@ -778,8 +778,9 @@ const getBase = task(opt => {
     return Object.assign(
         opt,
         {
-            uri:  (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (uri.indexOf('?') === -1 && body ? '?' + str(body) : ''),
-            body: undefined
+            credentials: 'include',
+            uri:         (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (uri.indexOf('?') === -1 && body ? '?' + str(body) : ''),
+            body:        undefined
         }
     )
 });

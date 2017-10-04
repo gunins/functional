@@ -4,8 +4,8 @@
 	(factory((global['functional/core/Option'] = global['functional/core/Option'] || {}, global['functional/core/Option'].js = {})));
 }(this, (function (exports) { 'use strict';
 
-let some = (value) => new Some(value);
-let none = () => new None();
+const some = (value) => new Some(value);
+const none = () => new None();
 
 class Some {
     constructor(value) {
@@ -29,7 +29,7 @@ class Some {
     };
 
     flatMap(fn) {
-        let out = fn(this.get());
+        const out = fn(this.get());
         if (out.isOption) {
             return out;
         }else{
