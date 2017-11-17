@@ -15,6 +15,7 @@ describe('Clone Tests', () => {
         expect(clone(1)).to.be.eql(1);
         expect(clone('string')).to.be.eql('string');
         expect(clone(false)).to.be.eql(false);
+        expect(clone(new Date(1510740672425))).to.be.eql(new Date(1510740672425));
     });
 
     it('Clone Array', () => {

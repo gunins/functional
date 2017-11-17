@@ -4,38 +4,37 @@
 	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = {}),global.___core_List_js));
 }(this, (function (exports,___core_List_js) { 'use strict';
 
-let pair = (guard, action) => {
-        return {guard, action}
-    };
-let objCopy = obj => {
-        let copy = Object.assign({}, obj);
-        return (fn) => {
-            Object.keys(copy).forEach(attr => {
-                copy[attr] = fn(copy[attr]);
-            });
-            return copy;
-        }
-    };
-let isSimple = (obj) => typeof obj == 'boolean' || null == obj || 'object' != typeof obj;
-let isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]';
-let isArray = (obj) => Object.prototype.toString.call(obj) === '[object Array]';
-let isObject = (obj) => (!!obj) && (obj.constructor === Object);
-let isOther = (obj) => !isDate(obj) && !isArray(obj) && !isObject(obj);
-let cloneSimple = (simple) => () => simple;
-let cloneDate = (date) => () => {
-        let copy = new Date();
-        copy.setTime(date.getTime());
-        return copy
-    };
-let cloneArray = (arr) => (fn) => arr.map(fn);
-let cloneObj = (obj) => (fn) => objCopy(obj)(fn);
-let arrayFunctor = pair(isArray, cloneArray);
-let dateFunctor = pair(isDate, cloneDate);
-let objectFunctor = pair(isObject, cloneObj);
-let otherFunctor = pair(isOther, cloneSimple);
-let functors = ___core_List_js.list(arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
-let getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj);
-let clone = (obj) => getFunctor(obj)(children => clone(children));
+const {assign, keys} = Object;
+
+const pair = (guard, action) => ({guard, action});
+
+// map method for Objects
+const objCopy = (obj, fn) => keys(obj).reduce((initial, attr) => assign(initial, {[attr]: fn(obj[attr])}), {});
+
+//Guards
+const isSimple = (obj) => typeof obj == 'boolean' || null == obj || 'object' != typeof obj;
+const isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]';
+const isArray = (obj) => Object.prototype.toString.call(obj) === '[object Array]';
+const isObject = (obj) => (!!obj) && (obj.constructor === Object);
+const isOther = (obj) => !isDate(obj) && !isArray(obj) && !isObject(obj);
+
+// Cloning actions, for different types
+//All imutable references returning same instance
+const cloneSimple = (simple) => () => simple;
+const cloneDate = (date) => () => new Date(date.getTime());
+const cloneArray = (arr) => (fn) => arr.map(fn);
+const cloneObj = (obj) => (fn) => objCopy(obj, fn);
+
+// Define functors, with guards and actions
+const arrayFunctor = pair(isArray, cloneArray);
+const dateFunctor = pair(isDate, cloneDate);
+const objectFunctor = pair(isObject, cloneObj);
+const otherFunctor = pair(isOther, cloneSimple);
+
+//take all functors in a list.
+const functors = ___core_List_js.list(arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
+const getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj);
+const clone = (obj) => getFunctor(obj)(children => clone(children));
 
 exports.clone = clone;
 exports.isSimple = isSimple;
