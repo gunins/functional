@@ -1,13 +1,13 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('./List.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', './List.js'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.__Option_js,global.__Task_js,global.__List_js));
-}(this, (function (exports,__Option_js,__Task_js,__List_js) { 'use strict';
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.List_js));
+}(this, (function (exports,Option_js,Task_js,List_js) { 'use strict';
 
 /**
  * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
  * */
-let setTask = (fn) => fn && fn.isTask && fn.isTask() ? fn : __Task_js.task(fn);
+let setTask = (fn) => fn && fn.isTask && fn.isTask() ? fn : Task_js.task(fn);
 //Define Private methods
 const _create = Symbol('_create');
 const _reverse = Symbol('_reverse');
@@ -22,13 +22,13 @@ const _run = Symbol('_run');
 
 class Stream {
     constructor(head, ...tail) {
-        this[_create](head, tail.length > 0 ? stream(...tail) : __Option_js.none());
+        this[_create](head, tail.length > 0 ? stream(...tail) : Option_js.none());
     }
 
     //private function.
     [_create](head, tail) {
-        this.head = head !== undefined ? __Option_js.some(setTask(head)) : __Option_js.none();
-        this.tail = tail && tail.isStream && tail.isStream() ? tail.copy() : __Option_js.none();
+        this.head = head !== undefined ? Option_js.some(setTask(head)) : Option_js.none();
+        this.tail = tail && tail.isStream && tail.isStream() ? tail.copy() : Option_js.none();
         return this;
     };
 
@@ -50,7 +50,7 @@ class Stream {
     [_applyMethod](method, fn) {
         let {head, tail} = this;
         let empty = Stream.empty();
-        return head.isSome() ? empty[_create](head.get()[method](fn), tail.isSome && !tail.isSome() ? __Option_js.none() : tail[_applyMethod](method, fn)) : empty;
+        return head.isSome() ? empty[_create](head.get()[method](fn), tail.isSome && !tail.isSome() ? Option_js.none() : tail[_applyMethod](method, fn)) : empty;
     }
 
     //private method
@@ -91,7 +91,7 @@ class Stream {
     }
 
     insert(head) {
-        return Stream.empty()[_create](setTask(head), this.head ? this : __Option_js.none());
+        return Stream.empty()[_create](setTask(head), this.head ? this : Option_js.none());
     };
 
     add(head) {
@@ -101,14 +101,14 @@ class Stream {
     _copy() {
         let {head, tail} = this;
         let empty = Stream.empty();
-        return head.isSome() ? empty[_create](head.get().copy(), tail.isSome && !tail.isSome() ? __Option_js.none() : tail._copy()) : empty;
+        return head.isSome() ? empty[_create](head.get().copy(), tail.isSome && !tail.isSome() ? Option_js.none() : tail._copy()) : empty;
 
     };
 
 
     async [_run]() {
         let {head, tail} = this;
-        let empty = __List_js.List.empty();
+        let empty = List_js.List.empty();
 
         if (head.isSome()) {
             let awaitHEad = await head.get().unsafeRun();

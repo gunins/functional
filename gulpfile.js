@@ -50,9 +50,9 @@ let rollupStream = (srcDir) => chain((chunk) => {
         moduleName = path.replace(baseDir, ''),
         excluded = excludePaths.filter(file => file !== path);
     return rollup({
-        entry:      path,
+        input:      path,
         format:     'umd',
-        moduleName: moduleName,
+        name: moduleName,
         external:   excluded
     }).pipe(source(moduleName));
 });
@@ -73,9 +73,9 @@ gulp.task('rollup', ['clean'], () => {
 
 let sampleRollup = (name, file = 'index', format = 'umd') => {
     let roll = rollup({
-        entry:      `./examples/${name}/src/${file}.js`,
+        input:      `./examples/${name}/src/${file}.js`,
         format:     format,
-        moduleName: file,
+        name: file,
         plugins:    [
             resolve({
                 jsnext:               true,

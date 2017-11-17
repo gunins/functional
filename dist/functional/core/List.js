@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js')) :
 	typeof define === 'function' && define.amd ? define(['exports', './Option.js'], factory) :
-	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = {}),global.__Option_js));
-}(this, (function (exports,__Option_js) { 'use strict';
+	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = {}),global.Option_js));
+}(this, (function (exports,Option_js) { 'use strict';
 
 //Define Private methods;
 const _create = Symbol('_create');
@@ -15,13 +15,13 @@ const _filter = Symbol('_filter');
 class List {
     constructor(head, ...tail) {
         // split the head and tail pass to new list
-        this[_create](head, tail.length > 0 ? list(...tail) : __Option_js.none());
+        this[_create](head, tail.length > 0 ? list(...tail) : Option_js.none());
     };
 
     //Private Method
     [_create](head, tail) {
-        this.head = head !== undefined ? __Option_js.some(head) : __Option_js.none();
-        this.tail = tail && tail.isList && tail.isList() && tail.head.isSome && tail.head.isSome() ? tail.copy() : __Option_js.none();
+        this.head = head !== undefined ? Option_js.some(head) : Option_js.none();
+        this.tail = tail && tail.isList && tail.isList() && tail.head.isSome && tail.head.isSome() ? tail.copy() : Option_js.none();
         return this;
     };
 
@@ -44,14 +44,14 @@ class List {
     [_map](fn, i = 0) {
         let {head, tail} = this;
         let empty = List.empty();
-        return head.isSome() ? empty[_create](fn(head.get(), i), tail.isSome && !tail.isSome() ? __Option_js.none() : tail[_map](fn, i + 1)) : empty;
+        return head.isSome() ? empty[_create](fn(head.get(), i), tail.isSome && !tail.isSome() ? Option_js.none() : tail[_map](fn, i + 1)) : empty;
     };
 
     //private method
     [_take](count, i = 1) {
         let {head, tail} = this;
         let empty = List.empty();
-        return head.isSome() ? empty[_create](head.get(), (tail.isSome && !tail.isSome()) || count <= i ? __Option_js.none() : tail[_take](count, i + 1)) : empty;
+        return head.isSome() ? empty[_create](head.get(), (tail.isSome && !tail.isSome()) || count <= i ? Option_js.none() : tail[_take](count, i + 1)) : empty;
     }
 
     //private method
@@ -76,7 +76,7 @@ class List {
     };
 
     insert(head) {
-        return List.empty()[_create](head, this.head ? this : __Option_js.none());
+        return List.empty()[_create](head, this.head ? this : Option_js.none());
     }
 
     add(head) {
@@ -131,7 +131,7 @@ class List {
             value = head.get(),
             comparison = fn(value);
 
-        return comparison ? value : tail.isList && tail.isList() ? tail.find(fn) : __Option_js.none();
+        return comparison ? value : tail.isList && tail.isList() ? tail.find(fn) : Option_js.none();
     };
 
 
