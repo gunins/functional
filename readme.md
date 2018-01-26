@@ -344,11 +344,82 @@ Static methods
 
 **empty():** Create empty Stream
 
+### Match
+Pattern Matching helper.
+
+Example for list 
+
+```javascript
+    // define list type to default return
+     const listMatch = match(list);
+        const values = list(1, 2, 'vasja', 3, 4);
+        // define patterns needed for matching, return has to be an Option    
+        const evenMatch = (num) => !isNaN(num) && num % 2 === 0 ? some(num) : none();
+        const oddMatch = (num) => !isNaN(num) && num % 2 !== 0 ? some(num) : none();
+
+
+        const result = values
+            .flatMap(listMatch({
+                case: evenMatch,
+                // define function particular pattern. Function has to return same type, which one you define on match initialisation.
+                '=>': _ => list(_ + `even`)
+            }, {
+                case: oddMatch,
+                '=>': _ => list(_ + `odd`)
+            })).toArray();
+        
+        //result wil be ['1odd', '2even', 'vasja', '3odd', '4even']
+
+```
+
+Example for Task
+
+```javascript
+        // define task type for default return
+        const taskMatch = match(task);
+        // define patterns needed for matching    
+        const evenMatch = (num) => !isNaN(num) && num % 2 === 0 ? some(num) : none();
+        const oddMatch = (num) => !isNaN(num) && num % 2 !== 0 ? some(num) : none();
+
+        const result = await task(1)
+            .flatMap(taskMatch({
+                    case: evenMatch,
+                    // define function particular pattern. Function has to return same type, which one you define on match initialisation.
+                    '=>': _ => task(_ + `even`)
+                },
+                {
+                    case: oddMatch,
+                    '=>': _ => task(_ + `odd`)
+                }))
+            .resolve(res =>res /*res should be `1odd`*/)
+            .map(() => 2)
+            .flatMap(taskMatch({
+                    case: evenMatch,
+                    '=>': _ => task(_ + `even`)
+                },
+                {
+                    case: oddMatch,
+                    '=>': _ => task(_ + `odd`)
+                }))
+            .resolve(res =>res /*res should be `2even`*/)
+            .unsafeRun();
+        
+       // expect result will be `2even`
+
+```
+**Type = List|Option|Task ...**
+
+**match(Type)(...{case:()=> Option, '=>':()=>Type}):** create match functor, with returning type, 
+and returning function will take an objects with patterns and functions. First matching pattern, will be applied, the rest ignored.
+If no match, will return initial value with applied type. 
+
+
+
 ### Async Fetch
 
 Tasks for fetch API 
 
-Get Example 
+Example 
 
 ```javascript
 import {get} from './functional/async/Fetch';
@@ -374,7 +445,7 @@ import {task} from './functional/core/Task';
 
 ```
 
-Get example.
+Example.
 
 ```javascript
 import {get} from './functional/async/Fetch';

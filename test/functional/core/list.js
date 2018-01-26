@@ -1,8 +1,9 @@
-let {List, list} = require('../../../dist/functional/core/List'),
-    {expect} = require('chai');
+const {List, list} = require('../../../dist/functional/core/List');
+const {expect}     = require('chai');
+
 describe('List Tests: ', () => {
     it('Testing List Constructor', () => {
-        let a = new List(1, 2, 3);
+        let a            = new List(1, 2, 3);
         let {head, tail} = a;
         expect(head.get()).to.be.eql(1);
 
@@ -12,18 +13,17 @@ describe('List Tests: ', () => {
 
         expect(!tail.tail.tail.isSome()).to.be.true;
 
-
     });
     it('testing list, and map and toArray', () => {
-        let a = list(1, 2, 3);
-        let test = [1, 2, 3];
+        let a     = list(1, 2, 3);
+        let test  = [1, 2, 3];
         let test2 = [2, 3, 4];
 
         a.map((item, i) => {
             expect(item === test[i]);
         });
 
-        let b = a.map(a => a + 1);
+        let b      = a.map(a => a + 1);
         let bArray = b.toArray();
 
         expect(Array.isArray(bArray));
@@ -49,7 +49,6 @@ describe('List Tests: ', () => {
         expect(c.size()).to.be.eql(2);
         expect(d.size()).to.be.eql(1);
 
-
         let testB = [1],
             testC = [2, 1],
             testD = [4];
@@ -71,10 +70,9 @@ describe('List Tests: ', () => {
         expect(c.size()).to.be.eql(2);
         expect(d.size()).to.be.eql(3);
 
-
         let testB = [1],
-            testC = [1,2],
-            testD = [1,2,3];
+            testC = [1, 2],
+            testD = [1, 2, 3];
 
         expect(b.toArray()).to.eql(testB);
         expect(c.toArray()).to.eql(testC);
@@ -118,11 +116,11 @@ describe('List Tests: ', () => {
 
     })
     it('testing find', () => {
-        let a = list(1, 2, 3);
+        let a     = list(1, 2, 3);
         let value = a.find(v => v === 2);
         expect(value).to.be.eql(2);
-        let c = list(1, 2, 3, 3, 3, 3);
-        let i = 0;
+        let c      = list(1, 2, 3, 3, 3, 3);
+        let i      = 0;
         let valueB = c.find(v => {
             i++;
             return v === 3;
@@ -131,22 +129,22 @@ describe('List Tests: ', () => {
         expect(i).to.be.eql(3);
     });
     it('testing find', () => {
-        let a = list(1, 2, 3);
+        let a     = list(1, 2, 3);
         let value = a.filter(v => v >= 2);
         expect(value.toArray()).to.be.eql([2, 3]);
-        let c = list(1, 2, 3, 3, 3);
+        let c      = list(1, 2, 3, 3, 3);
         let valueB = c.filter(v => v === 3);
         expect(valueB.toArray()).to.be.eql([3, 3, 3]);
     });
 
     it('testing take', () => {
-        let a = list(1, 2, 3);
+        let a     = list(1, 2, 3);
         let value = a.take(2);
         expect(value.toArray()).to.be.eql([1, 2]);
 
         let valueB = a.take(1);
         expect(valueB.toArray()).to.be.eql([1]);
-        let c = list(1, 2, 3, 3, 3);
+        let c      = list(1, 2, 3, 3, 3);
         let valueC = c.take(3);
         expect(valueC.toArray()).to.be.eql([1, 2, 3]);
     });
