@@ -4,9 +4,11 @@
 	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.Task_js));
 }(this, (function (exports,Task_js) { 'use strict';
 
+const {assign} = Object;
+
 const load = async (opt) => {
-    const res = await fetch(opt.uri, Object.assign({}, opt, {
-        headers: Object.assign({
+    const res = await fetch(opt.uri, assign({}, opt, {
+        headers: assign({
             'Accept':       'application/json, text/plain, */*',
             'Content-Type': 'application/json'
         }, opt && opt.headers ? opt.headers : {})
@@ -19,45 +21,53 @@ const str = obj => Object.keys(obj)
 
 const fetchTask = Task_js.task(opt => load(opt));
 
+const uriPath = ({protocol, host, uri}) => (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri);
+
 const getBase = Task_js.task(opt => {
-    const {protocol, host, uri, body} = opt;
-    return Object.assign(
+    const {uri, body} = opt;
+    return assign(
+        {credentials: 'include'},
         opt,
         {
-            credentials: 'include',
-            uri:         (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri) + (uri.indexOf('?') === -1 && body ? '?' + str(body) : ''),
-            body:        undefined
+            uri:  uriPath(opt) + (uri.indexOf('?') === -1 && body ? '?' + str(body) : ''),
+            body: undefined
         }
     )
 });
 const get = getBase.copy()
-    .map(opt => Object.assign(
-        opt,
-        {method: 'get'}
+    .map(opt => assign(
+        {method: 'get'},
+        opt
     ))
     .through(fetchTask);
 
 const del = getBase.copy()
-    .map(opt => Object.assign(
-        opt,
-        {method: 'delete'}
+    .map(opt => assign(
+        {method: 'delete'},
+        opt
     ))
     .through(fetchTask);
 
 
-const postBase = Task_js.task(opt => Object.assign(
-    {method: 'post'},
+const postBase = Task_js.task(opt => assign(
+    {
+        method:      'post',
+        credentials: 'include',
+    },
     opt,
-    {body: JSON.stringify(opt.body || {})})
-);
+    {
+        body: JSON.stringify(opt.body || {}),
+        uri:  uriPath(opt)
+    }));
 const post = postBase.copy()
-    .map(opt => Object.assign(
+    .map(opt => assign(
         opt,
         {method: 'post'}
     ))
     .through(fetchTask);
+
 const put = postBase.copy()
-    .map(opt => Object.assign(
+    .map(opt => assign(
         opt,
         {method: 'put'}
     ))
