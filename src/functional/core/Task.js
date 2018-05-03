@@ -247,6 +247,10 @@ class Task {
     static empty() {
         return task();
     };
+
+    static  all(tasks = [], context={}) {
+        return task().flatMap(async ()=>task(await Promise.all(tasks.map(_ => task(context).through(_).unsafeRun()))));
+    }
 }
 
 let task = (...tasks) => new Task(...tasks);

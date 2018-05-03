@@ -508,7 +508,27 @@ describe('Task Tests: ', () => {
         expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c', d: 'd'});
 
 
-    })
+    });
+    it('Test all task Static method', async () => {
+        let taskB = task(d => assign(d, {c: 'c'}));
+
+
+        let taskC = task().through(taskB);
+
+        let taskD = taskC.flatMap(d => task(assign(d, {d: 'd'})));
+
+        let [dataA,dataB] = await Task.all([taskC, taskD], {a: 'a', b: 'b'}).unsafeRun();
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+
+        expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c', d: 'd'});
+
+        let [dataC,dataD] = await Task.all([task().through(taskB), taskC.flatMap(d => task(assign(d, {d: 'd'})))]).unsafeRun();
+        expect(dataC).to.be.eql({ c: 'c'});
+
+        expect(dataD).to.be.eql({c: 'c', d: 'd'});
+
+
+    });
 
 
 });
