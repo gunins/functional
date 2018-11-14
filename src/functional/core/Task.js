@@ -14,34 +14,33 @@ let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply),
  *      @Task(3) // Static values
  * */
 //Define Private methods;
-const _parent = Symbol('_parent'),
-    _topRef = Symbol('_topRef'),
-    _topParent = Symbol('_topParent'),
-    _children = Symbol('_children'),
-    _resolvers = Symbol('_resolvers'),
-    _rejecters = Symbol('_rejecters'),
-    _resolve = Symbol('_resolve'),
-    _reject = Symbol('_reject'),
-    _bottomRef = Symbol('_bottomRef'),
-    _uuid = Symbol('_uuid'),
-
-    _create = Symbol('_create'),
-    _task = Symbol('_task'),
-    _setPromise = Symbol('_setPromise'),
-    _setParent = Symbol('_setParent'),
-    _addParent = Symbol('_addParent'),
-    _setChildren = Symbol('_setChildren'),
-    _resolveRun = Symbol('_resolveRun'),
-    _rejectRun = Symbol('_rejectRun'),
-    _triggerUp = Symbol('_triggerUp'),
-    _triggerDown = Symbol('_triggerDown'),
-    _run = Symbol('_run'),
-    _map = Symbol('_map'),
-    _flatMap = Symbol('_flatMap'),
-    _copyJob = Symbol('_copyJob'),
-    _getTopRef = Symbol('_getTopRef'),
-    _getBottomRef = Symbol('_getBottomRef'),
-    _copy = Symbol('_copy');
+const _parent = Symbol('_parent');
+const _topRef = Symbol('_topRef');
+const _topParent = Symbol('_topParent');
+const _children = Symbol('_children');
+const _resolvers = Symbol('_resolvers');
+const _rejecters = Symbol('_rejecters');
+const _resolve = Symbol('_resolve');
+const _reject = Symbol('_reject');
+const _bottomRef = Symbol('_bottomRef');
+const _uuid = Symbol('_uuid');
+const _create = Symbol('_create');
+const _task = Symbol('_task');
+const _setPromise = Symbol('_setPromise');
+const _setParent = Symbol('_setParent');
+const _addParent = Symbol('_addParent');
+const _setChildren = Symbol('_setChildren');
+const _resolveRun = Symbol('_resolveRun');
+const _rejectRun = Symbol('_rejectRun');
+const _triggerUp = Symbol('_triggerUp');
+const _triggerDown = Symbol('_triggerDown');
+const _run = Symbol('_run');
+const _map = Symbol('_map');
+const _flatMap = Symbol('_flatMap');
+const _copyJob = Symbol('_copyJob');
+const _getTopRef = Symbol('_getTopRef');
+const _getBottomRef = Symbol('_getBottomRef');
+const _copy = Symbol('_copy');
 
 class Task {
 
@@ -248,8 +247,15 @@ class Task {
         return task();
     };
 
-    static  all(tasks = [], context={}) {
-        return task().flatMap(async ()=>task(await Promise.all(tasks.map(_ => task(context).through(_).unsafeRun()))));
+    static all(tasks = [], context = {}) {
+        return task()
+            .flatMap(() => task(
+                Promise.all(
+                    tasks.map(_ => task(context)
+                        .through(_)
+                        .unsafeRun())
+                )
+            ));
     }
 }
 

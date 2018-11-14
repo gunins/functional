@@ -248,8 +248,15 @@ class Task {
         return task();
     };
 
-    static  all(tasks = [], context={}) {
-        return task().flatMap(async ()=>task(await Promise.all(tasks.map(_ => task(context).through(_).unsafeRun()))));
+    static all(tasks = [], context = {}) {
+        return task()
+            .flatMap(() => task(
+                Promise.all(
+                    tasks.map(_ => task(context)
+                        .through(_)
+                        .unsafeRun())
+                )
+            ));
     }
 }
 
