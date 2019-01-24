@@ -26,7 +26,7 @@ describe('List Tests: ', () => {
         let b      = a.map(a => a + 1);
         let bArray = b.toArray();
 
-        expect(Array.isArray(bArray));
+        expect(Array.isArray(bArray)).to.be.true;
         bArray.forEach((item, i) => {
             expect(item === test2[i]);
         })

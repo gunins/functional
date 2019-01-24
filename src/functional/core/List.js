@@ -1,12 +1,20 @@
 import {some, none} from './Option';
 
 //Define Private methods;
-const _create = Symbol('_create'),
-    _reverse = Symbol('_reverse'),
-    _map = Symbol('_map'),
-    _take = Symbol('_take'),
-    _flatMap = Symbol('_flatMap'),
-    _filter = Symbol('_filter');
+const _create = Symbol('_create');
+const _reverse = Symbol('_reverse');
+const _map = Symbol('_map');
+const _take = Symbol('_take');
+const _flatMap = Symbol('_flatMap');
+const _filter = Symbol('_filter');
+
+const hasTail = (tail) => tail && tail.isList && tail.isList();
+const hasHead = (head) => head && head.isSome && head.isSome();
+const noTail = (tail) => tail && tail.isSome && !tail.isSome();
+const tailHasSize = (tail) => hasTail(tail) && hasHead(tail.head);
+
+const flatList = (left, list) => list
+    .foldLeft(left, (_, record) => _.insert(record));
 
 class List {
     constructor(head, ...tail) {
@@ -17,16 +25,16 @@ class List {
     //Private Method
     [_create](head, tail) {
         this.head = head !== undefined ? some(head) : none();
-        this.tail = tail && tail.isList && tail.isList() && tail.head.isSome && tail.head.isSome() ? tail.copy() : none();
+        this.tail = tailHasSize(tail) ? tail : none();
         return this;
     };
 
     //Private Method
     [_reverse](list) {
-        let {head, tail} = this;
+        const {head, tail} = this;
         if (head.isSome()) {
-            let insert = list.insert(head.get());
-            if (tail.isSome && !tail.isSome()) {
+            const insert = list.insert(head.get());
+            if (noTail(tail)) {
                 return insert;
             } else {
                 return tail[_reverse](insert);
@@ -38,32 +46,32 @@ class List {
 
     //private method
     [_map](fn, i = 0) {
-        let {head, tail} = this;
-        let empty = List.empty();
-        return head.isSome() ? empty[_create](fn(head.get(), i), tail.isSome && !tail.isSome() ? none() : tail[_map](fn, i + 1)) : empty;
+        const {head, tail} = this;
+        const empty = List.empty();
+        return hasHead(head) ? empty[_create](fn(head.get(), i), noTail(tail) ? none() : tail[_map](fn, i + 1)) : empty;
     };
 
     //private method
     [_take](count, i = 1) {
-        let {head, tail} = this;
-        let empty = List.empty();
-        return head.isSome() ? empty[_create](head.get(), (tail.isSome && !tail.isSome()) || count <= i ? none() : tail[_take](count, i + 1)) : empty;
+        const {head, tail} = this;
+        const empty = List.empty();
+        return hasHead(head) ? empty[_create](head.get(), (noTail(tail)) || count <= i ? none() : tail[_take](count, i + 1)) : empty;
     }
 
     //private method
     [_flatMap](fn, i = 0) {
-        let {head, tail} = this,
-            list = head.isSome() ? fn(head.get(), i) : List.empty();
-        return tail.isSome && !tail.isSome() ? list : list.concat(tail[_flatMap](fn, i));
+        const {head, tail} = this;
+        const list = hasHead(head) ? fn(head.get(), i) : List.empty();
+        return noTail(tail) ? list : list.concat(tail[_flatMap](fn, i));
 
     };
 
     //private method
     [_filter](fn, list = List.empty()) {
-        let {head, tail} = this,
-            value = head.get(),
-            comparison = fn(value);
-        let outList = comparison ? list.insert(value) : list;
+        const {head, tail} = this;
+        const value = head.get();
+        const comparison = fn(value);
+        const outList = comparison ? list.insert(value) : list;
         return tail.isList && tail.isList() ? tail[_filter](fn, outList) : outList.reverse();
     }
 
@@ -84,18 +92,15 @@ class List {
     };
 
     concat(...lists) {
-        let empty = List.empty();
-        [this].concat(lists).forEach(list => {
-            list.forEach(record => {
-                empty = empty.insert(record);
-            });
-        });
-        return empty.reverse();
+        const listArray = [this, ...lists];
+        return listArray
+            .reduce(flatList, List.empty())
+            .reverse();
     };
 
     reverse() {
-        let {head} = this,
-            empty = List.empty();
+        const {head} = this;
+        const empty = List.empty();
         if (!head.isSome()) {
             return empty;
         } else {
@@ -106,12 +111,12 @@ class List {
 
 
     foldLeft(a, fn) {
-        let func = fn || a,
-            initialValue = fn ? a : undefined,
-            {head, tail} = this;
+        const func = fn || a;
+        const initialValue = fn ? a : undefined;
+        const {head, tail} = this;
         if (!head.isSome()) {
             return initialValue;
-        } else if (head.isSome() && tail.isSome && !tail.isSome()) {
+        } else if (head.isSome() && noTail(tail)) {
             return func(initialValue, head.get());
         } else {
             return tail.foldLeft(func(initialValue, head.get()), func)
@@ -119,15 +124,16 @@ class List {
     }
 
     foldRight(a, fn) {
-        return this.reverse().foldLeft(a, fn);
+        return this
+            .reverse()
+            .foldLeft(a, fn);
     };
 
     find(fn) {
-        let {head, tail} = this,
-            value = head.get(),
-            comparison = fn(value);
-
-        return comparison ? value : tail.isList && tail.isList() ? tail.find(fn) : none();
+        const {head, tail} = this;
+        const value = head.get();
+        const comparison = fn(value);
+        return comparison ? value : hasTail(tail) ? tail.find(fn) : none();
     };
 
 
@@ -152,9 +158,7 @@ class List {
     };
 
     size() {
-        let count = 0
-        this.forEach(() => count++);
-        return count;
+        return this.foldLeft(0, _ => ++_);
     };
 
     take(count) {
@@ -170,9 +174,7 @@ class List {
     };
 
     toArray() {
-        let array = [];
-        this.forEach(item => array.push(item));
-        return array;
+        return this.foldLeft([], (_, value) => [..._, value]);
     }
 
     static empty() {
@@ -181,6 +183,7 @@ class List {
 
 
 }
-let list = (...fns) => new List(...fns);
+
+const list = (...fns) => new List(...fns);
 
 export {List, list}
