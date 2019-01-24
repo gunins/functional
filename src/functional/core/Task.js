@@ -3,10 +3,10 @@ import {some, none} from './Option';
 import {clone} from '../utils/clone';
 
 
-let isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply),
-    toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job),
-    emptyFn = () => {
-    };
+const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
+const toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job);
+const emptyFn = () => {
+};
 /**
  * Task class is for asyns/sync jobs. You can provide 3 types on tasks
  *      @Task((resolve,reject)=>resolve()) // resolve reject params
