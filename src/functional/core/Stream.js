@@ -56,9 +56,9 @@ const _getBottomRef = Symbol('_getBottomRef');
 const _copy = Symbol('_copy');
 
 
+const _refs = Symbol('_refs');
 const _handlers = Symbol('_handlers');
 const _setHandlers = Symbol('_setHandlers');
-const _getHandlers = Symbol('_getHandlers');
 
 const _onReady = Symbol('_onReady');
 const _onPause = Symbol('_onPause');
@@ -72,6 +72,7 @@ class Stream {
     // for non stream instances better to use tasks.
     constructor(job, parent) {
         this[_uuid] = Symbol('uuid');
+        this[_refs] = storage();
         this[_setHandlers](storage());
 
         this[_children] = List.empty();
@@ -90,9 +91,9 @@ class Stream {
 
     [_setParent](parent) {
         if (isStream(parent)) {
-            this[_handlers].set(_parent, (..._) => parent[_triggerUp](..._));
-            this[_handlers].set(_topRef, (..._) => parent[_getTopRef](..._));
-            this[_handlers].set(_topParent, (..._) => parent[_addParent](..._));
+            this[_refs].set(_parent, (..._) => parent[_triggerUp](..._));
+            this[_refs].set(_topRef, (..._) => parent[_getTopRef](..._));
+            this[_refs].set(_topParent, (..._) => parent[_addParent](..._));
         }
     }
 
@@ -102,7 +103,7 @@ class Stream {
 
     [_copyJob](parent) {
         const job = stream(this[_stream].get(), parent);
-        job[_setHandlers](this[_getHandlers]);
+        job[_setHandlers](this[_handlers]);
 
         if (parent) {
             parent[_setChildren](job);
@@ -112,10 +113,6 @@ class Stream {
 
     [_setHandlers](handlers) {
         this[_handlers] = handlers
-    };
-
-    [_getHandlers]() {
-        return this[_handlers]
     };
 
 
@@ -128,7 +125,7 @@ class Stream {
         const copyJob = goNext ? parent : this[_copyJob](parent);
         const next = goNext || this[_uuid] === uuid;
 
-        return this[_handlers].get(_bottomRef).getOrElse((uuid, job) => job)(uuid, copyJob, next);
+        return this[_refs].get(_bottomRef).getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
     [_copy](uuid) {
