@@ -2,215 +2,247 @@ import {some, none} from './Option';
 import {task} from './Task';
 import {List} from './List';
 
+const isStream = ({isStream} = {}) => isStream && isStream();
+const isOption = ({isOption} = {}) => isOption && isOption();
+
+const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
+const toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job);
+
+const storage = () => {
+    const store = new Map();
+    return {
+        get(key) {
+            return store.get(key) || none()
+        },
+        set(key, value) {
+            const data = isOption(value) ? value : some(value);
+            store.set(key, data);
+            return data;
+        }
+    }
+};
+
 /**
  * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
  * */
-let setTask = (fn) => fn && fn.isTask && fn.isTask() ? fn : task(fn),
-    emptyFn = () => {
-    };
+
 //Define Private methods
-const _create = Symbol('_create'),
-    _reverse = Symbol('_reverse'),
-    _applyMethod = Symbol('_applyMethod'),
-    _map = Symbol('_map'),
-    _flatMap = Symbol('_flatMap'),
-    _through = Symbol('_through'),
-    _resolve = Symbol('_resolve'),
-    _reject = Symbol('_reject'),
-    _forEach = Symbol('_forEach'),
-    _run = Symbol('_run');
+const _parent = Symbol('_parent');
+const _topRef = Symbol('_topRef');
+const _topParent = Symbol('_topParent');
+const _children = Symbol('_children');
+const _resolvers = Symbol('_resolvers');
+const _rejecters = Symbol('_rejecters');
+const _resolve = Symbol('_resolve');
+const _reject = Symbol('_reject');
+const _bottomRef = Symbol('_bottomRef');
+const _uuid = Symbol('_uuid');
+const _create = Symbol('_create');
+const _stream = Symbol('_stream');
+const _setPromise = Symbol('_setPromise');
+const _setParent = Symbol('_setParent');
+const _addParent = Symbol('_addParent');
+const _setChildren = Symbol('_setChildren');
+const _resolveRun = Symbol('_resolveRun');
+const _rejectRun = Symbol('_rejectRun');
+const _triggerUp = Symbol('_triggerUp');
+const _triggerDown = Symbol('_triggerDown');
+const _run = Symbol('_run');
+const _map = Symbol('_map');
+const _flatMap = Symbol('_flatMap');
+const _copyJob = Symbol('_copyJob');
+const _getTopRef = Symbol('_getTopRef');
+const _getBottomRef = Symbol('_getBottomRef');
+const _copy = Symbol('_copy');
+
+
+const _handlers = Symbol('_handlers');
+const _setHandlers = Symbol('_setHandlers');
+const _getHandlers = Symbol('_getHandlers');
+
+const _onReady = Symbol('_onReady');
+const _onPause = Symbol('_onPause');
+const _onResume = Symbol('_onResume');
+const _onStop = Symbol('_onStop');
+const _onData = Symbol('_onData');
+const _onError = Symbol('_onError');
 
 class Stream {
-    constructor(head, ...tail) {
-        this[_create](head, tail.length > 0 ? stream(...tail) : none());
+    // job will return stream instance. In case onReady not defined, shortcut for.map method.
+    // for non stream instances better to use tasks.
+    constructor(job, parent) {
+        this[_uuid] = Symbol('uuid');
+        this[_setHandlers](storage());
+
+        this[_children] = List.empty();
+        this[_resolvers] = List.empty();
+        this[_rejecters] = List.empty();
+
+
+        this[_create](job, parent);
     }
 
-    //private function.
-    [_create](head, tail) {
-        this.head = head !== undefined ? some(setTask(head)) : none();
-        this.tail = tail && tail.isStream && tail.isStream() ? tail.copy() : none();
+    [_create](job, parent) {
+        this[_setParent](parent);
+        this[_stream] = job !== undefined ? some(toFunction(job)) : none();
+        return this;
+    }
+
+    [_setParent](parent) {
+        if (isStream(parent)) {
+            this[_handlers].set(_parent, (..._) => parent[_triggerUp](..._));
+            this[_handlers].set(_topRef, (..._) => parent[_getTopRef](..._));
+            this[_handlers].set(_topParent, (..._) => parent[_addParent](..._));
+        }
+    }
+
+    [_triggerUp]() {
+    };
+
+
+    [_copyJob](parent) {
+        const job = stream(this[_stream].get(), parent);
+        job[_setHandlers](this[_getHandlers]);
+
+        if (parent) {
+            parent[_setChildren](job);
+        }
+        return job;
+    };
+
+    [_setHandlers](handlers) {
+        this[_handlers] = handlers
+    };
+
+    [_getHandlers]() {
+        return this[_handlers]
+    };
+
+
+    [_getTopRef](uuid) {
+        return this[_topRef]
+            .getOrElse((uuid) => this[_copy](uuid))(uuid);
+    };
+
+    [_getBottomRef](uuid, parent, goNext = false) {
+        const copyJob = goNext ? parent : this[_copyJob](parent);
+        const next = goNext || this[_uuid] === uuid;
+
+        return this[_handlers].get(_bottomRef).getOrElse((uuid, job) => job)(uuid, copyJob, next);
+    }
+
+    [_copy](uuid) {
+        return this[_getBottomRef](uuid);
+    };
+
+
+    // return copy of stream instance
+    copy() {
+    };
+
+    // return new stream instance
+    map(fn) {
+    };
+
+    // return new stream instance
+    flatMap(fn) {
+    };
+
+    // return new stream instance
+    through(_stream) {
+    };
+
+    throughTask(_task) {
+    };
+
+    //OPTIONAL: onReady Means, taking initialisation object, and return promise with new params.
+    // return same instance
+
+    onReady(cb) {
+        this[_handlers].set(_onReady, cb);
+        return this;
+
+    };
+
+    // OPTIONAL: event to pause, for example filereader, or web socket
+    // return same instance
+    onPause(cb) {
+        this[_handlers].set(_onPause, cb);
+        return this;
+
+    };
+
+    //OPTIONAL: event to resume stream.
+    // return same instance
+
+    onResume(cb) {
+        this[_handlers].set(_onResume, cb);
         return this;
     };
 
-    //Private Method
-    [_reverse](stream) {
-        let {head, tail} = this;
-        if (head.isSome()) {
-            let insert = stream.insert(head.get());
-            if (tail.isSome && !tail.isSome()) {
-                return insert;
-            } else {
-                return tail[_reverse](insert);
-            }
-        } else {
-            return stream;
-        }
+    //OPTIONAL: In case need to destroy instance
+    // return same instance
+    onStop(cb) {
+        this[_handlers].set(_onStop, cb);
+        return this;
     };
 
-    [_applyMethod](method, fn) {
-        let {head, tail} = this;
-        let empty = Stream.empty();
-        return head.isSome() ? empty[_create](head.get()[method](fn), tail.isSome && !tail.isSome() ? none() : tail[_applyMethod](method, fn)) : empty;
+    // OPTIONAL: every time data collected
+    // Will return, chunk, and scope context. In case you need to manage own history.
+    // return same instance
+    onData(cb) {
+        this[_handlers].set(_onData, cb);
+        return this;
+    };
+
+    // OPTIONAL: handling error.
+    // return same instance
+    onError(cb) {
+        this[_handlers].set(_onError, cb);
+        return this;
+
     }
 
-    //private method
-    [_map](fn) {
-        return this[_applyMethod]('map', fn);
-    };
-
-    //private method
-    //TODO: probably has to flattening stream.
-    [_flatMap](fn) {
-        return this[_applyMethod]('flatMap', fn);
-    };
-
-    //private method
-    [_through](_task) {
-        return this[_applyMethod]('through', _task);
-    };
-
-    //private method
-    [_resolve](fn) {
-        return this[_applyMethod]('resolve', fn);
-    }; //private method
-
-    [_reject](fn) {
-        return this[_applyMethod]('reject', fn);
-    };
-
-    [_forEach](fn) {
-        let {head, tail} = this;
-        if (head.isSome()) {
-            fn(head.get().copy());
-        }
-        ;
-
-        if (tail && tail.isStream && tail.isStream()) {
-            tail[_forEach](fn)
-        }
-    }
-
-    insert(head) {
-        return Stream.empty()[_create](setTask(head), this.head ? this : none());
-    };
-
-    add(head) {
-        return this.reverse().insert(head).reverse();
-    }
-
-    _copy() {
-        let {head, tail} = this;
-        let empty = Stream.empty();
-        return head.isSome() ? empty[_create](head.get().copy(), tail.isSome && !tail.isSome() ? none() : tail._copy()) : empty;
-
-    };
-
-
-    async [_run]() {
-        let {head, tail} = this;
-        let empty = List.empty();
-
-        if (head.isSome()) {
-            let awaitHEad = await head.get().unsafeRun();
-            empty = empty.insert(awaitHEad);
-        }
-
-        if (tail.isStream && tail.isStream()) {
-            let awaitTail = await tail[_run]();
-            empty = empty.concat(awaitTail);
-        }
-
-        return empty;
-
-    };
-
-    copy() {
-        return this._copy();
-    };
-
-
-    /**
-     * FROM stream(1,2,3) RETURNING stream(task(1),task(2),task(3));
-     * */
-    map(fn) {
-        return this[_map](fn);
-    };
-
-    flatMap(fn) {
-        return this[_flatMap](fn);
-    };
-
-    async foldLeft(initial, fn) {
-        let list = await this.toList();
-        return list.foldLeft(initial, fn);
-    };
-
-    async foldRight(initial, fn) {
-        let list = await this.toList();
-        return list.foldRight(initial, fn);
-    };
-
-    reverse() {
-        let {head} = this,
-            empty = Stream.empty();
-        if (!head.isSome()) {
-            return empty;
-        } else {
-            return this[_reverse](empty);
-        }
-    };
-
-    concat(...streams) {
-        let empty = Stream.empty();
-        [this].concat(streams).forEach(stream => {
-            stream[_forEach](record => {
-                empty = empty.insert(record);
-            });
-        });
-        return empty.reverse();
-    };
-
-    size() {
-        let count = 0
-        this[_forEach](() => count++);
-        return count;
-    };
-
-    through(_task) {
-        return this[_through](_task);
-    };
-
-    resolve(fn) {
-        return this[_resolve](fn);
-    };
-
-    reject(fn) {
-        return this[_reject](fn);
-    }
-
-    repeat() {
-
-    };
-
-    zip() {
-
-    };
-
+    // boolean, if straem instance or not
     isStream() {
         return this.toString() === '[object Stream]';
     };
 
-    async toArray() {
-        let streamList = await this.toList();
-        return streamList.toArray();
+
+    //Infinite stream, skip error/ continue.
+    //    @param errors, how many error retries, till fail.
+    unsafeRun(errors) {
+        return {
+            stop() {
+
+            },
+            pause() {
+
+            },
+            resume() {
+
+            }
+        }
     };
 
-    async toList() {
-        return await this[_run]();
-    };
+    //Infinite stream, auto stop on error.
+    safeRun() {
+        return {
+            stop() {
 
-    async unsafeRun() {
-        return await this[_run]();
+            },
+            pause() {
+
+            },
+            resume() {
+
+            }
+        }
+    }
+
+    // Runs stream till return null. Will return Promise with instance context
+    run() {
+        //return Promise.
     }
 
 
@@ -223,6 +255,6 @@ class Stream {
     };
 }
 
-let stream = (...tasks) => new Stream(...tasks);
+let stream = (...args) => new Stream(...args);
 
 export {Stream, stream}

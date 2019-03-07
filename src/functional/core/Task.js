@@ -67,8 +67,9 @@ class Task {
 
     [_setPromise](job) {
         return (data, res) => new Promise((resolve, reject) => {
-            let out = clone(data),
-                fn = job.getOrElse((_, resolve) => resolve(out));
+            const out = clone(data);
+            const fn = job.getOrElse((_, resolve) => resolve(out));
+
             if (res) {
                 return (fn.length <= 1) ? resolve(fn(out)) : fn(out, resolve, reject);
             } else {
@@ -79,9 +80,9 @@ class Task {
 
     [_setParent](parent) {
         if (parent && parent.isTask && parent.isTask()) {
-            this[_parent] = some(parent[_triggerUp].bind(parent));
-            this[_topRef] = some(parent[_getTopRef].bind(parent));
-            this[_topParent] = some(parent[_addParent].bind(parent));
+            this[_parent] = some((..._) => parent[_triggerUp](..._));
+            this[_topRef] = some((..._) => parent[_getTopRef](..._));
+            this[_topParent] = some((..._) => parent[_addParent](..._));
         }
     };
 
@@ -94,8 +95,8 @@ class Task {
 
     [_setChildren](children) {
         if (children && children.isTask && children.isTask()) {
-            this[_children] = this[_children].insert(children[_run].bind(children));
-            this[_bottomRef] = some(children[_getBottomRef].bind(children));
+            this[_children] = this[_children].insert((..._) => children[_run](..._));
+            this[_bottomRef] = some((..._) => children[_getBottomRef](..._));
         }
 
     };
@@ -127,28 +128,28 @@ class Task {
 
     [_run](resp, resolve = true) {
         return this[_setPromise](this[_task])(resp, resolve)
-            .then(this[_resolveRun].bind(this))
-            .catch(this[_rejectRun].bind(this));
+            .then((_) => this[_resolveRun](_))
+            .catch((_) => this[_rejectRun](_));
     };
 
     [_map](fn) {
-        let job = task(fn, this);
+        const job = task(fn, this);
         this[_setChildren](job);
         return job;
     };
 
     [_flatMap](fn) {
         return this[_map](fn)
-            .map((responseTask, res, rej) => {
+            .map((responseTask) => {
                 if (!(responseTask.isTask && responseTask.isTask())) {
-                    rej('flatMap has to return task');
+                    return Promise.reject('flatMap has to return task');
                 }
-                responseTask.unsafeRun().then(res).catch(rej);
+                return responseTask.unsafeRun();
             });
     };
 
     [_copyJob](parent) {
-        let job = task(this[_task].get(), parent);
+        const job = task(this[_task].get(), parent);
         job[_resolvers] = this[_resolvers];
         job[_rejecters] = this[_rejecters];
 
@@ -164,8 +165,8 @@ class Task {
     };
 
     [_getBottomRef](uuid, parent, goNext = false) {
-        let copyJob = goNext ? parent : this[_copyJob](parent);
-        let next = goNext || this[_uuid] === uuid ? true : false;
+        const copyJob = goNext ? parent : this[_copyJob](parent);
+        const next = goNext || this[_uuid] === uuid;
         return this[_bottomRef].getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
@@ -187,7 +188,7 @@ class Task {
     };
 
     through(joined) {
-        let clone = joined.copy();
+        const clone = joined.copy();
         clone[_addParent](this);
         return clone;
     };
@@ -259,6 +260,6 @@ class Task {
     }
 }
 
-let task = (...tasks) => new Task(...tasks);
+const task = (...tasks) => new Task(...tasks);
 
 export {Task, task}
