@@ -4,9 +4,17 @@ import {clone} from '../utils/clone';
 
 
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
-const toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job);
-const emptyFn = () => {
-};
+const toFunction = (job) => isFunction(job) ? job : () => job;
+const emptyFn = _ => _;
+const setPromise = (job) => (data, success) => new Promise((resolve, reject) => {
+    const dataCopy = clone(data);
+    const fn = job.getOrElse(emptyFn);
+    if (success) {
+        return (fn.length <= 1) ? resolve(fn(dataCopy)) : fn(dataCopy, resolve, reject);
+    } else {
+        return reject(dataCopy);
+    }
+});
 /**
  * Task class is for asyns/sync jobs. You can provide 3 types on tasks
  *      @Task((resolve,reject)=>resolve()) // resolve reject params
@@ -66,16 +74,7 @@ class Task {
     };
 
     [_setPromise](job) {
-        return (data, res) => new Promise((resolve, reject) => {
-            const out = clone(data);
-            const fn = job.getOrElse((_, resolve) => resolve(out));
-
-            if (res) {
-                return (fn.length <= 1) ? resolve(fn(out)) : fn(out, resolve, reject);
-            } else {
-                return reject(out);
-            }
-        });
+        return setPromise(job);
     };
 
     [_setParent](parent) {
@@ -90,7 +89,8 @@ class Task {
         this[_topParent].getOrElse((parent) => {
             parent[_setChildren](this);
             this[_setParent](parent)
-        })(parent)
+        })(parent);
+        return this;
     };
 
     [_setChildren](children) {
@@ -126,8 +126,8 @@ class Task {
         this[_children].map(child => child(data, resolve));
     };
 
-    [_run](resp, resolve = true) {
-        return this[_setPromise](this[_task])(resp, resolve)
+    [_run](data, success = true) {
+        return this[_setPromise](this[_task])(data, success)
             .then((_) => this[_resolveRun](_))
             .catch((_) => this[_rejectRun](_));
     };
@@ -188,9 +188,9 @@ class Task {
     };
 
     through(joined) {
-        const clone = joined.copy();
-        clone[_addParent](this);
-        return clone;
+        return joined
+            .copy()
+            [_addParent](this);
     };
 
     forEach(fn) {

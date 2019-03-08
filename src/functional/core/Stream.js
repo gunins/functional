@@ -1,12 +1,24 @@
 import {some, none} from './Option';
 import {task} from './Task';
 import {List} from './List';
+import {clone} from '../utils/clone';
+import {option} from '../utils/option';
 
 const isStream = ({isStream} = {}) => isStream && isStream();
-const isOption = ({isOption} = {}) => isOption && isOption();
-
+const isMaybe = ({isOption} = {}) => isOption && isOption();
+const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
-const toFunction = (job) => isFunction(job) ? job : (_, resolve) => resolve(job);
+const toFunction = (job) => option()
+    .or(isFunction(job), () => some(job))
+    .or(isDefined(job), () => some(() => job))
+    .finally(() => none());
+
+const emptyFn = _ => _;
+
+const toMaybe = (value) => option()
+    .or(isMaybe(value), () => value)
+    .or(!isDefined(value), () => none())
+    .finally(() => some(value));
 
 const storage = () => {
     const store = new Map();
@@ -15,15 +27,24 @@ const storage = () => {
             return store.get(key) || none()
         },
         set(key, value) {
-            const data = isOption(value) ? value : some(value);
+            const data = toMaybe(value);
             store.set(key, data);
             return data;
         }
     }
 };
 
+const setPromise = (job) => (data, res) => new Promise((resolve, reject) => {
+    const fn = job.getOrElse(emptyFn);
+    if (res) {
+        return (fn.length <= 1) ? resolve(fn(data)) : fn(data, resolve, reject);
+    } else {
+        return reject(data);
+    }
+});
+
 /**
- * Stream is executing asynchronusly, Tasks, with Lazy evaluation.
+ * Stream is executing asynchronusly.
  * */
 
 //Define Private methods
@@ -38,13 +59,12 @@ const _reject = Symbol('_reject');
 const _bottomRef = Symbol('_bottomRef');
 const _uuid = Symbol('_uuid');
 const _create = Symbol('_create');
-const _stream = Symbol('_stream');
 const _setPromise = Symbol('_setPromise');
 const _setParent = Symbol('_setParent');
 const _addParent = Symbol('_addParent');
 const _setChildren = Symbol('_setChildren');
-const _resolveRun = Symbol('_resolveRun');
-const _rejectRun = Symbol('_rejectRun');
+const _successRun = Symbol('_successRun');
+const _failRun = Symbol('_failRun');
 const _triggerUp = Symbol('_triggerUp');
 const _triggerDown = Symbol('_triggerDown');
 const _run = Symbol('_run');
@@ -57,9 +77,10 @@ const _copy = Symbol('_copy');
 
 
 const _refs = Symbol('_refs');
-const _handlers = Symbol('_handlers');
-const _setHandlers = Symbol('_setHandlers');
+const _stream = Symbol('_stream');
+const _setStream = Symbol('_setStream');
 
+const _instance = Symbol('_instance');
 const _onReady = Symbol('_onReady');
 const _onPause = Symbol('_onPause');
 const _onResume = Symbol('_onResume');
@@ -73,11 +94,9 @@ class Stream {
     constructor(job, parent) {
         this[_uuid] = Symbol('uuid');
         this[_refs] = storage();
-        this[_setHandlers](storage());
+        this[_setStream](storage());
 
         this[_children] = List.empty();
-        this[_resolvers] = List.empty();
-        this[_rejecters] = List.empty();
 
 
         this[_create](job, parent);
@@ -85,9 +104,18 @@ class Stream {
 
     [_create](job, parent) {
         this[_setParent](parent);
-        this[_stream] = job !== undefined ? some(toFunction(job)) : none();
+        this[_stream].set(_instance, toFunction(job));
         return this;
     }
+
+    [_addParent](parent) {
+        this[_refs].get(_topParent)
+            .getOrElse((parent) => {
+                parent[_setChildren](this);
+                this[_setParent](parent);
+            })(parent);
+        return this;
+    };
 
     [_setParent](parent) {
         if (isStream(parent)) {
@@ -97,13 +125,23 @@ class Stream {
         }
     }
 
-    [_triggerUp]() {
+    [_setChildren](children) {
+        if (isStream(children)) {
+            this[_children] = this[_children].insert((..._) => children[_run](..._));
+            this[_refs].set(_bottomRef, (..._) => children[_getBottomRef](..._));
+        }
+
+    };
+
+    [_triggerUp](_) {
+        return this[_refs].get(_parent).getOrElse((_) => this[_run](null, true, _))(_);
+
     };
 
 
     [_copyJob](parent) {
         const job = stream(this[_stream].get(), parent);
-        job[_setHandlers](this[_handlers]);
+        job[_setStream](this[_stream]);
 
         if (parent) {
             parent[_setChildren](job);
@@ -111,8 +149,8 @@ class Stream {
         return job;
     };
 
-    [_setHandlers](handlers) {
-        this[_handlers] = handlers
+    [_setStream](handlers) {
+        this[_stream] = handlers
     };
 
 
@@ -125,16 +163,24 @@ class Stream {
         const copyJob = goNext ? parent : this[_copyJob](parent);
         const next = goNext || this[_uuid] === uuid;
 
-        return this[_refs].get(_bottomRef).getOrElse((uuid, job) => job)(uuid, copyJob, next);
+        return this[_refs]
+            .get(_bottomRef)
+            .getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
     [_copy](uuid) {
         return this[_getBottomRef](uuid);
     };
 
+    [_run](data, success = true, type) {
+        return this[_setPromise](this[_stream], this[_stream])(data, success, type)
+            .then((_) => this[_successRun](_))
+            .catch((_) => this[_failRun](_));
+    };
 
     // return copy of stream instance
     copy() {
+        return this[_getTopRef](this[_uuid]);
     };
 
     // return new stream instance
@@ -146,7 +192,10 @@ class Stream {
     };
 
     // return new stream instance
-    through(_stream) {
+    through(joined) {
+        return joined
+            .copy()
+            [_addParent](this);
     };
 
     throughTask(_task) {
@@ -156,7 +205,7 @@ class Stream {
     // return same instance
 
     onReady(cb) {
-        this[_handlers].set(_onReady, cb);
+        this[_stream].set(_onReady, cb);
         return this;
 
     };
@@ -164,7 +213,7 @@ class Stream {
     // OPTIONAL: event to pause, for example filereader, or web socket
     // return same instance
     onPause(cb) {
-        this[_handlers].set(_onPause, cb);
+        this[_stream].set(_onPause, cb);
         return this;
 
     };
@@ -173,14 +222,14 @@ class Stream {
     // return same instance
 
     onResume(cb) {
-        this[_handlers].set(_onResume, cb);
+        this[_stream].set(_onResume, cb);
         return this;
     };
 
     //OPTIONAL: In case need to destroy instance
     // return same instance
     onStop(cb) {
-        this[_handlers].set(_onStop, cb);
+        this[_stream].set(_onStop, cb);
         return this;
     };
 
@@ -188,14 +237,14 @@ class Stream {
     // Will return, chunk, and scope context. In case you need to manage own history.
     // return same instance
     onData(cb) {
-        this[_handlers].set(_onData, cb);
+        this[_stream].set(_onData, cb);
         return this;
     };
 
     // OPTIONAL: handling error.
     // return same instance
     onError(cb) {
-        this[_handlers].set(_onError, cb);
+        this[_stream].set(_onError, cb);
         return this;
 
     }
