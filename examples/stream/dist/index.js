@@ -50,6 +50,10 @@ class Some {
         return this.isSome() ? this.value : defaultVal
     };
 
+    getOrElseLazy(defaultVal=()=>{}) {
+        return this.isSome() ? this.value : defaultVal()
+    };
+
     toString() {
         return '[object Some]';
     };
@@ -77,7 +81,7 @@ class None extends Some {
 //Define Private methods;
 const _create$1 = Symbol('_create');
 const _reverse = Symbol('_reverse');
-const _map$1 = Symbol('_map');
+const _map = Symbol('_map');
 const _take = Symbol('_take');
 const _flatMap$1 = Symbol('_flatMap');
 const _filter = Symbol('_filter');
@@ -119,10 +123,10 @@ class List {
     };
 
     //private method
-    [_map$1](fn, i = 0) {
+    [_map](fn, i = 0) {
         const {head, tail} = this;
         const empty = List.empty();
-        return hasHead(head) ? empty[_create$1](fn(head.get(), i), noTail(tail) ? none() : tail[_map$1](fn, i + 1)) : empty;
+        return hasHead(head) ? empty[_create$1](fn(head.get(), i), noTail(tail) ? none() : tail[_map](fn, i + 1)) : empty;
     };
 
     //private method
@@ -216,7 +220,7 @@ class List {
     };
 
     map(fn) {
-        return this[_map$1](fn);
+        return this[_map](fn);
     };
 
     forEach(fn) {
@@ -292,11 +296,10 @@ const clone = (obj) => getFunctor(obj)(children => clone(children));
 
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => isFunction(job) ? job : () => job;
-const emptyFn = () => {
-};
+const emptyFn = _ => _;
 const setPromise = (job) => (data, success) => new Promise((resolve, reject) => {
     const dataCopy = clone(data);
-    const fn = job.getOrElse(_ => _);
+    const fn = job.getOrElse(emptyFn);
     if (success) {
         return (fn.length <= 1) ? resolve(fn(dataCopy)) : fn(dataCopy, resolve, reject);
     } else {
@@ -331,7 +334,6 @@ const _rejectRun = Symbol('_rejectRun');
 const _triggerUp = Symbol('_triggerUp');
 const _triggerDown = Symbol('_triggerDown');
 const _run = Symbol('_run');
-const _map = Symbol('_map');
 const _flatMap = Symbol('_flatMap');
 const _copyJob = Symbol('_copyJob');
 const _getTopRef = Symbol('_getTopRef');
@@ -420,14 +422,9 @@ class Task {
             .catch((_) => this[_rejectRun](_));
     };
 
-    [_map](fn) {
-        const job = task(fn, this);
-        this[_setChildren](job);
-        return job;
-    };
-
     [_flatMap](fn) {
-        return this[_map](fn)
+        return this
+            .map(fn)
             .map((responseTask) => {
                 if (!(responseTask.isTask && responseTask.isTask())) {
                     return Promise.reject('flatMap has to return task');
@@ -440,7 +437,6 @@ class Task {
         const job = task(this[_task].get(), parent);
         job[_resolvers] = this[_resolvers];
         job[_rejecters] = this[_rejecters];
-
 
         if (parent) {
             parent[_setChildren](job);
@@ -468,7 +464,9 @@ class Task {
 
 
     map(fn) {
-        return this[_map](fn);
+        const job = task(fn, this);
+        this[_setChildren](job);
+        return job;
     };
 
     flatMap(fn) {
@@ -550,11 +548,34 @@ class Task {
 
 const task = (...tasks) => new Task(...tasks);
 
-const isStream = ({isStream} = {}) => isStream && isStream();
-const isOption = ({isOption} = {}) => isOption && isOption();
+const lambda = () => {
+};
+//Option will find true statement and returning result (Call by Value)
+const option = (...methods) => ({
+    or(bool, left) {
+        return option(...methods, {bool, left})
+    },
+    finally(right = lambda) {
+        const {left} = methods.find(({bool}) => bool) || {};
+        return left ? left() : right();
+    }
+});
 
+const isStream = (_ = {}) => _.isStream && _.isStream();
+const isMaybe = (_ = {}) => _.isOption && _.isOption();
+const isDefined = (_) => _ !== undefined;
 const isFunction$1 = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
-const toFunction$1 = (job) => isFunction$1(job) ? job : () => job;
+const toFunction$1 = (job) => option()
+    .or(isFunction$1(job), () => some(job))
+    .or(isDefined(job), () => some(() => job))
+    .finally(() => none());
+
+const emptyFn$1 = _ => _;
+
+const toMaybe = (value) => option()
+    .or(isMaybe(value), () => value)
+    .or(!isDefined(value), () => none())
+    .finally(() => some(value));
 
 const storage = () => {
     const store = new Map();
@@ -563,12 +584,69 @@ const storage = () => {
             return store.get(key) || none()
         },
         set(key, value) {
-            const data = isOption(value) ? value : some(value);
+            const data = toMaybe(value);
             store.set(key, data);
             return data;
+        },
+        has(key) {
+            return store.has(key);
+
         }
     }
 };
+
+const getRoot = (instance, onReady) => option()
+    .or(onReady, () => instance())
+    .finally(() => instance);
+
+
+const setPromise$1 = (streamInstance, context) => (data, success, type) => {
+    const instance = streamInstance.get(_instance);
+    const onReady = streamInstance.get(_onReady);
+    const onData = streamInstance.get(_onData);
+
+    const streamContext = context.get(_context);
+    console.log('streamType', type);
+    if (!success) {
+        return Promise.resolve(streamContext.get())
+    }
+    return new Promise((resolve, reject) => {
+        const root = context
+            .get(_root)
+            .getOrElseLazy(() => {
+                const rootInstance = getRoot(instance.get(), onReady.get());
+                context.set(_root, rootInstance);
+                return rootInstance;
+            });
+        resolve(root);
+    })
+        .then((root) => {
+            const response = onReady.getOrElse(() => root(data));
+            const res = response(root, data);
+            console.log('onReady', res);
+            return res;
+            //createRoot -> ?onReady -> instance() else instance
+        })
+        .then((data) => {
+            if (data) {
+                const response = onData.getOrElse(emptyFn$1)(data, streamContext.get());
+                console.log('onData', response);
+                context.set(_context, response);
+                return response;
+            } else {
+                return data;
+            }
+        })
+
+};
+
+const repeat = (method, stop) => method()
+    .then((data) => {
+        console.log('repeatData', data);
+        return option()
+            .or(data, () => method())
+            .finally(() => stop())
+    });
 
 /**
  * Stream is executing asynchronusly.
@@ -582,11 +660,14 @@ const _children$1 = Symbol('_children');
 const _bottomRef$1 = Symbol('_bottomRef');
 const _uuid$1 = Symbol('_uuid');
 const _create$2 = Symbol('_create');
-const _stream = Symbol('_stream');
 const _setParent$1 = Symbol('_setParent');
 const _addParent$1 = Symbol('_addParent');
 const _setChildren$1 = Symbol('_setChildren');
+const _successRun = Symbol('_successRun');
+const _stop = Symbol('_stop');
+const _trigger = Symbol('_trigger');
 const _triggerUp$1 = Symbol('_triggerUp');
+const _triggerDown$1 = Symbol('_triggerDown');
 const _run$1 = Symbol('_run');
 const _copyJob$1 = Symbol('_copyJob');
 const _getTopRef$1 = Symbol('_getTopRef');
@@ -595,9 +676,13 @@ const _copy$1 = Symbol('_copy');
 
 
 const _refs = Symbol('_refs');
-const _handlers = Symbol('_handlers');
-const _setHandlers = Symbol('_setHandlers');
+const _stream = Symbol('_stream');
+const _setStream = Symbol('_setStream');
 
+const _root = Symbol('_root');
+const _context = Symbol('_context');
+
+const _instance = Symbol('_instance');
 const _onReady = Symbol('_onReady');
 const _onPause = Symbol('_onPause');
 const _onResume = Symbol('_onResume');
@@ -611,7 +696,8 @@ class Stream {
     constructor(job, parent) {
         this[_uuid$1] = Symbol('uuid');
         this[_refs] = storage();
-        this[_setHandlers](storage());
+        this[_context] = storage();
+        this[_setStream](storage());
 
         this[_children$1] = List.empty();
 
@@ -621,7 +707,7 @@ class Stream {
 
     [_create$2](job, parent) {
         this[_setParent$1](parent);
-        this[_stream] = job !== undefined ? some(toFunction$1(job)) : none();
+        this[_stream].set(_instance, toFunction$1(job));
         return this;
     }
 
@@ -650,15 +736,34 @@ class Stream {
 
     };
 
-    [_triggerUp$1]() {
-        return this[_refs].get(_parent$1).getOrElse(() => this[_run$1]())();
+    [_trigger](_) {
+        return this[_refs]
+            .get(_parent$1)
+            .getOrElse((_) => this[_run$1](null, true, _))(_)
+    }
+
+    [_stop](_) {
+        return this[_refs]
+            .get(_parent$1)
+            .getOrElse((_) => this[_run$1](null, false, _))(_)
+    }
+
+    [_triggerUp$1](_) {
+        return repeat(() => this[_trigger](_), () => this[_stop](_))
+            .then(() => this[_context]
+                .get(_context)
+                .get())
 
     };
 
+    [_successRun](data, type) {
+        this[_triggerDown$1](data, true, type);
+        return data;
+    };
 
     [_copyJob$1](parent) {
         const job = stream(this[_stream].get(), parent);
-        job[_setHandlers](this[_handlers]);
+        job[_setStream](this[_stream]);
 
         if (parent) {
             parent[_setChildren$1](job);
@@ -666,13 +771,13 @@ class Stream {
         return job;
     };
 
-    [_setHandlers](handlers) {
-        this[_handlers] = handlers;
+    [_setStream](handlers) {
+        this[_stream] = handlers;
     };
 
 
     [_getTopRef$1](uuid) {
-        return this[_topRef$1]
+        return this[_refs].get(_topRef$1)
             .getOrElse((uuid) => this[_copy$1](uuid))(uuid);
     };
 
@@ -685,10 +790,22 @@ class Stream {
             .getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
+    [_triggerDown$1](data, resolve, type) {
+        this[_children$1].map(child => child(data, resolve, type));
+    };
+
     [_copy$1](uuid) {
         return this[_getBottomRef$1](uuid);
     };
 
+    [_run$1](data, success = true, type) {
+        return setPromise$1(this[_stream], this[_context])(data, success, type)
+            .then((data) => this[_successRun](data, type))
+            .catch((_) => {
+                console.log(_);
+                //this[_failRun](_)
+            });
+    };
 
     // return copy of stream instance
     copy() {
@@ -717,7 +834,7 @@ class Stream {
     // return same instance
 
     onReady(cb) {
-        this[_handlers].set(_onReady, cb);
+        this[_stream].set(_onReady, cb);
         return this;
 
     };
@@ -725,7 +842,7 @@ class Stream {
     // OPTIONAL: event to pause, for example filereader, or web socket
     // return same instance
     onPause(cb) {
-        this[_handlers].set(_onPause, cb);
+        this[_stream].set(_onPause, cb);
         return this;
 
     };
@@ -734,14 +851,14 @@ class Stream {
     // return same instance
 
     onResume(cb) {
-        this[_handlers].set(_onResume, cb);
+        this[_stream].set(_onResume, cb);
         return this;
     };
 
     //OPTIONAL: In case need to destroy instance
     // return same instance
     onStop(cb) {
-        this[_handlers].set(_onStop, cb);
+        this[_stream].set(_onStop, cb);
         return this;
     };
 
@@ -749,14 +866,14 @@ class Stream {
     // Will return, chunk, and scope context. In case you need to manage own history.
     // return same instance
     onData(cb) {
-        this[_handlers].set(_onData, cb);
+        this[_stream].set(_onData, cb);
         return this;
     };
 
     // OPTIONAL: handling error.
     // return same instance
     onError(cb) {
-        this[_handlers].set(_onError, cb);
+        this[_stream].set(_onError, cb);
         return this;
 
     }
@@ -801,6 +918,7 @@ class Stream {
     // Runs stream till return null. Will return Promise with instance context
     run() {
         //return Promise.
+        return this[_triggerUp$1]('run');
     }
 
 

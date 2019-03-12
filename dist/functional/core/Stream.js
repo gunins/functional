@@ -1,14 +1,24 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('./List.js'), require('../utils/clone.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', './List.js', '../utils/clone.js'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.List_js,global.clone_js));
-}(this, (function (exports,Option_js,Task_js,List_js,clone_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('./List.js'), require('../utils/clone.js'), require('../utils/option.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', './List.js', '../utils/clone.js', '../utils/option.js'], factory) :
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.List_js,global.clone_js,global.option_js));
+}(this, (function (exports,Option_js,Task_js,List_js,clone_js,option_js) { 'use strict';
 
-const isStream = ({isStream} = {}) => isStream && isStream();
-const isOption = ({isOption} = {}) => isOption && isOption();
-
+const isStream = (_ = {}) => _.isStream && _.isStream();
+const isMaybe = (_ = {}) => _.isOption && _.isOption();
+const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
-const toFunction = (job) => isFunction(job) ? job : () => job;
+const toFunction = (job) => option_js.option()
+    .or(isFunction(job), () => Option_js.some(job))
+    .or(isDefined(job), () => Option_js.some(() => job))
+    .finally(() => Option_js.none());
+
+const emptyFn = _ => _;
+
+const toMaybe = (value) => option_js.option()
+    .or(isMaybe(value), () => value)
+    .or(!isDefined(value), () => Option_js.none())
+    .finally(() => Option_js.some(value));
 
 const storage = () => {
     const store = new Map();
@@ -17,12 +27,69 @@ const storage = () => {
             return store.get(key) || Option_js.none()
         },
         set(key, value) {
-            const data = isOption(value) ? value : Option_js.some(value);
+            const data = toMaybe(value);
             store.set(key, data);
             return data;
+        },
+        has(key) {
+            return store.has(key);
+
         }
     }
 };
+
+const getRoot = (instance, onReady) => option_js.option()
+    .or(onReady, () => instance())
+    .finally(() => instance);
+
+
+const setPromise = (streamInstance, context) => (data, success, type) => {
+    const instance = streamInstance.get(_instance);
+    const onReady = streamInstance.get(_onReady);
+    const onData = streamInstance.get(_onData);
+
+    const streamContext = context.get(_context);
+    console.log('streamType', type);
+    if (!success) {
+        return Promise.resolve(streamContext.get())
+    }
+    return new Promise((resolve, reject) => {
+        const root = context
+            .get(_root)
+            .getOrElseLazy(() => {
+                const rootInstance = getRoot(instance.get(), onReady.get());
+                context.set(_root, rootInstance);
+                return rootInstance;
+            });
+        resolve(root);
+    })
+        .then((root) => {
+            const response = onReady.getOrElse(() => root(data));
+            const res = response(root, data);
+            console.log('onReady', res);
+            return res;
+            //createRoot -> ?onReady -> instance() else instance
+        })
+        .then((data) => {
+            if (data) {
+                const response = onData.getOrElse(emptyFn)(data, streamContext.get());
+                console.log('onData', response);
+                context.set(_context, response);
+                return response;
+            } else {
+                return data;
+            }
+        })
+
+};
+
+const repeat = (method, stop) => method()
+    .then((data) => {
+        console.log('repeatData', data);
+        return option_js.option()
+            .or(data, () => method())
+            .finally(() => stop())
+    });
 
 /**
  * Stream is executing asynchronusly.
@@ -36,11 +103,14 @@ const _children = Symbol('_children');
 const _bottomRef = Symbol('_bottomRef');
 const _uuid = Symbol('_uuid');
 const _create = Symbol('_create');
-const _stream = Symbol('_stream');
 const _setParent = Symbol('_setParent');
 const _addParent = Symbol('_addParent');
 const _setChildren = Symbol('_setChildren');
+const _successRun = Symbol('_successRun');
+const _stop = Symbol('_stop');
+const _trigger = Symbol('_trigger');
 const _triggerUp = Symbol('_triggerUp');
+const _triggerDown = Symbol('_triggerDown');
 const _run = Symbol('_run');
 const _copyJob = Symbol('_copyJob');
 const _getTopRef = Symbol('_getTopRef');
@@ -49,9 +119,13 @@ const _copy = Symbol('_copy');
 
 
 const _refs = Symbol('_refs');
-const _handlers = Symbol('_handlers');
-const _setHandlers = Symbol('_setHandlers');
+const _stream = Symbol('_stream');
+const _setStream = Symbol('_setStream');
 
+const _root = Symbol('_root');
+const _context = Symbol('_context');
+
+const _instance = Symbol('_instance');
 const _onReady = Symbol('_onReady');
 const _onPause = Symbol('_onPause');
 const _onResume = Symbol('_onResume');
@@ -65,7 +139,8 @@ class Stream {
     constructor(job, parent) {
         this[_uuid] = Symbol('uuid');
         this[_refs] = storage();
-        this[_setHandlers](storage());
+        this[_context] = storage();
+        this[_setStream](storage());
 
         this[_children] = List_js.List.empty();
 
@@ -75,7 +150,7 @@ class Stream {
 
     [_create](job, parent) {
         this[_setParent](parent);
-        this[_stream] = job !== undefined ? Option_js.some(toFunction(job)) : Option_js.none();
+        this[_stream].set(_instance, toFunction(job));
         return this;
     }
 
@@ -104,15 +179,34 @@ class Stream {
 
     };
 
-    [_triggerUp]() {
-        return this[_refs].get(_parent).getOrElse(() => this[_run]())();
+    [_trigger](_) {
+        return this[_refs]
+            .get(_parent)
+            .getOrElse((_) => this[_run](null, true, _))(_)
+    }
+
+    [_stop](_) {
+        return this[_refs]
+            .get(_parent)
+            .getOrElse((_) => this[_run](null, false, _))(_)
+    }
+
+    [_triggerUp](_) {
+        return repeat(() => this[_trigger](_), () => this[_stop](_))
+            .then(() => this[_context]
+                .get(_context)
+                .get())
 
     };
 
+    [_successRun](data, type) {
+        this[_triggerDown](data, true, type);
+        return data;
+    };
 
     [_copyJob](parent) {
         const job = stream(this[_stream].get(), parent);
-        job[_setHandlers](this[_handlers]);
+        job[_setStream](this[_stream]);
 
         if (parent) {
             parent[_setChildren](job);
@@ -120,13 +214,13 @@ class Stream {
         return job;
     };
 
-    [_setHandlers](handlers) {
-        this[_handlers] = handlers;
+    [_setStream](handlers) {
+        this[_stream] = handlers;
     };
 
 
     [_getTopRef](uuid) {
-        return this[_topRef]
+        return this[_refs].get(_topRef)
             .getOrElse((uuid) => this[_copy](uuid))(uuid);
     };
 
@@ -139,10 +233,22 @@ class Stream {
             .getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
 
+    [_triggerDown](data, resolve, type) {
+        this[_children].map(child => child(data, resolve, type));
+    };
+
     [_copy](uuid) {
         return this[_getBottomRef](uuid);
     };
 
+    [_run](data, success = true, type) {
+        return setPromise(this[_stream], this[_context])(data, success, type)
+            .then((data) => this[_successRun](data, type))
+            .catch((_) => {
+                console.log(_);
+                //this[_failRun](_)
+            });
+    };
 
     // return copy of stream instance
     copy() {
@@ -171,7 +277,7 @@ class Stream {
     // return same instance
 
     onReady(cb) {
-        this[_handlers].set(_onReady, cb);
+        this[_stream].set(_onReady, cb);
         return this;
 
     };
@@ -179,7 +285,7 @@ class Stream {
     // OPTIONAL: event to pause, for example filereader, or web socket
     // return same instance
     onPause(cb) {
-        this[_handlers].set(_onPause, cb);
+        this[_stream].set(_onPause, cb);
         return this;
 
     };
@@ -188,14 +294,14 @@ class Stream {
     // return same instance
 
     onResume(cb) {
-        this[_handlers].set(_onResume, cb);
+        this[_stream].set(_onResume, cb);
         return this;
     };
 
     //OPTIONAL: In case need to destroy instance
     // return same instance
     onStop(cb) {
-        this[_handlers].set(_onStop, cb);
+        this[_stream].set(_onStop, cb);
         return this;
     };
 
@@ -203,14 +309,14 @@ class Stream {
     // Will return, chunk, and scope context. In case you need to manage own history.
     // return same instance
     onData(cb) {
-        this[_handlers].set(_onData, cb);
+        this[_stream].set(_onData, cb);
         return this;
     };
 
     // OPTIONAL: handling error.
     // return same instance
     onError(cb) {
-        this[_handlers].set(_onError, cb);
+        this[_stream].set(_onError, cb);
         return this;
 
     }
@@ -255,6 +361,7 @@ class Stream {
     // Runs stream till return null. Will return Promise with instance context
     run() {
         //return Promise.
+        return this[_triggerUp]('run');
     }
 
 

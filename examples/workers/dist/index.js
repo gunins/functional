@@ -50,6 +50,10 @@ class Some {
         return this.isSome() ? this.value : defaultVal
     };
 
+    getOrElseLazy(defaultVal=()=>{}) {
+        return this.isSome() ? this.value : defaultVal()
+    };
+
     toString() {
         return '[object Some]';
     };
@@ -77,7 +81,7 @@ class None extends Some {
 //Define Private methods;
 const _create$1 = Symbol('_create');
 const _reverse = Symbol('_reverse');
-const _map$1 = Symbol('_map');
+const _map = Symbol('_map');
 const _take = Symbol('_take');
 const _flatMap$1 = Symbol('_flatMap');
 const _filter = Symbol('_filter');
@@ -119,10 +123,10 @@ class List {
     };
 
     //private method
-    [_map$1](fn, i = 0) {
+    [_map](fn, i = 0) {
         const {head, tail} = this;
         const empty = List.empty();
-        return hasHead(head) ? empty[_create$1](fn(head.get(), i), noTail(tail) ? none() : tail[_map$1](fn, i + 1)) : empty;
+        return hasHead(head) ? empty[_create$1](fn(head.get(), i), noTail(tail) ? none() : tail[_map](fn, i + 1)) : empty;
     };
 
     //private method
@@ -216,7 +220,7 @@ class List {
     };
 
     map(fn) {
-        return this[_map$1](fn);
+        return this[_map](fn);
     };
 
     forEach(fn) {
@@ -292,11 +296,10 @@ const clone = (obj) => getFunctor(obj)(children => clone(children));
 
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => isFunction(job) ? job : () => job;
-const emptyFn = () => {
-};
+const emptyFn = _ => _;
 const setPromise = (job) => (data, success) => new Promise((resolve, reject) => {
     const dataCopy = clone(data);
-    const fn = job.getOrElse(_ => _);
+    const fn = job.getOrElse(emptyFn);
     if (success) {
         return (fn.length <= 1) ? resolve(fn(dataCopy)) : fn(dataCopy, resolve, reject);
     } else {
@@ -331,7 +334,6 @@ const _rejectRun = Symbol('_rejectRun');
 const _triggerUp = Symbol('_triggerUp');
 const _triggerDown = Symbol('_triggerDown');
 const _run = Symbol('_run');
-const _map = Symbol('_map');
 const _flatMap = Symbol('_flatMap');
 const _copyJob = Symbol('_copyJob');
 const _getTopRef = Symbol('_getTopRef');
@@ -420,14 +422,9 @@ class Task {
             .catch((_) => this[_rejectRun](_));
     };
 
-    [_map](fn) {
-        const job = task(fn, this);
-        this[_setChildren](job);
-        return job;
-    };
-
     [_flatMap](fn) {
-        return this[_map](fn)
+        return this
+            .map(fn)
             .map((responseTask) => {
                 if (!(responseTask.isTask && responseTask.isTask())) {
                     return Promise.reject('flatMap has to return task');
@@ -440,7 +437,6 @@ class Task {
         const job = task(this[_task].get(), parent);
         job[_resolvers] = this[_resolvers];
         job[_rejecters] = this[_rejecters];
-
 
         if (parent) {
             parent[_setChildren](job);
@@ -468,7 +464,9 @@ class Task {
 
 
     map(fn) {
-        return this[_map](fn);
+        const job = task(fn, this);
+        this[_setChildren](job);
+        return job;
     };
 
     flatMap(fn) {

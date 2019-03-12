@@ -50,6 +50,10 @@ class Some {
         return this.isSome() ? this.value : defaultVal
     };
 
+    getOrElseLazy(defaultVal=()=>{}) {
+        return this.isSome() ? this.value : defaultVal()
+    };
+
     toString() {
         return '[object Some]';
     };

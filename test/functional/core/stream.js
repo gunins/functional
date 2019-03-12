@@ -3,10 +3,10 @@ let {Stream, stream} = require('../../../dist/functional/core/Stream'),
     {expect} = require('chai'),
     {spy} = require('sinon');
 
-describe.skip('Stream Tests: ', () => {
-    it('Stream Constructor', async () => {
+describe('Stream Tests: ', () => {
+    it.only('Stream Constructor', async () => {
         let a = stream(() => {
-            return [1, 2, 3];
+            return Promise.resolve([1, 2, 3]);
         })
             .onReady((_) => _.shift());
 
@@ -16,10 +16,10 @@ describe.skip('Stream Tests: ', () => {
         let result = [];
 
         const resp = await c.onData((_, context) => {
-            result = context = [...context, _];
-            return context;
+            result = [...(context || []), _];
+            return result;
         }).run();
-
+        console.log('Response test', resp);
         expect(result).to.be.eql([2, 3, 4]);
         expect(result).to.be.eql(resp);
 

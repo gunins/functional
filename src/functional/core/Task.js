@@ -43,7 +43,6 @@ const _rejectRun = Symbol('_rejectRun');
 const _triggerUp = Symbol('_triggerUp');
 const _triggerDown = Symbol('_triggerDown');
 const _run = Symbol('_run');
-const _map = Symbol('_map');
 const _flatMap = Symbol('_flatMap');
 const _copyJob = Symbol('_copyJob');
 const _getTopRef = Symbol('_getTopRef');
@@ -132,14 +131,9 @@ class Task {
             .catch((_) => this[_rejectRun](_));
     };
 
-    [_map](fn) {
-        const job = task(fn, this);
-        this[_setChildren](job);
-        return job;
-    };
-
     [_flatMap](fn) {
-        return this[_map](fn)
+        return this
+            .map(fn)
             .map((responseTask) => {
                 if (!(responseTask.isTask && responseTask.isTask())) {
                     return Promise.reject('flatMap has to return task');
@@ -152,7 +146,6 @@ class Task {
         const job = task(this[_task].get(), parent);
         job[_resolvers] = this[_resolvers];
         job[_rejecters] = this[_rejecters];
-
 
         if (parent) {
             parent[_setChildren](job);
@@ -180,7 +173,9 @@ class Task {
 
 
     map(fn) {
-        return this[_map](fn);
+        const job = task(fn, this);
+        this[_setChildren](job);
+        return job;
     };
 
     flatMap(fn) {
