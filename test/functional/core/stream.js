@@ -1,10 +1,10 @@
-let {Stream, stream} = require('../../../dist/functional/core/Stream'),
-    {task} = require('../../../dist/functional/core/Task'),
-    {expect} = require('chai'),
-    {spy} = require('sinon');
+let {Stream, stream} = require('../../../dist/functional/core/Stream');
+let {task} = require('../../../dist/functional/core/Task');
+let {expect} = require('chai');
+let {spy} = require('sinon');
 
 describe('Stream Tests: ', () => {
-    it.only('Stream Constructor', async () => {
+    it.only('Stream through simple', async () => {
         let a = stream(() => {
             return Promise.resolve([1, 2, 3]);
         })
@@ -19,8 +19,53 @@ describe('Stream Tests: ', () => {
             result = [...(context || []), _];
             return result;
         }).run();
-        console.log('Response test', resp);
         expect(result).to.be.eql([2, 3, 4]);
+        expect(result).to.be.eql(resp);
+
+
+    });
+    it.only('Stream map simple', async () => {
+        let a = stream(() => {
+            return Promise.resolve([1, 2, 3]);
+        }).onReady((_) => {
+            return Promise.resolve(_.shift())
+        });
+
+        let b = stream((_) => _ + 1);
+
+        let c = a
+            .through(b)
+            .map(_ => _ + 1);
+        let result = [];
+
+        const resp = await c.onData((_, context) => {
+            result = [...(context || []), _];
+            return result;
+        }).run();
+        expect(result).to.be.eql([3, 4, 5]);
+        expect(result).to.be.eql(resp);
+
+
+    });
+    it.only('Stream throughTask simple', async () => {
+        let a = stream(() => {
+            return Promise.resolve([1, 2, 3]);
+        }).onReady((_) => {
+            return Promise.resolve(_.shift())
+        });
+
+        let b = stream((_) => _ + 1);
+
+        let c = a
+            .through(b)
+            .throughTask(task(_ => _ + 1));
+        let result = [];
+
+        const resp = await c.onData((_, context) => {
+            result = [...(context || []), _];
+            return result;
+        }).run();
+        expect(result).to.be.eql([3, 4, 5]);
         expect(result).to.be.eql(resp);
 
 

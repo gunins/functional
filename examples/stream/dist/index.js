@@ -561,6 +561,7 @@ const option = (...methods) => ({
     }
 });
 
+const RUN_TYPE = 'run';
 const isStream = (_ = {}) => _.isStream && _.isStream();
 const isMaybe = (_ = {}) => _.isOption && _.isOption();
 const isDefined = (_) => _ !== undefined;
@@ -600,53 +601,43 @@ const getRoot = (instance, onReady) => option()
     .finally(() => instance);
 
 
+const applyStep = cb => _ => {
+    cb(_);
+    return _;
+};
+
+const getContext = (context, field) => context.get(field).get();
+const setContext = (context, field) => applyStep(_ => context.set(field, _));
+
+const noData = (data, type) => !data && type === RUN_TYPE;
+
 const setPromise$1 = (streamInstance, context) => (data, success, type) => {
     const instance = streamInstance.get(_instance);
     const onReady = streamInstance.get(_onReady);
     const onData = streamInstance.get(_onData);
 
-    const streamContext = context.get(_context);
-    console.log('streamType', type);
-    if (!success) {
-        return Promise.resolve(streamContext.get())
-    }
-    return new Promise((resolve, reject) => {
-        const root = context
-            .get(_root)
-            .getOrElseLazy(() => {
-                const rootInstance = getRoot(instance.get(), onReady.get());
-                context.set(_root, rootInstance);
-                return rootInstance;
-            });
-        resolve(root);
-    })
-        .then((root) => {
-            const response = onReady.getOrElse(() => root(data));
-            const res = response(root, data);
-            console.log('onReady', res);
-            return res;
-            //createRoot -> ?onReady -> instance() else instance
-        })
-        .then((data) => {
-            if (data) {
-                const response = onData.getOrElse(emptyFn$1)(data, streamContext.get());
-                console.log('onData', response);
-                context.set(_context, response);
-                return response;
-            } else {
-                return data;
-            }
-        })
+    const rootContext = setContext(context, _root);
+    const streamContext = setContext(context, _context);
+
+    const root = context
+        .get(_root)
+        .getOrElseLazy(() => rootContext(getRoot(instance.get(), onReady.get())));
+
+    return new Promise((resolve, reject) => success ? resolve(root) : reject(data))
+        .then((root) => onReady.getOrElse(() => root(data))(root, data))
+        .then((data) => option()
+            .or(noData(data, type), () => data)
+            .finally(() => streamContext(
+                onData
+                    .getOrElse(emptyFn$1)(data, getContext(context, _context))))
+        )
 
 };
 
 const repeat = (method, stop) => method()
-    .then((data) => {
-        console.log('repeatData', data);
-        return option()
-            .or(data, () => method())
-            .finally(() => stop())
-    });
+    .then((data) => option()
+        .or(data, () => method())
+        .finally(() => stop()));
 
 /**
  * Stream is executing asynchronusly.
@@ -802,7 +793,7 @@ class Stream {
         return setPromise$1(this[_stream], this[_context])(data, success, type)
             .then((data) => this[_successRun](data, type))
             .catch((_) => {
-                console.log(_);
+              //  console.log('run', _);
                 //this[_failRun](_)
             });
     };
@@ -814,6 +805,9 @@ class Stream {
 
     // return new stream instance
     map(fn) {
+        const job = stream(fn, this);
+        this[_setChildren$1](job);
+        return job;
     };
 
     // return new stream instance
@@ -828,6 +822,7 @@ class Stream {
     };
 
     throughTask(_task) {
+        return this.map(_=>task(_).through(_task).unsafeRun())
     };
 
     //OPTIONAL: onReady Means, taking initialisation object, and return promise with new params.
@@ -849,7 +844,6 @@ class Stream {
 
     //OPTIONAL: event to resume stream.
     // return same instance
-
     onResume(cb) {
         this[_stream].set(_onResume, cb);
         return this;
@@ -918,7 +912,7 @@ class Stream {
     // Runs stream till return null. Will return Promise with instance context
     run() {
         //return Promise.
-        return this[_triggerUp$1]('run');
+        return this[_triggerUp$1](RUN_TYPE);
     }
 
 
