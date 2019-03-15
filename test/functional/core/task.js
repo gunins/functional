@@ -510,22 +510,33 @@ describe('Task Tests: ', () => {
 
     });
     it('Test all task Static method', async () => {
-        let taskB = task(d => assign(d, {c: 'c'}));
+        let a = 0;
+        let taskB = task(d => {
+            console.log(a);
+            return assign(d, {c: 'c'+(a++)})
+        });
 
 
-        let taskC = task().through(taskB);
+        let taskC = task()
+            .through(taskB)
+            .through(taskB)
+            .through(taskB)
+            .through(taskB);
 
         let taskD = taskC.flatMap(d => task(assign(d, {d: 'd'})));
 
+        console.log('1--------');
         let [dataA,dataB] = await Task.all([taskC, taskD], {a: 'a', b: 'b'}).unsafeRun();
-        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
+        console.log('2--------');
+        expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c6'});
 
-        expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c', d: 'd'});
+        expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c7', d: 'd'});
 
         let [dataC,dataD] = await Task.all([task().through(taskB), taskC.flatMap(d => task(assign(d, {d: 'd'})))]).unsafeRun();
-        expect(dataC).to.be.eql({ c: 'c'});
+        console.log('3--------');
+        expect(dataC).to.be.eql({ c: 'c8'});
 
-        expect(dataD).to.be.eql({c: 'c', d: 'd'});
+        expect(dataD).to.be.eql({c: 'c12', d: 'd'});
 
 
     });
