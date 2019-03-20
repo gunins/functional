@@ -512,7 +512,6 @@ describe('Task Tests: ', () => {
     it('Test all task Static method', async () => {
         let a = 0;
         let taskB = task(d => {
-            console.log(a);
             return assign(d, {c: 'c'+(a++)})
         });
 
@@ -525,15 +524,11 @@ describe('Task Tests: ', () => {
 
         let taskD = taskC.flatMap(d => task(assign(d, {d: 'd'})));
 
-        console.log('1--------');
         let [dataA,dataB] = await Task.all([taskC, taskD], {a: 'a', b: 'b'}).unsafeRun();
-        console.log('2--------');
         expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c6'});
-
         expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c7', d: 'd'});
 
         let [dataC,dataD] = await Task.all([task().through(taskB), taskC.flatMap(d => task(assign(d, {d: 'd'})))]).unsafeRun();
-        console.log('3--------');
         expect(dataC).to.be.eql({ c: 'c8'});
 
         expect(dataD).to.be.eql({c: 'c12', d: 'd'});

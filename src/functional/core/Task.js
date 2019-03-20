@@ -154,7 +154,8 @@ class Task {
     };
 
     [_getTopRef](uuid, parent) {
-        return this[_topRef].getOrElse((uuid, parent) => this[_copy](uuid, parent))(uuid, parent);
+        return this[_topRef]
+            .getOrElse((uuid, parent) => this[_copy](uuid, parent))(uuid, parent);
     };
 
     [_getBottomRef](uuid, parent, goNext = false) {
