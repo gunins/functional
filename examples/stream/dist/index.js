@@ -749,7 +749,7 @@ class Stream {
 
 
     [_triggerUp$1](data, type) {
-         this[_refs]
+        this[_refs]
             .get(_parent$1)
             .getOrElse((data, type) => this[_run$1](isEmptyData(data) ? TOP_INSTANCE : data, type))(data, type);
 
@@ -776,6 +776,7 @@ class Stream {
             .getOrElse((uuid) => this[_copy$1](uuid))(uuid);
     };
 
+
     [_getBottomRef$1](uuid, parent, goNext = false) {
         const copyJob = goNext ? parent : this[_copyJob$1](parent);
         const next = goNext || this[_uuid$1] === uuid;
@@ -783,6 +784,10 @@ class Stream {
             .get(_bottomRef$1)
             .getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
+
+    [_copy$1](uuid) {
+        return this[_getBottomRef$1](uuid);
+    };
 
     [_triggerDown$1](data, type) {
         this[_refs]
@@ -799,22 +804,19 @@ class Stream {
 
     };
 
-    [_copy$1](uuid) {
-        return this[_getBottomRef$1](uuid);
-    };
-
     [_run$1](data, type) {
-        return option()
+        option()
             .or(isError(data, type), () => this[_error](data, type))
             .or(isStop(data, type), () => this[_stop](data, type))
             .or(stopNoData(data, type), () => this[_stopStep](data))
-            .finally(() => this[_executeStep](data, type))
+            .finally(() => this[_executeStep](data, type));
     }
 
     [_executeStep](data, type) {
-        return setPromise$1(this[_stream], this[_context])(data, type)
+        setPromise$1(this[_stream], this[_context])(data, type)
             .then((_) => this[_triggerDown$1](_, type))
-            .catch((_) => this[_error](_, type))
+            .catch((_) => this[_error](_, type));
+
 
     };
 
@@ -834,7 +836,8 @@ class Stream {
         const context = this[_clearContext]();
         return onError
             .getOrElse(() => Promise.reject(error))(root, context, error)
-            .catch((error) => this[_triggerDown$1](error, ERROR_TYPE));
+            .catch((error) => this[_triggerDown$1](error, ERROR_TYPE))
+            .then((_) => this[_triggerDown$1](_, type));
     }
 
 

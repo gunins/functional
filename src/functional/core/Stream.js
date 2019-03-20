@@ -210,7 +210,7 @@ class Stream {
 
 
     [_triggerUp](data, type) {
-         this[_refs]
+        this[_refs]
             .get(_parent)
             .getOrElse((data, type) => this[_run](isEmptyData(data) ? TOP_INSTANCE : data, type))(data, type);
 
@@ -237,6 +237,7 @@ class Stream {
             .getOrElse((uuid) => this[_copy](uuid))(uuid);
     };
 
+
     [_getBottomRef](uuid, parent, goNext = false) {
         const copyJob = goNext ? parent : this[_copyJob](parent);
         const next = goNext || this[_uuid] === uuid;
@@ -244,6 +245,10 @@ class Stream {
             .get(_bottomRef)
             .getOrElse((uuid, job) => job)(uuid, copyJob, next);
     }
+
+    [_copy](uuid) {
+        return this[_getBottomRef](uuid);
+    };
 
     [_triggerDown](data, type) {
         this[_refs]
@@ -260,12 +265,8 @@ class Stream {
 
     };
 
-    [_copy](uuid) {
-        return this[_getBottomRef](uuid);
-    };
-
     [_run](data, type) {
-        return option()
+        option()
             .or(isError(data, type), () => this[_error](data, type))
             .or(isStop(data, type), () => this[_stop](data, type))
             .or(stopNoData(data, type), () => this[_stopStep](data))
@@ -273,9 +274,10 @@ class Stream {
     }
 
     [_executeStep](data, type) {
-        return setPromise(this[_stream], this[_context])(data, type)
+        setPromise(this[_stream], this[_context])(data, type)
             .then((_) => this[_triggerDown](_, type))
-            .catch((_) => this[_error](_, type))
+            .catch((_) => this[_error](_, type));
+
 
     };
 
@@ -295,7 +297,8 @@ class Stream {
         const context = this[_clearContext]();
         return onError
             .getOrElse(() => Promise.reject(error))(root, context, error)
-            .catch((error) => this[_triggerDown](error, ERROR_TYPE));
+            .catch((error) => this[_triggerDown](error, ERROR_TYPE))
+            .then((_) => this[_triggerDown](_, type));
     }
 
 
