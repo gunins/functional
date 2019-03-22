@@ -1,6 +1,6 @@
 const {Stream, stream} = require('../../../dist/functional/core/Stream');
 const {task} = require('../../../dist/functional/core/Task');
-const {fileReaderStream, fileWriteStream} = require('../../../dist/functional/fsStreams/fileReader');
+const {fileReadStream, fileWriteStream} = require('../../../dist/functional/fsStreams/fileReader');
 const {unlink, rmdir, mkdir, readFileSync} = require('fs');
 const path = require('path');
 const {expect} = require('chai');
@@ -21,33 +21,14 @@ describe('Stream Tests: ', () => {
         }));
 
     });
-    it('Stream through simple', async () => {
-        const readStream = (src) => stream(() => {
-            return fileReaderStream(src);
-        })
-            .onReady((instance) => {
-                return instance.read(10);
-            })
-            .onStop((instance) => {
-                return instance.destroy();
-            });
+    it('Stream file read to write', async () => {
 
-        const writeStream = (src) => stream(() => {
-            return fileWriteStream(src)
-        })
-            .onReady((instance, chunk) => {
-                return instance.write(chunk)
-            })
-            .onStop((instance) => {
-                return instance.end()
-            });
-
-
-        await readStream(source)
+        const fileStream = fileReadStream(source, 10)
             .map(chunk => chunk.toString('utf8'))
             .map(string => string.toUpperCase())
-            .through(writeStream(destination))
-            .run();
+            .through(fileWriteStream(destination));
+
+            await fileStream.run();
 
         const readFileSync1 = readFileSync(testDestination, 'utf8');
         const readFileSync2 = readFileSync(destination, 'utf8');

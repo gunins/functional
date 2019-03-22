@@ -96,7 +96,7 @@ let examples = () => {
     sampleRollup('basic');
     sampleRollup('workers');
     sampleRollup('workers', 'worker');
-    sampleRollup('stream');
+    sampleRollup('fetchStream');
 };
 gulp.task('sampleRollup', examples);
 
