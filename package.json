@@ -23,6 +23,7 @@
     "gulp-tag-version": "^1.3.0",
     "gulp-uglify": "^2.1.2",
     "gulp-watch": "^4.3.11",
+    "leakage": "^0.4.0",
     "mocha": "^3.5.0",
     "rollup-plugin-multi-entry": "^2.0.1",
     "rollup-plugin-node-resolve": "^3.0.0",

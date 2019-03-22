@@ -1,16 +1,18 @@
-let {Stream, stream} = require('../../../dist/functional/core/Stream');
-let {task} = require('../../../dist/functional/core/Task');
-let {expect} = require('chai');
-let {spy} = require('sinon');
+const {Stream, stream} = require('../../../dist/functional/core/Stream');
+const {task} = require('../../../dist/functional/core/Task');
+const {expect} = require('chai');
+const {spy} = require('sinon');
+
 
 describe.only('Stream Tests: ', () => {
     it('Stream through simple', async () => {
+
         const instanceSpy = spy();
         const onReadySpy = spy();
-        const instance = Promise.resolve([1, 2, 3]);
+        const instance = [1, 2, 3];
         const a = stream(() => {
             instanceSpy();
-            return instance;
+            return Promise.resolve(instance);
         })
             .onReady((_) => {
                 onReadySpy();
@@ -108,7 +110,7 @@ describe.only('Stream Tests: ', () => {
         });
 
 
-        const [A,B,C,D, E] = await Promise.all([
+        const [A, B, C, D, E] = await Promise.all([
             strA.run(),
             strA.run(),
             strA.run(),
@@ -127,11 +129,17 @@ describe.only('Stream Tests: ', () => {
 
     });
     it('Stream throughTask simple', async () => {
+        const onstopFirst = spy();
+        const onstopSecond = spy();
         let a = stream(() => {
             return Promise.resolve([1, 2, 3]);
         }).onReady((_) => {
             return Promise.resolve(_.shift())
-        });
+        })
+            .onStop((_, instance) => {
+                onstopFirst();
+                return _;
+            });
 
         let b = stream((_) => _ + 1);
 
@@ -143,9 +151,17 @@ describe.only('Stream Tests: ', () => {
         const resp = await c.onData((_, context) => {
             result = [...(context || []), _];
             return result;
-        }).run();
+        })
+            .onStop((_, instance) => {
+                onstopSecond();
+                return _;
+            })
+            .run();
         expect(result).to.be.eql([3, 4, 5]);
         expect(result).to.be.eql(resp);
+        expect(onstopFirst.calledOnce).to.be.true
+        expect(onstopSecond.calledOnce).to.be.true
+        expect(onstopSecond.calledAfter(onstopFirst)).to.be.true
 
 
     });

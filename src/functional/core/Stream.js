@@ -77,7 +77,7 @@ const applyStep = cb => _ => {
 const getContext = (context, field) => () => context.get(field).get();
 const setContext = (context, field) => applyStep(_ => context.set(field, _));
 
-const toPromise = (cb) => (...args) => new Promise((resolve) => resolve(cb(...args)));
+const toPromise = (cb) => (...args) => Promise.resolve(cb(...args));
 
 const setPromise = (streamInstance, context) => (data, type) => {
     const instance = streamInstance.get(_instance);
@@ -92,11 +92,11 @@ const setPromise = (streamInstance, context) => (data, type) => {
         .get(_root)
         .getOrElseLazy(() => rootContext(getRoot(instance, onReady)));
 
-    return new Promise((resolve) => resolve(root))
+    return Promise.resolve(root)
         .then((root) => onReady.getOrElse(() => root(data))(root, data))
-        .then((data) => setStreamContext(
+        .then((_) => setStreamContext(
             onData
-                .getOrElse(emptyFn)(data, getStreamContext()))
+                .getOrElse(emptyFn)(_, getStreamContext()))
         )
 
 
@@ -153,9 +153,6 @@ const _onStreamError = Symbol('_onStreamError');
 const _onStreamFinishHandlers = Symbol('_onStreamFinishHandlers');
 const _onStreamErrorHandlers = Symbol('_onStreamErrorHandlers');
 
-const _onStreamFinishCall = Symbol('_onStreamFinishHandlers');
-
-
 const _refs = Symbol('_refs');
 const _stream = Symbol('_stream');
 const _setStream = Symbol('_setStream');
@@ -186,7 +183,7 @@ class Stream {
     constructor(job, parent) {
         this[_uuid] = Symbol('uuid');
         this[_refs] = storage();
-        this[_setStream](storage());
+        this[_stream] = storage();
         this[_contextStorage] = new Map();
         this[_onStreamFinishHandlers] = storage();
         this[_onStreamErrorHandlers] = storage();
@@ -312,10 +309,11 @@ class Stream {
 
     };
 
-    [_stop](data, type, contextID) {
+    async [_stop](data, type, contextID) {
         const sessionContext = this[_getContext](contextID);
-        const instance = getContext(sessionContext, _root)();
+        const instance = await Promise.resolve(getContext(sessionContext, _root)());
         const context = this[_clearContext](contextID);
+
         this[_stream]
             .get(_onStop)
             .getOrElse((_) => Promise.resolve(_))(context, instance)
