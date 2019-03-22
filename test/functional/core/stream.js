@@ -4,7 +4,7 @@ const {expect} = require('chai');
 const {spy} = require('sinon');
 
 
-describe.only('Stream Tests: ', () => {
+describe('Stream Tests: ', () => {
     it('Stream through simple', async () => {
 
         const instanceSpy = spy();
@@ -222,9 +222,6 @@ describe.only('Stream Tests: ', () => {
             expect(errorBSpy.calledOnce).to.be.true;
             expect(errorCSpy.calledOnce).to.be.true;
         }
-        // expect(result).to.be.eql([2, 3, 4]);
-        // expect(result).to.be.eql(resp);
-
 
     });
 

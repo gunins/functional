@@ -3,13 +3,22 @@ import {
     createWriteStream
 } from 'fs';
 
-const srcStream = (streamInstance) => (src) => new Promise((resolve) => {
-    const stream = streamInstance(src);
+const fileReaderStream = (src) => new Promise((resolve) => {
+    const stream = createReadStream(src);
     stream.on('readable', () => resolve(stream));
-}).then((stream)=>stream);
+});
+const fileWriteStream = async (src) => {
+    const stream = createWriteStream(src);
+    return {
+        write(chunk){
+            return new Promise((resolve) => stream.write(chunk, 'utf8', () => resolve(chunk)))
+        },
+        end(chunk){
+            return new Promise((resolve) => stream.end(chunk, 'utf8', () => resolve(chunk)))
+        }
+    }
 
-const fileReaderStream = srcStream(createReadStream);
-const fileWriteStream = srcStream(createWriteStream);
+};
 
 export {fileReaderStream, fileWriteStream}
 

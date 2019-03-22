@@ -16,8 +16,8 @@ const ERROR_TYPE = Symbol('ERROR_TYPE');
 const TOP_INSTANCE = Symbol('TOP_INSTANCE');
 const EMPTY_DATA = Symbol('NO_DATA');
 
-const isStream = (_ = {}) => _.isStream && _.isStream();
-const isMaybe = (_ = {}) => _.isOption && _.isOption();
+const isStream = (_ = {}) => _ && _.isStream && _.isStream();
+const isMaybe = (_ = {}) => _ && _.isOption && _.isOption();
 const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => option()

@@ -4,13 +4,22 @@
 	(factory((global['functional/fsStreams/fileReader'] = global['functional/fsStreams/fileReader'] || {}, global['functional/fsStreams/fileReader'].js = {}),global.fs));
 }(this, (function (exports,fs) { 'use strict';
 
-const srcStream = (streamInstance) => (src) => new Promise((resolve) => {
-    const stream = streamInstance(src);
+const fileReaderStream = (src) => new Promise((resolve) => {
+    const stream = fs.createReadStream(src);
     stream.on('readable', () => resolve(stream));
-}).then((stream)=>stream);
+});
+const fileWriteStream = async (src) => {
+    const stream = fs.createWriteStream(src);
+    return {
+        write(chunk){
+            return new Promise((resolve) => stream.write(chunk, 'utf8', () => resolve(chunk)))
+        },
+        end(chunk){
+            return new Promise((resolve) => stream.end(chunk, 'utf8', () => resolve(chunk)))
+        }
+    }
 
-const fileReaderStream = srcStream(fs.createReadStream);
-const fileWriteStream = srcStream(fs.createWriteStream);
+};
 
 exports.fileReaderStream = fileReaderStream;
 exports.fileWriteStream = fileWriteStream;
