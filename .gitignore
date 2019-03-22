@@ -63,4 +63,4 @@ typings/
 /target/
 .idea/
 target/
-/test/functional/core/data/emojilistUppper.txt
+/tmp/

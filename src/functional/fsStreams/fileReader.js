@@ -10,11 +10,11 @@ const fileReaderStream = (src) => new Promise((resolve) => {
 const fileWriteStream = async (src) => {
     const stream = createWriteStream(src);
     return {
-        write(chunk){
-            return new Promise((resolve) => stream.write(chunk, 'utf8', () => resolve(chunk)))
+        write(chunk, encoding ='utf8'){
+            return new Promise((resolve) => stream.write(chunk, encoding, () => resolve(chunk)))
         },
-        end(chunk){
-            return new Promise((resolve) => stream.end(chunk, 'utf8', () => resolve(chunk)))
+        end(chunk, encoding ='utf8'){
+            return new Promise((resolve) => stream.end(chunk, encoding, () => resolve(chunk)))
         }
     }
 

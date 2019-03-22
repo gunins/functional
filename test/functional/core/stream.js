@@ -18,7 +18,7 @@ describe('Stream Tests: ', () => {
                 onReadySpy();
                 return _.shift()
             })
-            .onStop((context, inst) => {
+            .onStop((inst, context) => {
                 expect(inst).to.be.eql(instance);
                 return context;
             });
@@ -136,7 +136,7 @@ describe('Stream Tests: ', () => {
         }).onReady((_) => {
             return Promise.resolve(_.shift())
         })
-            .onStop((_, instance) => {
+            .onStop((instance, _) => {
                 onstopFirst();
                 return _;
             });
@@ -152,7 +152,7 @@ describe('Stream Tests: ', () => {
             result = [...(context || []), _];
             return result;
         })
-            .onStop((_, instance) => {
+            .onStop((instance, _) => {
                 onstopSecond();
                 return _;
             })

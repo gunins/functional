@@ -298,7 +298,7 @@ class Stream {
 
         this[_stream]
             .get(_onStop)
-            .getOrElse((_) => Promise.resolve(_))(context, instance)
+            .getOrElse((inst, _) => Promise.resolve(_))(instance, context)
             .then((_) => this[_triggerDown](_, STOP_TYPE, contextID));
 
 

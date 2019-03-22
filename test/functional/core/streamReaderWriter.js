@@ -1,61 +1,57 @@
 const {Stream, stream} = require('../../../dist/functional/core/Stream');
 const {task} = require('../../../dist/functional/core/Task');
 const {fileReaderStream, fileWriteStream} = require('../../../dist/functional/fsStreams/fileReader');
-const {unlink} = require('fs');
+const {unlink, rmdir, mkdir, readFileSync} = require('fs');
+const path = require('path');
 const {expect} = require('chai');
 const {spy} = require('sinon');
 
-const source = '/Users/guntarssimanskis/github/Tasks/test/functional/core/data/emojilist.txt';
-const destination = '/Users/guntarssimanskis/github/Tasks/test/functional/core/data/emojilistUppper.txt';
-describe.only('Stream Tests: ', () => {
+const tmpDir = path.resolve('./tmp');
+const source = path.resolve('./test/functional/core/data/emojilist.txt');
+const testDestination = path.resolve('./test/functional/core/data/emojilistUppper.txt');
+const destination = path.resolve(tmpDir, './emojilistUppper.txt');
+describe('Stream Tests: ', () => {
     beforeEach(async () => {
-       await new Promise((resolve)=>unlink(destination,()=>{
-           resolve();
-       }));
+        await new Promise((resolve) => rmdir(tmpDir, () => {
+            resolve();
+        }));
+
+        await new Promise((resolve) => mkdir(tmpDir, () => {
+            resolve();
+        }));
+
     });
     it('Stream through simple', async () => {
-        const readStream = stream(() => {
-            return fileReaderStream(source);
+        const readStream = (src) => stream(() => {
+            return fileReaderStream(src);
         })
             .onReady((instance) => {
                 return instance.read(10);
             })
-            .onStop((context, instance) => {
-                console.log('Destroy');
+            .onStop((instance) => {
                 return instance.destroy();
             });
 
-
-        const toUpperUTF8Stream = stream((chunk) => {
-            return chunk.toString('utf8');
-        });
-
-        const toUpperCaseStream = stream((chunk) => {
-            return chunk.toUpperCase();
-        });
-
-        const writeStream = stream(() => {
-            return fileWriteStream(destination)
+        const writeStream = (src) => stream(() => {
+            return fileWriteStream(src)
         })
             .onReady((instance, chunk) => {
                 return instance.write(chunk)
             })
-            .onStop((context, instance) => {
+            .onStop((instance) => {
                 return instance.end()
             });
 
-        const sampleStream = await readStream
-            .through(toUpperUTF8Stream)
-            .through(toUpperCaseStream)
-            .through(writeStream)
-            .map(_ => {
-                console.log('String Content', _);
-                return _
-            })
+
+        await readStream(source)
+            .map(chunk => chunk.toString('utf8'))
+            .map(string => string.toUpperCase())
+            .through(writeStream(destination))
             .run();
-        console.log('Total Finish',sampleStream);
 
-
+        const readFileSync1 = readFileSync(testDestination, 'utf8');
+        const readFileSync2 = readFileSync(destination, 'utf8');
+        expect(readFileSync1).to.eql(readFileSync2);
     });
 
 
