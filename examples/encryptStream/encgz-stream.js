@@ -35,7 +35,7 @@ const zipStream = () => fileReadStream(source)
     .through(fileWriteStream(destination));
 
 const unzipStream = () => fileReadStream(destination)
-    .through(duplexStream(createDecgz('SECRET', initVect).pipe(createGunzip())))
+    .through(duplexStream(createDecgz('SECRET', initVect)))
     .through(fileWriteStream(destinationUnzip));
 
 console.log(initVect);
