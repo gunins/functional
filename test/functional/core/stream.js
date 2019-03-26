@@ -130,12 +130,20 @@ describe('Stream Tests: ', () => {
     });
     it('Stream throughTask simple', async () => {
         const onstopFirst = spy();
+        const onDataFirst = spy();
         const onstopSecond = spy();
+        const instance = [1, 2, 3]
         let a = stream(() => {
-            return Promise.resolve([1, 2, 3]);
-        }).onReady((_) => {
-            return Promise.resolve(_.shift())
+            return Promise.resolve(instance);
         })
+            .onReady((_) => {
+                return Promise.resolve(_.shift())
+            })
+            .onData((_, context, inst) => {
+                onDataFirst();
+                expect(inst).to.be.eql(instance);
+                return _
+            })
             .onStop((instance, _) => {
                 onstopFirst();
                 return _;
@@ -160,6 +168,7 @@ describe('Stream Tests: ', () => {
         expect(result).to.be.eql([3, 4, 5]);
         expect(result).to.be.eql(resp);
         expect(onstopFirst.calledOnce).to.be.true
+        expect(onDataFirst.callCount).to.be.eql(4);
         expect(onstopSecond.calledOnce).to.be.true
         expect(onstopSecond.calledAfter(onstopFirst)).to.be.true
 

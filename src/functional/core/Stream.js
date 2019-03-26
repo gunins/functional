@@ -75,7 +75,7 @@ const applyStep = cb => _ => {
 };
 
 const getContext = (context, field) => () => context.get(field).get();
-const setContext = (context, field) => applyStep(_ => context.set(field, _));
+const setContext = (context, field) => applyStep(async _ => context.set(field, await _));
 
 const toPromise = (cb) => (...args) => Promise.resolve(cb(...args));
 
@@ -93,18 +93,14 @@ const setPromise = (streamInstance, context) => (data, type) => {
         .getOrElseLazy(() => rootContext(getRoot(instance, onReady)));
 
     return Promise.resolve(root)
-        .then((root) => onReady.getOrElse(() => root(data))(root, data))
-        .then((_) => setStreamContext(
-            onData
-                .getOrElse(emptyFn)(_, getStreamContext()))
-        )
+        .then((root) => Promise.resolve(onReady.getOrElse(() => root(data))(root, data))
+            .then((_) => setStreamContext(
+                        onData
+                            .getOrElse(emptyFn)(_, getStreamContext(), root))
+            ))
 
 
 };
-const repeat = (method, stop) => method()
-    .then((data) => option()
-        .or(data, () => method())
-        .finally(() => stop()));
 
 
 const topInstance = (data, type) => data === TOP_INSTANCE;
@@ -312,11 +308,11 @@ class Stream {
     async [_stop](data, type, contextID) {
         const sessionContext = this[_getContext](contextID);
         const instance = await Promise.resolve(getContext(sessionContext, _root)());
-        const context = this[_clearContext](contextID);
+        const context = await Promise.resolve(this[_clearContext](contextID));
 
         this[_stream]
             .get(_onStop)
-            .getOrElse((inst, _) => Promise.resolve(_))(instance, context)
+            .getOrElse(() => Promise.resolve(data))(instance, context, data)
             .then((_) => this[_triggerDown](_, STOP_TYPE, contextID))
 
 

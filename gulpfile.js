@@ -50,10 +50,10 @@ let rollupStream = (srcDir) => chain((chunk) => {
         moduleName = path.replace(baseDir, ''),
         excluded = excludePaths.filter(file => file !== path);
     return rollup({
-        input:      path,
-        format:     'umd',
-        name: moduleName,
-        external:   excluded
+        input:    path,
+        format:   'umd',
+        name:     moduleName,
+        external: excluded
     }).pipe(source(moduleName));
 });
 
@@ -73,10 +73,10 @@ gulp.task('rollup', ['clean'], () => {
 
 let sampleRollup = (name, file = 'index', format = 'umd') => {
     let roll = rollup({
-        input:      `./examples/${name}/src/${file}.js`,
-        format:     format,
-        name: file,
-        plugins:    [
+        input:   `./examples/${name}/src/${file}.js`,
+        format:  format,
+        name:    file,
+        plugins: [
             resolve({
                 jsnext:               true,
                 browser:              true,
@@ -102,6 +102,13 @@ gulp.task('sampleRollup', examples);
 
 gulp.task('watch', ['clean', 'rollup'], () => {
     return watch('./examples/**/*.js', {ignoreInitial: false}, examples);
+});
+
+gulp.task('watchSrc', ['clean'], () => {
+    return watch('./src/**/*.js', {ignoreInitial: false}, () => gulp
+        .src('./src/**/*.js', {read: false})
+        .pipe(rollupStream('/src/'))
+        .pipe(gulp.dest('./dist')));
 });
 
 

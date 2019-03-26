@@ -1,4 +1,4 @@
-const {fileReadStream, fileWriteStream} = require('../../dist/functional/fsStreams/fileReader');
+const {fileReadStream, fileWriteStream} = require('../../dist/functional/nodeStreams/fileReader');
 const {option} = require('../../dist/functional/utils/option');
 
 const path = require('path');
@@ -14,16 +14,22 @@ const stringToUpperCaseStream = (source, destination) => fileReadStream(source, 
     //Chunk to UpperCase
     .map(string => string.toUpperCase())
     //Write to stream
-    .through(fileWriteStream(destination)).run();
+    .through(fileWriteStream(destination))
+    .run();
+
 
 const [source, destination] = process.argv.slice(2);
 
 const isHelp = (source) => source === '--help' || source === '-h';
-const hasArguments = (source, destination)=>source && destination;
+const hasArguments = (source, destination) => source && destination;
 
 option()
     .or(hasArguments(source, destination),
-        () => stringToUpperCaseStream(sourcePath(source), destinationPath(destination)))
+        () => stringToUpperCaseStream(sourcePath(source), destinationPath(destination))
+            .then(() => {
+                console.log(`Stream Finished! File: ${destination}, is available now!`)
+            })
+    )
     .or(isHelp(source), () => console.log('Add source and destination as arguments. \n For example:\n node streamReaderWriter.js ./data/emojilist.txt ./emojilistUppper.txt \n'))
     .finally(() => console.error('Source and destination are not defined! use --help for more information'))
 
