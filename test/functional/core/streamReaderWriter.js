@@ -1,5 +1,7 @@
 const {fileReadStream, fileWriteStream} = require('../../../dist/functional/nodeStreams/fileReader');
-const {rmdir, mkdir, readFileSync} = require('fs');
+const rmdirRecursiveSync = require('rmdir-recursive').sync;
+const {mkdirSync, readFileSync} = require('fs');
+
 const path = require('path');
 const {expect} = require('chai');
 
@@ -8,14 +10,9 @@ const source = path.resolve('./test/functional/core/data/emojilist.txt');
 const testDestination = path.resolve('./test/functional/core/data/emojilistUppper.txt');
 const destination = path.resolve(tmpDir, './emojilistUppper.txt');
 describe('Stream Tests: ', () => {
-    beforeEach(async () => {
-        await new Promise((resolve) => rmdir(tmpDir, () => {
-            resolve();
-        }));
-
-        await new Promise((resolve) => mkdir(tmpDir, () => {
-            resolve();
-        }));
+    beforeEach(() => {
+        rmdirRecursiveSync(tmpDir);
+        mkdirSync(tmpDir);
 
     });
     it('Stream file read to write', async () => {
@@ -25,7 +22,7 @@ describe('Stream Tests: ', () => {
             .map(string => string.toUpperCase())
             .through(fileWriteStream(destination));
 
-            await fileStream.run();
+        await fileStream.run();
 
         const readFileSync1 = readFileSync(testDestination, 'utf8');
         const readFileSync2 = readFileSync(destination, 'utf8');

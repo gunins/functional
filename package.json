@@ -7,7 +7,8 @@
     "url": "https://github.com/gunins/functional"
   },
   "dependencies": {
-    "requirejs": "^2.3.5"
+    "requirejs": "^2.3.5",
+    "rmdir-recursive": "0.0.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",

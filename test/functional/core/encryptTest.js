@@ -1,12 +1,11 @@
 const {expect} = require('chai');
 const {fileReadStream, fileWriteStream} = require('../../../dist/functional/nodeStreams/fileReader');
 const {duplexStream} = require('../../../dist/functional/nodeStreams/nodeStreams');
-const {unlink, rmdir, mkdir, readFileSync} = require('fs');
+const rmdirRecursiveSync = require('rmdir-recursive').sync;
+
+const {mkdirSync, readFileSync} = require('fs');
 
 const path = require('path');
-
-const tmpDir = path.resolve('./tmp');
-
 
 
 const {
@@ -40,20 +39,16 @@ const unzipStream = (source, destination, secret, initVect) => fileReadStream(so
     .through(fileWriteStream(destination))
     .run();
 
+const tmpDir = path.resolve('./tmp');
 const source = path.resolve('./test/functional/core/data/divine-comedy.txt');
 const destination = path.resolve(tmpDir, './divine-comedy.txt.gzip');
 const destinationUnzip = path.resolve(tmpDir, './divine-gzip.txt');
 
 
 describe('Stream zlib Tests: ', () => {
-    beforeEach(async () => {
-        await new Promise((resolve) => rmdir(tmpDir, () => {
-            resolve();
-        }));
-
-        await new Promise((resolve) => mkdir(tmpDir, () => {
-            resolve();
-        }));
+    beforeEach(() => {
+        rmdirRecursiveSync(tmpDir)
+        mkdirSync(tmpDir);
 
     });
     it('Stream file read to write', async () => {
