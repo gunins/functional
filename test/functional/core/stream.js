@@ -16,7 +16,7 @@ describe('Stream Tests: ', () => {
         })
             .onReady((_) => {
                 onReadySpy();
-                return _.shift()
+                return _.shift();
             })
             .onStop((inst, context) => {
                 expect(inst).to.be.eql(instance);
@@ -42,11 +42,11 @@ describe('Stream Tests: ', () => {
             return result;
         })
             .run();
-        expect(result).to.be.eql([5, 6, 7]);
-        expect(result).to.be.eql(resp);
-        expect(instanceSpy.calledOnce).to.be.true;
-        expect(onReadySpy.callCount).to.be.eql(4);
-        expect(onDataSpy.callCount).to.be.eql(15);
+         expect(result).to.be.eql([5, 6, 7]);
+         expect(result).to.be.eql(resp);
+         expect(instanceSpy.calledOnce).to.be.true;
+         expect(onReadySpy.callCount).to.be.eql(4);
+         expect(onDataSpy.callCount).to.be.eql(15);
 
 
     });

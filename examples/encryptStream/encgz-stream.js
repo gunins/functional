@@ -20,27 +20,27 @@ const getChiperKey = (secret) => createHash('md5')
 
 const initVect = randomBytes(16);
 
-function createEncgz(secret, initVect) {
-    const cipherKey = getChiperKey(secret);
-    return createCipheriv('aes256', cipherKey, initVect).pipe(createGzip())
-}
+const createEncgz = (secret, initVect) => createCipheriv('aes256', getChiperKey(secret), initVect);
 
-function createDecgz(secret, initVect) {
-    const cipherKey = getChiperKey(secret);
-    return createDecipheriv('aes256', cipherKey, initVect).pipe(createGunzip())
-}
 
-const zipStream = () => fileReadStream(source)
-    .through(duplexStream(createEncgz('SECRET', initVect)))
-    .through(fileWriteStream(destination));
+const createDecgz = (secret, initVect) => createDecipheriv('aes256', getChiperKey(secret), initVect);
 
-const unzipStream = () => fileReadStream(destination)
-    .through(duplexStream(createDecgz('SECRET', initVect)))
-    .through(fileWriteStream(destinationUnzip));
 
-console.log(initVect);
-zipStream().run()
+const zipStream = (source, destination, secret, initVect) => fileReadStream(source)
+    .through(duplexStream(createEncgz(secret, initVect)))
+    .through(duplexStream(createGzip()))
+    .through(fileWriteStream(destination))
+    .run();
+
+const unzipStream = (source, destination, secret, initVect) => fileReadStream(source)
+    .through(duplexStream(createGunzip()))
+    .through(duplexStream(createDecgz(secret, initVect)))
+    .through(fileWriteStream(destination))
+    .run();
+
+console.log('initVect', initVect);
+zipStream(source, destination,'SECRET', initVect)
     .then(() => console.log('zip finished'))
-    .then(() => unzipStream().run())
+    .then(() => unzipStream(destination, destinationUnzip,'SECRET', initVect))
     .then(() => console.log('unzip finished'));
 

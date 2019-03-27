@@ -1,10 +1,7 @@
-const {Stream, stream} = require('../../../dist/functional/core/Stream');
-const {task} = require('../../../dist/functional/core/Task');
 const {fileReadStream, fileWriteStream} = require('../../../dist/functional/nodeStreams/fileReader');
-const {unlink, rmdir, mkdir, readFileSync} = require('fs');
+const {rmdir, mkdir, readFileSync} = require('fs');
 const path = require('path');
 const {expect} = require('chai');
-const {spy} = require('sinon');
 
 const tmpDir = path.resolve('./tmp');
 const source = path.resolve('./test/functional/core/data/emojilist.txt');

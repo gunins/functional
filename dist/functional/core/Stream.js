@@ -90,8 +90,8 @@ const setPromise = (streamInstance, context) => (data, type) => {
     return Promise.resolve(root)
         .then((root) => Promise.resolve(onReady.getOrElse(() => root(data))(root, data))
             .then((_) => setStreamContext(
-                        onData
-                            .getOrElse(emptyFn)(_, getStreamContext(), root))
+                onData
+                    .getOrElse(emptyFn)(_, getStreamContext(), root))
             ))
 
 
@@ -113,6 +113,7 @@ const stopNoData = (data, type) => !topInstance(data, type) && noData(data, type
 
 //Define Private methods
 const _parent = Symbol('_parent');
+const _upParent = Symbol('_upParent');
 const _topRef = Symbol('_topRef');
 const _topParent = Symbol('_topParent');
 const _child = Symbol('_child');
@@ -126,7 +127,7 @@ const _error = Symbol('_error');
 const _stopStep = Symbol('_stopStep');
 const _stop = Symbol('_stop');
 const _triggerUp = Symbol('_triggerUp');
-const _triggerDown = Symbol('_triggerDown');
+const _stepDown = Symbol('_stepDown');
 const _run = Symbol('_run');
 const _copyJob = Symbol('_copyJob');
 const _getTopRef = Symbol('_getTopRef');
@@ -209,6 +210,7 @@ class Stream {
             this[_refs].set(_parent, (..._) => parent[_triggerUp](..._));
             this[_refs].set(_topRef, (..._) => parent[_getTopRef](..._));
             this[_refs].set(_topParent, (..._) => parent[_addParent](..._));
+            this[_refs].set(_upParent, (..._) => parent[_run](..._));
         }
     }
 
@@ -262,12 +264,13 @@ class Stream {
         return this[_getBottomRef](uuid);
     };
 
-    [_triggerDown](data, type, contextID) {
+    [_stepDown](data, type, contextID) {
         this[_refs]
             .get(_child)
             .getOrElse((data, type) => option_js.option()
-                .or(isStop(data, type), () => {
-                    this[_onStreamFinishHandlers].once(contextID).getOrElse(emptyFn)(data);
+                .or(isStop(data, type),  () => {
+                    const context = this[_clearContext](contextID);
+                    this[_onStreamFinishHandlers].once(contextID).getOrElse(emptyFn)(context);
                 })
                 .or(isError(data, type), () => {
                     this[_onStreamErrorHandlers].once(contextID).getOrElse(emptyFn)(data);
@@ -287,21 +290,21 @@ class Stream {
 
     [_executeStep](data, type, contextID) {
         setPromise(this[_stream], this[_getContext](contextID))(data, type)
-            .then((_) => this[_triggerDown](_, type, contextID))
+            .then((_) => this[_stepDown](_, type, contextID))
             .catch((_) => this[_error](_, type, contextID));
 
 
     };
 
-    async [_stop](data, type, contextID) {
+     [_stop](data, type, contextID) {
         const sessionContext = this[_getContext](contextID);
-        const instance = await Promise.resolve(getContext(sessionContext, _root)());
-        const context = await Promise.resolve(this[_clearContext](contextID));
+        const instance = getContext(sessionContext, _root)();
+        const context = getContext(sessionContext, _context);
 
         this[_stream]
             .get(_onStop)
             .getOrElse(() => Promise.resolve(data))(instance, context, data)
-            .then((_) => this[_triggerDown](_, STOP_TYPE, contextID));
+            .then((_) => this[_stepDown](_, STOP_TYPE, contextID));
 
 
     }
@@ -317,8 +320,8 @@ class Stream {
         const context = this[_clearContext](contextID);
         return onError
             .getOrElse(() => Promise.reject(error))(root, context, error)
-            .catch((error) => this[_triggerDown](error, ERROR_TYPE, contextID))
-        // .then((_) => this[_triggerDown](_, type, contextID));
+            .catch((error) => this[_stepDown](error, ERROR_TYPE, contextID))
+        // .then((_) => this[_stepDown](_, type, contextID));
     }
 
     [_onStreamFinish](cb, contextID) {

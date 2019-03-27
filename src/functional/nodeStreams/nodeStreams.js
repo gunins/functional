@@ -1,7 +1,15 @@
 import {stream} from '../core/Stream';
 
 const {assign} = Object;
-const readPromise = (stream) => new Promise((resolve) => stream.on('readable', () => resolve(stream)));
+const readPromise = (stream) => new Promise((resolve) => stream.on('readable', () => resolve({
+    async read() {
+        return stream.read();
+    },
+    async destroy() {
+        stream.destroy();
+        return null;
+    }
+})));
 
 const writePromise = async (stream) => {
     return ({
@@ -14,12 +22,9 @@ const writePromise = async (stream) => {
         finished(chunk) {
             return new Promise((resolve) => stream.finished(chunk, () => resolve(chunk)))
         },
-        destroy() {
-            return Promise.resolve(stream.destroy())
-        },
-        push(chunk) {
-            return Promise.resolve(stream.push(chunk));
-
+        async destroy() {
+            stream.destroy();
+            return null;
         },
         on(name, cb) {
             return stream.on(name, (..._) => cb(..._))
@@ -27,24 +32,27 @@ const writePromise = async (stream) => {
         once(name) {
             return new Promise((resolve) => stream.once(name, (_) => resolve(_)))
         },
-        readLast() {
+        readLast(chunk) {
             return new Promise((resolve) => {
                 let chunks = Buffer.alloc(0);
                 stream.on('data', (_) => {
                     chunks = Buffer.concat([chunks, _]);
                 });
                 stream.on('end', () => resolve(chunks));
-                stream.end();
+                stream.end(chunk);
             })
         },
-        close() {
-            return Promise.resolve(stream.close())
+        async close() {
+            return stream.close();
         },
-        resume() {
-            return Promise.resolve(stream.resume())
+        async pause() {
+            return stream.pause();
+        },
+        async resume() {
+            return stream.resume();
         }
     });
-}
+};
 
 const duplexPromise = (stream) => {
     return writePromise(stream)
@@ -72,7 +80,7 @@ const writeStream = (instance) => stream(() => writePromise(instance))
 const duplexStream = (instance) => stream(() => duplexPromise(instance))
     .onReady((instance, context) => instance.write(context))
     .onData((chunk, context, instance) => instance.read())
-    .onStop((instance, context) => instance.readLast());
+    .onStop((instance, context, data) => instance.readLast(data));
 
 
 export {writeStream, readStream, duplexStream}

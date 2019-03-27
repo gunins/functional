@@ -67,3 +67,6 @@ target/
 /examples/fileReadStream/emojilistUppper.txt
 /examples/encryptStream/divine-comedy.txt.gzip
 /examples/encryptStream/divine-gzip.txt
+/examples/workers/dist/
+/examples/basic/dist/
+/examples/fetchStream/dist/
