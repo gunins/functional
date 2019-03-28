@@ -20,20 +20,20 @@ const getChiperKey = (secret) => createHash('md5')
 
 const initVect = randomBytes(16);
 
-const createEncgz = (secret, initVect) => createCipheriv('aes256', getChiperKey(secret), initVect);
+const encodeGZip = (secret, initVect) => createCipheriv('aes256', getChiperKey(secret), initVect);
 
 
-const createDecgz = (secret, initVect) => createDecipheriv('aes256', getChiperKey(secret), initVect);
+const decodeGzip = (secret, initVect) => createDecipheriv('aes256', getChiperKey(secret), initVect);
 
 
 const zipStream = (source, destination, secret, initVect) => fileReadStream(source)
     .through(duplexStream(createGzip()))
-    .through(duplexStream(createEncgz(secret, initVect)))
+    .through(duplexStream(encodeGZip(secret, initVect)))
     .through(fileWriteStream(destination))
     .run();
 
 const unzipStream = (source, destination, secret, initVect) => fileReadStream(source)
-    .through(duplexStream(createDecgz(secret, initVect)))
+    .through(duplexStream(decodeGzip(secret, initVect)))
     .through(duplexStream(createGunzip()))
     .through(fileWriteStream(destination))
     .run();

@@ -64,13 +64,17 @@ const getRoot = (instance, onReady) => option_js.option()
     .finally(() => instance.get());
 
 
-const applyStep = cb => _ => {
-    cb(_);
-    return _;
+const applyStep = cb => async _ => {
+    try {
+        cb(await _);
+        return _;
+    } catch (error) {
+        return error;
+    }
 };
 
 const getContext = (context, field) => () => context.get(field).get();
-const setContext = (context, field) => applyStep(async _ => context.set(field, await _));
+const setContext = (context, field) => applyStep(_ => context.set(field, _));
 
 const toPromise = (cb) => (...args) => Promise.resolve(cb(...args));
 
@@ -92,7 +96,7 @@ const setPromise = (streamInstance, context) => (data, type) => {
             .then((_) => setStreamContext(
                 onData
                     .getOrElse(emptyFn)(_, getStreamContext(), root))
-            ))
+            ));
 
 
 };
@@ -293,7 +297,7 @@ class Stream {
                 (_) => option_js.option()
                     .or(topInstance(data, type) && noData(_, type), () => this[_stop](_, type, contextID))
                     .finally(() => this[_stepDown](_, type, contextID))
-            ).catch((_) => this[_error](_, type, contextID));
+            ).catch((_) => this[_triggerUp](_, ERROR_TYPE, contextID));
 
 
     };
@@ -463,7 +467,7 @@ class Stream {
             this[_onStreamError]((error) => reject(error), contextID);
 
             this[_triggerUp](EMPTY_DATA, RUN_TYPE, contextID);
-        });
+        })
     }
 
 

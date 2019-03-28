@@ -42,11 +42,11 @@ describe('Stream Tests: ', () => {
             return result;
         })
             .run();
-         expect(result).to.be.eql([5, 6, 7]);
-         expect(result).to.be.eql(resp);
-         expect(instanceSpy.calledOnce).to.be.true;
-         expect(onReadySpy.callCount).to.be.eql(4);
-         expect(onDataSpy.callCount).to.be.eql(15);
+        expect(result).to.be.eql([5, 6, 7]);
+        expect(result).to.be.eql(resp);
+        expect(instanceSpy.calledOnce).to.be.true;
+        expect(onReadySpy.callCount).to.be.eql(4);
+        expect(onDataSpy.callCount).to.be.eql(15);
 
 
     });
@@ -227,6 +227,67 @@ describe('Stream Tests: ', () => {
         } catch (error) {
             // console.log('Error catched------');
             expect(error).to.be.eql('2message');
+            expect(errorASpy.calledOnce).to.be.true;
+            expect(errorBSpy.calledOnce).to.be.true;
+            expect(errorCSpy.calledOnce).to.be.true;
+        }
+
+    });
+
+    it('Stream Error simple 2', async () => {
+        let bool = true;
+        const errorASpy = spy();
+        const errorBSpy = spy();
+        const errorCSpy = spy();
+        try {
+
+            let a = stream(() => {
+                // console.log('Create Instance A');
+                return Promise.resolve([1, 2, 3]);
+            }).onReady((_) => {
+                // console.log('Ready Instance A');
+                return Promise.resolve(_.shift())
+            }).onError((instance, context, error) => {
+                // console.log('onError 1 |', instance, context, error, '|');
+                errorASpy();
+                return Promise.reject(error)
+            });
+
+            let b = stream((_) => {
+                // console.log('Ready Create Instance B');
+
+                return _ + 1
+            })
+                .onError((instance, context, error) => {
+                    // console.log('onError 2 |', instance, context, error, '|');
+                    errorBSpy();
+                    return Promise.reject(error)
+                });
+
+            let c = a
+                .through(b);
+
+            let result = [];
+
+
+            await c.onError((instance, context, error) => {
+                // console.log('onError 3 |', instance, context, error, '|');
+                errorCSpy();
+                return Promise.reject(error + 'message')
+            })
+                .onData((_, context) => {
+
+                    result = [...(context || []), _];
+                    return bool ? Promise.resolve(result)
+                        .then(_ => {
+                            bool = false;
+                            return _;
+                        }) : Promise.reject(result);
+                })
+                .run()
+        } catch (error) {
+
+            expect(error).to.be.eql('2,3message');
             expect(errorASpy.calledOnce).to.be.true;
             expect(errorBSpy.calledOnce).to.be.true;
             expect(errorCSpy.calledOnce).to.be.true;

@@ -28,14 +28,14 @@ const createDecgz = (secret, initVect) => createDecipheriv('aes256', getChiperKe
 
 
 const zipStream = (source, destination, secret, initVect) => fileReadStream(source)
-    .through(duplexStream(createEncgz(secret, initVect)))
     .through(duplexStream(createGzip()))
+    .through(duplexStream(createEncgz(secret, initVect)))
     .through(fileWriteStream(destination))
     .run();
 
 const unzipStream = (source, destination, secret, initVect) => fileReadStream(source)
-    .through(duplexStream(createGunzip()))
     .through(duplexStream(createDecgz(secret, initVect)))
+    .through(duplexStream(createGunzip()))
     .through(fileWriteStream(destination))
     .run();
 

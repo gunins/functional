@@ -81,9 +81,9 @@ const writeStream = (instance) => Stream_js.stream(() => writePromise(instance))
     .onReady((instance, chunk) => instance.write(chunk))
     .onStop((instance, context, data) => instance.end(data));
 
-const duplexStream = (instance) => Stream_js.stream(() => duplexPromise(instance))
+const duplexStream = (instance,...args) => Stream_js.stream(() => duplexPromise(instance))
     .onReady((instance, context) => instance.write(context))
-    .onData((chunk, context, instance) => instance.read())
+    .onData((chunk, context, instance) => instance.read(...args))
     .onStop((instance, context, data) => instance.readLast(data));
 
 exports.writeStream = writeStream;
