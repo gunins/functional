@@ -21,7 +21,7 @@ const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => option()
     .or(isFunction(job), () => some(job))
     .or(isDefined(job), () => some(() => job))
-    .finally(() => some(_=>_));
+    .finally(() => some(_ => _));
 
 const emptyFn = _ => _;
 
@@ -35,6 +35,10 @@ const storage = (copy) => {
     return {
         get(key) {
             return store.get(key) || none()
+        },
+        getValue(key) {
+            const context = store.get(key) || none();
+            return context.get();
         },
         set(key, value) {
             const data = toMaybe(value);
@@ -76,7 +80,7 @@ const applyStep = cb => async _ => {
     }
 };
 
-const getContext = (context, field) => () => context.get(field).get();
+const getContext = (context, field) => () => context.getValue(field);
 const setContext = (context, field) => applyStep(_ => context.set(field, _));
 
 const toPromise = (cb) => (...args) => Promise.resolve(cb(...args));
@@ -170,9 +174,13 @@ const _onStop = Symbol('_onStop');
 const _onData = Symbol('_onData');
 const _onError = Symbol('_onError');
 
-let uuuID = 0;
-const uuid = () => uuuID++;
-const setContextStorage = (context, contextID) => context.set(contextID, storage()).get(contextID);
+/*let uuuID = 0;
+const uuid = () => uuuID++;*/
+
+const setContextStorage = (context, contextID) => context
+    .get(contextID)
+    .getOrElseLazy(() => context.set(contextID, storage())
+        .get());
 
 
 class Stream {
@@ -183,14 +191,14 @@ class Stream {
         this[_uuid] = Symbol('uuid');
         this[_refs] = storage();
         this[_stream] = storage();
-        this[_contextStorage] = new Map();
+        this[_contextStorage] = storage();
         this[_onStreamFinishHandlers] = storage();
         this[_onStreamErrorHandlers] = storage();
         this[_create](job, parent);
     }
 
     [_clearContext](contextID) {
-        const contextContainer = this[_contextStorage].get(contextID);
+        const contextContainer = this[_contextStorage].getValue(contextID);
 
         const context = getContext(contextContainer, _context)();
         contextContainer.clear();
@@ -199,9 +207,7 @@ class Stream {
     }
 
     [_getContext](contextID) {
-        const context = this[_contextStorage]
-            .get(contextID);
-        return context || setContextStorage(this[_contextStorage], contextID);
+        return setContextStorage(this[_contextStorage], contextID);
     }
 
     [_create](job, parent) {
@@ -285,10 +291,14 @@ class Stream {
                 (data, type) => option()
                     .or(isStop(data, type), () => {
                         const context = this[_clearContext](contextID);
-                        this[_onStreamFinishHandlers].once(contextID).getOrElse(emptyFn)(context);
+                        this[_onStreamFinishHandlers]
+                            .once(contextID)
+                            .getOrElse(emptyFn)(context);
                     })
                     .or(isError(data, type), () => {
-                        this[_onStreamErrorHandlers].once(contextID).getOrElse(emptyFn)(data);
+                        this[_onStreamErrorHandlers]
+                            .once(contextID)
+                            .getOrElse(emptyFn)(data);
                     })
                     .finally(() => this[_triggerUp](EMPTY_DATA, type, contextID))
             )(data, type, contextID);
@@ -300,7 +310,6 @@ class Stream {
         option()
             .or(isError(data, type), () => this[_error](data, type, contextID))
             .or(isStop(data, type), () => this[_stop](data, type, contextID))
-            // .or(stopNoData(data, type), () => this[_stepUp](data, type, contextID))
             .or(noData(data, type) && !isStop(data, type), () => this[_stepUp](data, type, contextID))
             .finally(() => this[_executeStep](data, type, contextID))
     }
@@ -312,8 +321,6 @@ class Stream {
                     .or(topInstance(data, type) && noData(_, type), () => this[_stop](_, type, contextID))
                     .finally(() => this[_stepDown](_, type, contextID))
             ).catch((_) => this[_triggerUp](_, ERROR_TYPE, contextID));
-
-
     };
 
     [_stop](data, type, contextID) {
@@ -344,7 +351,6 @@ class Stream {
         return onError
             .getOrElse(() => Promise.reject(error))(root, context, error)
             .catch((error) => this[_stepDown](error, ERROR_TYPE, contextID))
-        // .then((_) => this[_stepDown](_, type, contextID));
     }
 
     [_onStreamFinish](cb, contextID) {
