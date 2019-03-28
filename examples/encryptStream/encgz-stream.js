@@ -27,6 +27,9 @@ const decodeGzip = (secret, initVect) => createDecipheriv('aes256', getChiperKey
 
 
 const zipStream = (source, destination, secret, initVect) => fileReadStream(source)
+    // .map(_ => _.toString('utf8'))
+    // .map(_ => _.toUpperCase())
+    // .map(_ => Buffer.from(_, 'utf8'))
     .through(duplexStream(createGzip()))
     .through(duplexStream(encodeGZip(secret, initVect)))
     .through(fileWriteStream(destination))
@@ -39,8 +42,8 @@ const unzipStream = (source, destination, secret, initVect) => fileReadStream(so
     .run();
 
 console.log('initVect', initVect);
-zipStream(source, destination,'SECRET', initVect)
+zipStream(source, destination, 'SECRET', initVect)
     .then(() => console.log('zip finished'))
-    .then(() => unzipStream(destination, destinationUnzip,'SECRET', initVect))
+    .then(() => unzipStream(destination, destinationUnzip, 'SECRET', initVect))
     .then(() => console.log('unzip finished'));
 

@@ -50,6 +50,111 @@ describe('Stream Tests: ', () => {
 
 
     });
+
+    it('Stream through simple if null', async () => {
+
+        const instanceSpy = spy();
+        const onReadySpy = spy();
+        const instance = [1, 2, 3];
+        const a = stream(() => {
+            instanceSpy();
+            return Promise.resolve(instance);
+        })
+            .onReady((_) => {
+                onReadySpy();
+                return _.shift();
+            })
+            .onStop((inst, context) => {
+                expect(inst).to.be.eql(instance);
+                return context;
+            });
+
+        const onDataSpy = spy();
+
+        const b = stream((_) => {
+            onDataSpy();
+            return _ + 1
+        }).onData((_) => {
+            onDataSpy();
+            return null
+        });
+
+        const c = a.through(b).through(b);
+        let result = [];
+
+        const resp = await c.onData((_, context) => {
+            onDataSpy();
+            result = [...(context || []), _];
+            return result;
+        })
+            .run();
+        expect(result).to.be.eql([]);
+        expect(resp).to.be.undefined;
+        expect(instanceSpy.calledOnce).to.be.true;
+        expect(onReadySpy.callCount).to.be.eql(4);
+        expect(onDataSpy.callCount).to.be.eql(6);
+
+
+    });
+
+    it('Stream through simple if pair', async () => {
+
+        const instanceSpy = spy();
+        const onReadySpy = spy();
+        const onReadyASpy = spy();
+        const onDataSpy = spy();
+
+        const instance = [1, 2, 3, 4, 5, 6];
+        const a = stream(() => {
+            instanceSpy();
+            return Promise.resolve(instance);
+        })
+            .onReady((_) => {
+                onReadySpy();
+                return _.shift();
+            })
+            .onStop((inst, context) => {
+                expect(inst).to.be.eql(instance);
+                return context;
+            });
+
+
+        const b = stream(() => {
+            instanceSpy();
+            let a = [];
+            return {
+                set(_) {
+                    const data = [...a, _];
+                    a = data.length === 2 ? [] : data;
+                    return data.length === 2 ? data : null;
+
+                }
+            }
+        }).onReady((instance, _) => {
+            onReadyASpy();
+            return instance.set(_);
+        });
+
+        const c = a.through(b);
+        let result = [];
+
+        const resp = await c.onData((_, context) => {
+            expect(_.length).to.be.eql(2);
+            onDataSpy();
+            result = [...(context || []), _];
+            return result;
+        })
+            .run();
+
+        expect(result).to.be.eql([[1, 2], [3, 4], [5, 6]]);
+        expect(resp).to.be.eql(result);
+        expect(instanceSpy.calledTwice).to.be.true;
+        expect(onReadySpy.callCount).to.be.eql(7);
+        expect(onReadyASpy.callCount).to.be.eql(6);
+        expect(onDataSpy.callCount).to.be.eql(3);
+
+
+    });
     it('Stream map simple', async () => {
         const instanceSpy = spy();
 

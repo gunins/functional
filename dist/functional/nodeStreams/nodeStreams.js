@@ -5,7 +5,7 @@
 }(this, (function (exports,Stream_js) { 'use strict';
 
 const {assign} = Object;
-const readPromise = (stream$$1, size) => new Promise((resolve) => stream$$1.on('readable', () => resolve({
+const readPromise = (stream$$1, {size} = {}) => new Promise((resolve) => stream$$1.on('readable', () => resolve({
     async read() {
         return stream$$1.read(size);
     },
@@ -15,13 +15,13 @@ const readPromise = (stream$$1, size) => new Promise((resolve) => stream$$1.on('
     }
 })));
 
-const writePromise = async (stream$$1) => {
+const writePromise = async (stream$$1, {encoding} = {encoding: 'utf8'}) => {
     return ({
-        write(chunk, encoding = 'utf8') {
+        write(chunk) {
             return new Promise((resolve) => stream$$1.write(chunk, encoding, () => resolve(chunk)))
         },
         end(chunk, encoding = 'utf8') {
-            return new Promise((resolve) => stream$$1.end(chunk, encoding, (..._) => resolve(chunk)))
+            return new Promise((resolve) => stream$$1.end(chunk, encoding, () => resolve(chunk)))
         },
         finished(chunk) {
             return new Promise((resolve) => stream$$1.finished(chunk, () => resolve(chunk)))
@@ -37,12 +37,13 @@ const writePromise = async (stream$$1) => {
             return new Promise((resolve) => stream$$1.once(name, (_) => resolve(_)))
         },
         readLast(chunk) {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 let chunks = Buffer.alloc(0);
                 stream$$1.on('data', (_) => {
                     chunks = Buffer.concat([chunks, _]);
                 });
                 stream$$1.on('end', () => resolve(chunks));
+                stream$$1.on('error', (error) => reject(error));
                 stream$$1.end(chunk);
             })
         },
@@ -58,12 +59,12 @@ const writePromise = async (stream$$1) => {
     });
 };
 
-const duplexPromise = (stream$$1) => {
-    return writePromise(stream$$1)
+const duplexPromise = (stream$$1, _ = {}) => {
+    return writePromise(stream$$1, _)
         .then((writer) => {
             return assign({
-                read(...args) {
-                    return Promise.resolve(stream$$1.read(...args))
+                read() {
+                    return Promise.resolve(stream$$1.read(_.size))
 
                 }
             }, writer)
@@ -71,12 +72,10 @@ const duplexPromise = (stream$$1) => {
 };
 
 
-const readStream = (instance, ...args) => {
-    return Stream_js.stream(() => readPromise(instance, ...args))
-        .onReady((instance) => instance.read())
-        .onStop((instance) => instance.destroy())
-        .onError((instance) => Promise.reject(instance.destroy()));
-};
+const readStream = (instance, options) => Stream_js.stream(() => readPromise(instance, options))
+    .onReady((instance) => instance.read())
+    .onStop((instance) => instance.destroy())
+    .onError((instance) => Promise.reject(instance.destroy()));
 
 const writeStream = (instance) => Stream_js.stream(() => writePromise(instance))
     .onReady((instance, chunk) => instance.write(chunk))
@@ -84,9 +83,9 @@ const writeStream = (instance) => Stream_js.stream(() => writePromise(instance))
     .onError((instance) => Promise.reject(instance.destroy()));
 
 
-const duplexStream = (instance, ...args) => Stream_js.stream(() => duplexPromise(instance))
+const duplexStream = (instance, options) => Stream_js.stream(() => duplexPromise(instance, options))
     .onReady((instance, context) => instance.write(context))
-    .onData((chunk, context, instance) => instance.read(...args))
+    .onData((chunk, context, instance) => instance.read())
     .onStop((instance, context, data) => instance.readLast(data))
     .onError((instance) => Promise.reject(instance.destroy()));
 
