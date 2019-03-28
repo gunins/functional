@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('../utils/option.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', '../utils/option.js'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.option_js));
-}(this, (function (exports,Option_js,Task_js,option_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('../utils/option.js'), require('../utils/storage.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', '../utils/option.js', '../utils/storage.js'], factory) :
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.option_js,global.storage_js));
+}(this, (function (exports,Option_js,Task_js,option_js,storage_js) { 'use strict';
 
 //stream lifecycle types
 const RUN_TYPE = Symbol('RUN_TYPE');
@@ -12,9 +12,9 @@ const TOP_INSTANCE = Symbol('TOP_INSTANCE');
 const EMPTY_DATA = Symbol('NO_DATA');
 
 const isStream = (_ = {}) => _ && _.isStream && _.isStream();
-const isMaybe = (_ = {}) => _ && _.isOption && _.isOption();
 const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
+
 const toFunction = (job) => option_js.option()
     .or(isFunction(job), () => Option_js.some(job))
     .or(isDefined(job), () => Option_js.some(() => job))
@@ -22,46 +22,6 @@ const toFunction = (job) => option_js.option()
 
 const emptyFn = _ => _;
 
-const toMaybe = (value) => option_js.option()
-    .or(isMaybe(value), () => value)
-    .or(!isDefined(value), () => Option_js.none())
-    .finally(() => Option_js.some(value));
-
-const storage = (copy) => {
-    const store = new Map(copy);
-    return {
-        get(key) {
-            return store.get(key) || Option_js.none()
-        },
-        getValue(key) {
-            const context = store.get(key) || Option_js.none();
-            return context.get();
-        },
-        set(key, value) {
-            const data = toMaybe(value);
-            store.set(key, data);
-            return data;
-        },
-        has(key) {
-            return store.has(key);
-        },
-        once(key) {
-            const context = store.get(key) || Option_js.none();
-            store.delete(key);
-            return context;
-        },
-        delete(key) {
-            return store.delete(key);
-        },
-        clear() {
-            store.clear();
-        },
-        copy() {
-            return storage(store);
-        }
-
-    }
-};
 
 const getRoot = (instance, onReady) => option_js.option()
     .or(onReady.isSome(), () => instance.get()())
@@ -167,7 +127,7 @@ const uuid = () => uuuID++;*/
 
 const setContextStorage = (context, contextID) => context
     .get(contextID)
-    .getOrElseLazy(() => context.set(contextID, storage())
+    .getOrElseLazy(() => context.set(contextID, storage_js.storage())
         .get());
 
 
@@ -177,11 +137,11 @@ class Stream {
 
     constructor(job, parent) {
         this[_uuid] = Symbol('uuid');
-        this[_refs] = storage();
-        this[_stream] = storage();
-        this[_contextStorage] = storage();
-        this[_onStreamFinishHandlers] = storage();
-        this[_onStreamErrorHandlers] = storage();
+        this[_refs] = storage_js.storage();
+        this[_stream] = storage_js.storage();
+        this[_contextStorage] = storage_js.storage();
+        this[_onStreamFinishHandlers] = storage_js.storage();
+        this[_onStreamErrorHandlers] = storage_js.storage();
         this[_create](job, parent);
     }
 

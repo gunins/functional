@@ -1,7 +1,7 @@
-import {some, none} from './Option';
+import {some} from './Option';
 import {task} from './Task';
 import {option} from '../utils/option';
-
+import {storage} from '../utils/storage';
 
 //stream lifecycle types
 const RUN_TYPE = Symbol('RUN_TYPE');
@@ -15,9 +15,9 @@ const TOP_INSTANCE = Symbol('TOP_INSTANCE');
 const EMPTY_DATA = Symbol('NO_DATA');
 
 const isStream = (_ = {}) => _ && _.isStream && _.isStream();
-const isMaybe = (_ = {}) => _ && _.isOption && _.isOption();
 const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
+
 const toFunction = (job) => option()
     .or(isFunction(job), () => some(job))
     .or(isDefined(job), () => some(() => job))
@@ -25,46 +25,6 @@ const toFunction = (job) => option()
 
 const emptyFn = _ => _;
 
-const toMaybe = (value) => option()
-    .or(isMaybe(value), () => value)
-    .or(!isDefined(value), () => none())
-    .finally(() => some(value));
-
-const storage = (copy) => {
-    const store = new Map(copy);
-    return {
-        get(key) {
-            return store.get(key) || none()
-        },
-        getValue(key) {
-            const context = store.get(key) || none();
-            return context.get();
-        },
-        set(key, value) {
-            const data = toMaybe(value);
-            store.set(key, data);
-            return data;
-        },
-        has(key) {
-            return store.has(key);
-        },
-        once(key) {
-            const context = store.get(key) || none();
-            store.delete(key);
-            return context;
-        },
-        delete(key) {
-            return store.delete(key);
-        },
-        clear() {
-            store.clear();
-        },
-        copy() {
-            return storage(store);
-        }
-
-    }
-};
 
 const getRoot = (instance, onReady) => option()
     .or(onReady.isSome(), () => instance.get()())
