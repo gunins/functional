@@ -1,4 +1,5 @@
 const {fileReadStream, fileWriteStream} = require('../../dist/functional/nodeStreams/fileReader');
+const {stream} = require('../../dist/functional/core/Stream');
 const {duplexStream} = require('../../dist/functional/nodeStreams/nodeStreams');
 const path = require('path');
 

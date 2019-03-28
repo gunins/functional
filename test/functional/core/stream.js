@@ -258,6 +258,7 @@ describe('Stream Tests: ', () => {
 
         let c = a
             .through(b)
+            .through(stream())
             .throughTask(task(_ => _ + 1));
         let result = [];
 

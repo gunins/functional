@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('./List.js'), require('../utils/clone.js'), require('../utils/option.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', './List.js', '../utils/clone.js', '../utils/option.js'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.List_js,global.clone_js,global.option_js));
-}(this, (function (exports,Option_js,Task_js,List_js,clone_js,option_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option.js'), require('./Task.js'), require('../utils/option.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', './Option.js', './Task.js', '../utils/option.js'], factory) :
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option_js,global.Task_js,global.option_js));
+}(this, (function (exports,Option_js,Task_js,option_js) { 'use strict';
 
 //stream lifecycle types
 const RUN_TYPE = Symbol('RUN_TYPE');
@@ -18,7 +18,7 @@ const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => option_js.option()
     .or(isFunction(job), () => Option_js.some(job))
     .or(isDefined(job), () => Option_js.some(() => job))
-    .finally(() => Option_js.none());
+    .finally(() => Option_js.some(_=>_));
 
 const emptyFn = _ => _;
 
@@ -461,7 +461,6 @@ class Stream {
         return new Promise((resolve, reject) => {
 
             const contextID = Symbol('_contextID');
-
 
             this[_onStreamFinish]((data) => resolve(data), contextID);
             this[_onStreamError]((error) => reject(error), contextID);

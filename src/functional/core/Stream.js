@@ -1,7 +1,5 @@
 import {some, none} from './Option';
 import {task} from './Task';
-import {List} from './List';
-import {clone} from '../utils/clone';
 import {option} from '../utils/option';
 
 
@@ -23,7 +21,7 @@ const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => option()
     .or(isFunction(job), () => some(job))
     .or(isDefined(job), () => some(() => job))
-    .finally(() => none());
+    .finally(() => some(_=>_));
 
 const emptyFn = _ => _;
 
@@ -477,7 +475,6 @@ class Stream {
         return new Promise((resolve, reject) => {
 
             const contextID = Symbol('_contextID');
-
 
             this[_onStreamFinish]((data) => resolve(data), contextID);
             this[_onStreamError]((error) => reject(error), contextID);
