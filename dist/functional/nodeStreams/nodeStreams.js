@@ -5,9 +5,9 @@
 }(this, (function (exports,Stream_js) { 'use strict';
 
 const {assign} = Object;
-const readPromise = (stream$$1) => new Promise((resolve) => stream$$1.on('readable', () => resolve({
+const readPromise = (stream$$1, size) => new Promise((resolve) => stream$$1.on('readable', () => resolve({
     async read() {
-        return stream$$1.read();
+        return stream$$1.read(size);
     },
     async destroy() {
         stream$$1.destroy();
@@ -72,8 +72,8 @@ const duplexPromise = (stream$$1) => {
 
 
 const readStream = (instance, ...args) => {
-    return Stream_js.stream(() => readPromise(instance))
-        .onReady((instance) => instance.read(...args))
+    return Stream_js.stream(() => readPromise(instance, ...args))
+        .onReady((instance) => instance.read())
         .onStop((instance) => instance.destroy());
 };
 

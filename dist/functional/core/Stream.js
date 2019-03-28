@@ -103,10 +103,6 @@ const noData = (data, type) => !data;
 const isEmptyData = (data) => data === EMPTY_DATA;
 const isError = (data, type) => type === ERROR_TYPE;
 const isStop = (data, type) => type === STOP_TYPE;
-const isRun = (data, type) => type === RUN_TYPE;
-const stopNoData = (data, type) => !topInstance(data, type) && noData(data, type) && isRun(data, type);
-
-
 /**
  * Stream is executing asynchronusly.
  * */
@@ -124,7 +120,7 @@ const _setParent = Symbol('_setParent');
 const _addParent = Symbol('_addParent');
 const _setChildren = Symbol('_setChildren');
 const _error = Symbol('_error');
-const _stopStep = Symbol('_stopStep');
+const _stepUp = Symbol('_stepUp');
 const _stop = Symbol('_stop');
 const _triggerUp = Symbol('_triggerUp');
 const _stepDown = Symbol('_stepDown');
@@ -267,15 +263,17 @@ class Stream {
     [_stepDown](data, type, contextID) {
         this[_refs]
             .get(_child)
-            .getOrElse((data, type) => option_js.option()
-                .or(isStop(data, type),  () => {
-                    const context = this[_clearContext](contextID);
-                    this[_onStreamFinishHandlers].once(contextID).getOrElse(emptyFn)(context);
-                })
-                .or(isError(data, type), () => {
-                    this[_onStreamErrorHandlers].once(contextID).getOrElse(emptyFn)(data);
-                })
-                .finally(() => this[_triggerUp](EMPTY_DATA, type, contextID)))(data, type, contextID);
+            .getOrElse(
+                (data, type) => option_js.option()
+                    .or(isStop(data, type), () => {
+                        const context = this[_clearContext](contextID);
+                        this[_onStreamFinishHandlers].once(contextID).getOrElse(emptyFn)(context);
+                    })
+                    .or(isError(data, type), () => {
+                        this[_onStreamErrorHandlers].once(contextID).getOrElse(emptyFn)(data);
+                    })
+                    .finally(() => this[_triggerUp](EMPTY_DATA, type, contextID))
+            )(data, type, contextID);
 
 
     };
@@ -284,19 +282,23 @@ class Stream {
         option_js.option()
             .or(isError(data, type), () => this[_error](data, type, contextID))
             .or(isStop(data, type), () => this[_stop](data, type, contextID))
-            .or(stopNoData(data, type), () => this[_stopStep](data, type, contextID))
+            // .or(stopNoData(data, type), () => this[_stepUp](data, type, contextID))
+            .or(noData(data, type) && !isStop(data, type), () => this[_stepUp](data, type, contextID))
             .finally(() => this[_executeStep](data, type, contextID));
     }
 
     [_executeStep](data, type, contextID) {
         setPromise(this[_stream], this[_getContext](contextID))(data, type)
-            .then((_) => this[_stepDown](_, type, contextID))
-            .catch((_) => this[_error](_, type, contextID));
+            .then(
+                (_) => option_js.option()
+                    .or(topInstance(data, type) && noData(_, type), () => this[_stop](_, type, contextID))
+                    .finally(() => this[_stepDown](_, type, contextID))
+            ).catch((_) => this[_error](_, type, contextID));
 
 
     };
 
-     [_stop](data, type, contextID) {
+    [_stop](data, type, contextID) {
         const sessionContext = this[_getContext](contextID);
         const instance = getContext(sessionContext, _root)();
         const context = getContext(sessionContext, _context);
@@ -309,8 +311,11 @@ class Stream {
 
     }
 
-    [_stopStep](data, type, contextID) {
-        this[_triggerUp](data, STOP_TYPE, contextID);
+    [_stepUp](data, type, contextID) {
+        this[_refs]
+            .get(_upParent)
+            .getOrElse(() => this[_run](TOP_INSTANCE, type, contextID))(data, type, contextID);
+
     }
 
     [_error](error, type, contextID) {

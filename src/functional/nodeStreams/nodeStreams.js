@@ -1,9 +1,9 @@
 import {stream} from '../core/Stream';
 
 const {assign} = Object;
-const readPromise = (stream) => new Promise((resolve) => stream.on('readable', () => resolve({
+const readPromise = (stream, size) => new Promise((resolve) => stream.on('readable', () => resolve({
     async read() {
-        return stream.read();
+        return stream.read(size);
     },
     async destroy() {
         stream.destroy();
@@ -68,8 +68,8 @@ const duplexPromise = (stream) => {
 
 
 const readStream = (instance, ...args) => {
-    return stream(() => readPromise(instance))
-        .onReady((instance) => instance.read(...args))
+    return stream(() => readPromise(instance, ...args))
+        .onReady((instance) => instance.read())
         .onStop((instance) => instance.destroy());
 };
 
