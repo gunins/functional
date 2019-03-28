@@ -74,17 +74,21 @@ const duplexPromise = (stream$$1) => {
 const readStream = (instance, ...args) => {
     return Stream_js.stream(() => readPromise(instance, ...args))
         .onReady((instance) => instance.read())
-        .onStop((instance) => instance.destroy());
+        .onStop((instance) => instance.destroy())
+        .onError((instance) => Promise.reject(instance.destroy()));
 };
 
 const writeStream = (instance) => Stream_js.stream(() => writePromise(instance))
     .onReady((instance, chunk) => instance.write(chunk))
-    .onStop((instance, context, data) => instance.end(data));
+    .onStop((instance, context, data) => instance.end(data))
+    .onError((instance) => Promise.reject(instance.destroy()));
 
-const duplexStream = (instance,...args) => Stream_js.stream(() => duplexPromise(instance))
+
+const duplexStream = (instance, ...args) => Stream_js.stream(() => duplexPromise(instance))
     .onReady((instance, context) => instance.write(context))
     .onData((chunk, context, instance) => instance.read(...args))
-    .onStop((instance, context, data) => instance.readLast(data));
+    .onStop((instance, context, data) => instance.readLast(data))
+    .onError((instance) => Promise.reject(instance.destroy()));
 
 exports.writeStream = writeStream;
 exports.readStream = readStream;
