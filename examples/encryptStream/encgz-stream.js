@@ -48,3 +48,4 @@ zipStream(source, destination, 'SECRET', initVect)
     .then(() => unzipStream(destination, destinationUnzip, 'SECRET', initVect))
     .then(() => console.log('unzip finished'));
 
+

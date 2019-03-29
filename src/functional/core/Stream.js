@@ -321,12 +321,12 @@ class Stream {
         this[_onStreamErrorHandlers].set(contextID, cb);
 
     }
-
-    // return copy of stream instance
+    //
+    // return copy of new stream instance
     copy() {
         return this[_getTopRef](this[_uuid]);
     };
-
+    // will take a functor (chunk)=>Promise
     // return new stream instance
     map(fn) {
         const job = stream(fn, this);
@@ -334,10 +334,10 @@ class Stream {
         return job;
     };
 
-    // return new stream instance
+   /* // return new stream instance
     flatMap(fn) {
-    };
-
+    };*/
+    //Will take a stream, and add to tail
     // return new stream instance
     through(joined) {
         return joined
@@ -345,12 +345,13 @@ class Stream {
             [_addParent](this)
             .map(_ => _);
     };
-
+    // Will take a task
     throughTask(_task) {
         return this.map(_ => task(_).through(_task).unsafeRun())
     };
 
     //OPTIONAL: onReady Means, taking initialisation object, and return promise with new params.
+    // callback will take arguments (instance, data)=>Promise
     // return same instance
 
     onReady(cb) {
@@ -359,7 +360,7 @@ class Stream {
 
     };
 
-    // OPTIONAL: event to pause, for example filereader, or web socket
+   /* // OPTIONAL: event to pause, for example filereader, or web socket
     // return same instance
     onPause(cb) {
         this[_stream].set(_onPause, toPromise(cb));
@@ -372,32 +373,35 @@ class Stream {
     onResume(cb) {
         this[_stream].set(_onResume, toPromise(cb));
         return this;
-    };
+    };*/
 
     //OPTIONAL: In case need to destroy instance
+    // callback will take arguments (instance, context, data)=>Promise
     // return same instance
-    onStop(cb) {
-        this[_stream].set(_onStop, toPromise(cb));
+    onStop(callback) {
+        this[_stream].set(_onStop, toPromise(callback));
         return this;
     };
 
     // OPTIONAL: every time data collected
     // Will return, chunk, and scope context. In case you need to manage own history.
+    // callback will take arguments (data, context, instance)=>Promise
     // return same instance
-    onData(cb) {
-        this[_stream].set(_onData, cb);
+    onData(callback) {
+        this[_stream].set(_onData, callback);
         return this;
     };
 
     // OPTIONAL: handling error.
     // return same instance
-    onError(cb) {
-        this[_stream].set(_onError, toPromise(cb));
+    // callback will take arguments (instance, context, error)=>Promise
+    onError(callback) {
+        this[_stream].set(_onError, toPromise(callback));
         return this;
 
     }
 
-    // boolean, if straem instance or not
+    // boolean, if stream instance or not
     isStream() {
         return this.toString() === '[object Stream]';
     };
@@ -405,7 +409,7 @@ class Stream {
 
     //Infinite stream, skip error/ continue.
     //    @param errors, how many error retries, till fail.
-    unsafeRun(errors) {
+    /*unsafeRun(errors) {
         return {
             stop() {
 
@@ -432,7 +436,7 @@ class Stream {
 
             }
         }
-    }
+    }*/
 
 
     // Runs stream till return null. Will return Promise with instance context
@@ -453,7 +457,7 @@ class Stream {
     toString() {
         return '[object Stream]'
     };
-
+    //Returns Empty Stream
     static empty() {
         return stream();
     };

@@ -264,50 +264,92 @@ Static methods
 
 ### Stream
 
-Async computation including list of tasks.
+Streaming IO library. There is helpers to support Nodejs Streams
+The design goal is stream composition, and pull based. All streams is in paused mode.
+Only send signal to parent stream, when  step is finished. Everything is promise based.
+
 
 Usage
 
 ```javascript
-    import {stream, Stream} from 'functional_tasks/src/core/Stream';
-    import {task} from 'functional_tasks/src/core/Task';
+    import {stream} from 'functional_tasks/src/core/Stream';
+    import {fileReadStream, fileWriteStream} from 'functional_tasks/functional/nodeStreams/fileReader';
+    const source = path.resolve('./test/functional/core/data/emojilist.txt');
+    const destination = path.resolve(tmpDir, './emojilistUppper.txt');
 
-    //Initial task
-      let a = stream(task((_, resolve, reject) => resolve(3)))
-            task((_,resolve) => {
-                resolve(4)
-            });
-           // get result each task is asynhronus, and will return value
-            a.toArray()
-            .then(data => {
-                // use data and data to be eql [3,4]
-            });
+         const fileStream = fileReadStream(source)
+                .map(chunk => chunk.toString('utf8'))
+                .map(string => string.toUpperCase())
+                .through(fileWriteStream(destination));
+    
+             fileStream.run()
+                .then(()=>{
+                     console.log('stream finished')
+                })
+                .catch((error)=>{
+                    console.error('Stream Error', error) 
+                });
 
 
 ```
 
-**new Stream(...Task|fn|obj|value):**  Create Stream with sequence. 
-**new(..Task|fn|obj|value):** create Stream, without new operator.
+In example, we read the file, convert `Buffer` to `utf8` string and convert to UpperCase, then save to new target file.
+Each new chunk only available, when file finish write. Reader is in pause mode.
 
-Function is same as Task
 ```javascript
-    (data, resolve, reject) => {
-    // data is returning data from previous task;
-    // resolve called, when async task is finished
-    // reject called if error
-        resolve(data + 1)
+
+    const readArray = stream(() => {
+        return [1, 2, 3, 4, 5, 6];
+    })
+        .onReady((_) => {
+            return _.shift();
+        })
+    
+    
+    
+    const pairArray = stream(() => {
+        let a = [];
+        return (_) =>{
+                const data = [...a, _];
+                a = data.length === 2 ? [] : data;
+                return data.length === 2 ? data : null;
+    
+            }
+    }).onReady((instance, _) => {
+        return instance(_);
+    });
+    
+    
+    const resp = await readArray.through(pairArray)
+        .onData((_, context) => {
+        return [...(context || []), _];
+    })
+        .run();
+    //resp = [[1,2],[3,4],[5,6]]
+
+```
+
+Simple javascript example, where you can pair array. 
+Two streams, first shifting aray, and return each item, second split to pairs. Third collecting data.
+
+Example is very basic, but, just show the use case, for example, readArray, can be Websocket.
+
+
+
+**new Stream(instance||Functor):**  Create Stream with sequence. 
+
+if onReady are not defined, then, `Functor` as argument giving chunk, from parent stream. Same like you use `stream().map()`
+```javascript
+    (chunk) => {
+    // data is returning data from parent stream;
+    // Promise.reject call if error
+        return chunk + 1
     }    
 
 ```
-synchronous functions no need extra params, and will take return value. 
 
-```javascript
-    (data) => {
-    // data is returning data from previous task;
-     return (data + 1)
-    }    
+For instance you can give for example 
 
-```
 **insert(task):** Adding new Task to the beginning of an Stream.
   
 **add(task):** Adding new Task to the end of an Stream.
