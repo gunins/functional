@@ -28,9 +28,9 @@ const decodeGzip = (secret, initVect) => createDecipheriv('aes256', getChiperKey
 
 
 const zipStream = (source, destination, secret, initVect) => fileReadStream(source)
-    // .map(_ => _.toString('utf8'))
-    // .map(_ => _.toUpperCase())
-    // .map(_ => Buffer.from(_, 'utf8'))
+// .map(_ => _.toString('utf8'))
+// .map(_ => _.toUpperCase())
+// .map(_ => Buffer.from(_, 'utf8'))
     .through(duplexStream(createGzip()))
     .through(duplexStream(encodeGZip(secret, initVect)))
     .through(fileWriteStream(destination))

@@ -9,8 +9,6 @@ const RUN_TYPE = Symbol('RUN_TYPE');
 const STOP_TYPE = Symbol('STOP_TYPE');
 const ERROR_TYPE = Symbol('ERROR_TYPE');
 const TOP_INSTANCE = Symbol('TOP_INSTANCE');
-const EMPTY_DATA = Symbol('NO_DATA');
-
 const isStream = (_ = {}) => _ && _.isStream && _.isStream();
 const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
@@ -68,7 +66,7 @@ const setPromise = (streamInstance, context) => (data, type) => {
 
 const topInstance = (data, type) => data === TOP_INSTANCE;
 const noData = (data, type) => !data;
-const isEmptyData = (data) => data === EMPTY_DATA;
+const isEmptyData = (data) => data === null;
 const isError = (data, type) => type === ERROR_TYPE;
 const isStop = (data, type) => type === STOP_TYPE;
 /**
@@ -248,7 +246,7 @@ class Stream {
                             .once(contextID)
                             .getOrElse(emptyFn)(data);
                     })
-                    .finally(() => this[_triggerUp](EMPTY_DATA, type, contextID))
+                    .finally(() => this[_stepUp](null, type, contextID))
             )(data, type, contextID);
 
 
@@ -433,7 +431,7 @@ class Stream {
             this[_onStreamFinish]((data) => resolve(data), contextID);
             this[_onStreamError]((error) => reject(error), contextID);
 
-            this[_triggerUp](EMPTY_DATA, RUN_TYPE, contextID);
+            this[_triggerUp](null, RUN_TYPE, contextID);
         })
     }
 

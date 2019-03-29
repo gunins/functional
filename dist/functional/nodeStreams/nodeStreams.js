@@ -20,7 +20,7 @@ const writePromise = async (stream$$1, {encoding} = {encoding: 'utf8'}) => {
         write(chunk) {
             return new Promise((resolve) => stream$$1.write(chunk, encoding, () => resolve(chunk)))
         },
-        end(chunk, encoding = 'utf8') {
+        end(chunk) {
             return new Promise((resolve) => stream$$1.end(chunk, encoding, () => resolve(chunk)))
         },
         finished(chunk) {
