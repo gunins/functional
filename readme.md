@@ -1,6 +1,7 @@
 ## Library for working with pull based async Tasks, Nodejs Streams and more [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
 ! Curently this library is on development stage.
+! ES6 Modules recommend to use through rollup or webpack.
 
 ### Why This Library
 
@@ -29,7 +30,7 @@ you can import directly from package.
 
 ```javascript
 
-import {Task, task} from 'functional_tasks';
+import functional_tasks from 'functional_tasks';
 
 ```
 
