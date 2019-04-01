@@ -1,13 +1,16 @@
-## Library for working with pull based async Tasks [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
+## Library for working with pull based async Tasks, Nodejs Streams and more [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
 ! Curently this library is on development stage.
 
 ### Why This Library
 
-This library inspired by [**fs2**](https://github.com/functional-streams-for-scala/fs2) Scala Library. Instead of pub sub concept, there introduced pull base concept.
-You can pull sequence of tasks, transform them, and returning as promise.
+This library inspired by [**fs2**](https://github.com/functional-streams-for-scala/fs2) Scala Library. Instead of events and callbacks, there introduced promise pull base concept.
 
-Also, you can combine tasks together. Task reject use [Railway Oriented Programming](http://www.zohaib.me/railway-programming-pattern-in-elixir/).
+The design goal is stream composition, and safe for memory. 
+For example, if read stream is faster than write, after some time, you will be out of memory.
+Solution is paused mode. Each stream is like task, every time finish, notify child with new data. 
+
+Also, you can combine tasks together. Tasks and Streams  use [Railway Oriented Programming](http://www.zohaib.me/railway-programming-pattern-in-elixir/).
 
 ### Installation
 
@@ -107,87 +110,6 @@ Subscribe for changes using resolve and reject
 ```
     
 ## API
-    
-### Option 
-Option represents optional values. usefoul to avoid if else statements.
-    
-Usage
-    
-```javascript
-    import {some, none} from 'functional_tasks/src/core/Option';
-    
-    some(/*some value*/)
-    none() //has no Value
-
-```
-    
-**new Some(@value):** Returns Option with some value
-**new None():** Returns Option with no value  
-
-**some(@value):** Returns Option with some value without `new` 
-**none():** Returns Option with no value without `new` 
-
-**some(@value).get()** Returning value   
-**(some(@value)|none()).getOrElse(@defaultValue)** Returning value if is Some, else use default Value;
-
-**(some(@value)|none()).isSome()** Returning true if `some` false is `none`
-
-**(some(@value)|none()).map()** Building new option by applying functor.
-
-**(some(@value)|none()).flatMap()** Building new option by applying functor  **returning value must be a Option**
- 
-### List
- 
-A class for immutable linked lists representing ordered collections of elements.
-
-Possible side effects, not use lists for large collections.
-
-Usage
-    
-```javascript
-   import {List, list} from 'functional_tasks/src/core/List';
-   let a = list(1,2,3)
-
-```
-
-**new List(...elemnts):**  Create immutable list of elements.
-**list(...elemnts):**  Create immutable list of elements without `new`.
-
-**insert(element):** Adding new Element to the beginning of an List.
-
-**add(element):** Adding new Element to the end of an List.
-
-**map(fn):** apply functor to all elements and returning new List
-
-**forEach(fn):** iterate over elements, and returning new List
-
-**flatMap(fn):** Building new Collection by apply functor. **returning value must be a list**
-
-**find(fn):** Returns first matching element in a list
-
-**filter(fn):** Returning new collection with matched criteria.
-
-**size():** Returning Size of List.
-
-**take(count):** Returning count of elements
-
-**foldLeft(init,fn):** Applies function to initialValue and all elements going left to right 
-
-**foldRight(init,fn):** Applies function to initialValue and all elements going right to left
-
-**reverse():** Returning new list in reversing order.
-
-**concat(...lists):** Combining multiple lists.
-
-**copy():** Returning new copy of list.
-
-**isList():** Returning true if is list.
-
-**toArray():** Convert list to Array.
-
-Static
-
-**empty():** Create Empty List.
 
 ### Task
 
@@ -261,6 +183,91 @@ synchronous functions no need extra params, and will take return value.
 Static methods
 
 **empty():** Create empty task
+
+
+
+### Async Fetch
+
+Tasks for fetch API 
+
+Example 
+
+```javascript
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+
+    let getData = task({uri: './package'})
+        .through(get)
+        .unsafeRun().then(data=>console.log(data));
+
+```
+
+ES6 async example
+
+```javascript
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package'})
+        .through(get)
+        .unsafeRun();
+    console.log(getData);
+})()
+
+```
+
+Example.
+
+```javascript
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package', body:{a:1, b:2}})
+        .through(get)
+        .unsafeRun();
+    console.log(getData);
+})()
+
+```
+
+Post example.
+
+```javascript
+import {post} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let getData = await task({uri: './package', body:{a:1, b:2}})
+        .through(post)
+        .unsafeRun();
+    console.log(getData);
+})()
+
+```
+There also available put and delete.
+
+Example, to combining tasks, with post
+
+
+```javascript
+import {post} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+(async () => {
+    let base =  task({uri: './package'}); 
+    
+    let setParams =  task(opt => Object.assign(opt, {
+                      body: {a: 1, b: 2}
+                  }));
+    
+    let getData = await task()
+                    .through(base)
+                    .through(setParams)
+                    .through(post)
+                    .unsafeRun();
+    
+    console.log(getData);
+})()
+
+```
 
 ### Stream
 
@@ -485,10 +492,6 @@ const fileReadStream = readStream(createReadStream(src));
 
 ```
 
-
-
-
-
 **onReady(callback):** Giving callback, to call any time child stream is ready. 
 Callback taking two arguments, Stream instance and data from parent stream.
 As return type taking Promise or any value. `null` will notify stream end.
@@ -519,6 +522,186 @@ Callback three arguments, Stream instance, last data from parent stream, and err
 Static methods
 
 **empty():** Create empty Stream
+
+### NodeStreams
+
+Because this library is made mainly for Nodejs streams, there is transformers, for nodejs streams.
+
+`writeStream, readStream, duplexStream`
+
+**Example**
+
+
+```javascript
+
+import {
+    createReadStream,
+    createWriteStream
+} from 'fs';
+
+import {createGzip} from 'zlib';
+
+import {readStream, writeStream, duplexStream} from 'functional/nodeStreams/nodeStreams';
+
+const fileReadStream = (src, size) => readStream(createReadStream(src), size);
+
+const fileWriteStream = (src, encoding = 'utf8') => writeStream(createWriteStream(src, encoding));
+
+const zip = duplexStream(createGzip())
+
+await fileReadStream(srcFile)
+    .through(zip)
+    .through(fileWriteStream(targetFile))
+    .run();
+
+```
+
+There is example how to read source file, zip  and write to destination.
+
+Kind of no difference with pipes, but with streams you can convert to upperCase, for example.
+
+```javascript
+
+await fileReadStream(srcFile)
+    .map(_ => _.toString('utf8'))
+    .map(_ => _.toUpperCase())
+    .map(_ => Buffer.from(_, 'utf8'))   
+    .through(zip)
+    .through(fileWriteStream(targetFile))
+    .run();
+
+```
+
+Or create separate transform Stream.
+
+```javascript
+
+const toUppercase = stream()   
+    .map(_ => _.toString('utf8'))
+    .map(_ => _.toUpperCase())
+    .map(_ => Buffer.from(_, 'utf8'));
+
+await fileReadStream(srcFile)
+    .through(toUppercase)
+    .through(zip)
+    .through(fileWriteStream(targetFile))
+    .run();
+
+
+```
+
+Or exact same use case, but you have a task, to manipulate buffer.
+
+
+```javascript
+
+const toUppercase = task()   
+    .map(_ => _.toString('utf8'))
+    .map(_ => _.toUpperCase())
+    .map(_ => Buffer.from(_, 'utf8'));
+
+await fileReadStream(srcFile)
+    .throughTask(toUppercase)
+    .through(zip)
+    .through(fileWriteStream(targetFile))
+    .run();
+
+
+```
+
+### File Reader
+
+In library already have `{fileReadStream, fileWriteStream}`
+
+You can import and use them directly.
+
+```javascript
+import {fileReadStream, fileWriteStream} from 'functional/nodeStreams/fileReader';
+
+```
+
+    
+### Option 
+Option represents optional values. usefoul to avoid if else statements.
+    
+Usage
+    
+```javascript
+    import {some, none} from 'functional_tasks/src/core/Option';
+    
+    some(/*some value*/)
+    none() //has no Value
+
+```
+    
+**new Some(@value):** Returns Option with some value
+**new None():** Returns Option with no value  
+
+**some(@value):** Returns Option with some value without `new` 
+**none():** Returns Option with no value without `new` 
+
+**some(@value).get()** Returning value   
+**(some(@value)|none()).getOrElse(@defaultValue)** Returning value if is Some, else use default Value;
+
+**(some(@value)|none()).isSome()** Returning true if `some` false is `none`
+
+**(some(@value)|none()).map()** Building new option by applying functor.
+
+**(some(@value)|none()).flatMap()** Building new option by applying functor  **returning value must be a Option**
+ 
+### List
+ 
+A class for immutable linked lists representing ordered collections of elements.
+
+Possible side effects, not use lists for large collections.
+
+Usage
+    
+```javascript
+   import {List, list} from 'functional_tasks/src/core/List';
+   let a = list(1,2,3)
+
+```
+
+**new List(...elemnts):**  Create immutable list of elements.
+**list(...elemnts):**  Create immutable list of elements without `new`.
+
+**insert(element):** Adding new Element to the beginning of an List.
+
+**add(element):** Adding new Element to the end of an List.
+
+**map(fn):** apply functor to all elements and returning new List
+
+**forEach(fn):** iterate over elements, and returning new List
+
+**flatMap(fn):** Building new Collection by apply functor. **returning value must be a list**
+
+**find(fn):** Returns first matching element in a list
+
+**filter(fn):** Returning new collection with matched criteria.
+
+**size():** Returning Size of List.
+
+**take(count):** Returning count of elements
+
+**foldLeft(init,fn):** Applies function to initialValue and all elements going left to right 
+
+**foldRight(init,fn):** Applies function to initialValue and all elements going right to left
+
+**reverse():** Returning new list in reversing order.
+
+**concat(...lists):** Combining multiple lists.
+
+**copy():** Returning new copy of list.
+
+**isList():** Returning true if is list.
+
+**toArray():** Convert list to Array.
+
+Static
+
+**empty():** Create Empty List.
+
 
 ### Match
 Pattern Matching helper.
@@ -590,86 +773,3 @@ and returning function will take an objects with patterns and functions. First m
 If no match, will return initial value with applied type. 
 
 
-
-### Async Fetch
-
-Tasks for fetch API 
-
-Example 
-
-```javascript
-import {get} from './functional/async/Fetch';
-import {task} from './functional/core/Task';
-
-    let getData = task({uri: './package'})
-        .through(get)
-        .unsafeRun().then(data=>console.log(data));
-
-```
-
-ES6 async example
-
-```javascript
-import {get} from './functional/async/Fetch';
-import {task} from './functional/core/Task';
-(async () => {
-    let getData = await task({uri: './package'})
-        .through(get)
-        .unsafeRun();
-    console.log(getData);
-})()
-
-```
-
-Example.
-
-```javascript
-import {get} from './functional/async/Fetch';
-import {task} from './functional/core/Task';
-(async () => {
-    let getData = await task({uri: './package', body:{a:1, b:2}})
-        .through(get)
-        .unsafeRun();
-    console.log(getData);
-})()
-
-```
-
-Post example.
-
-```javascript
-import {post} from './functional/async/Fetch';
-import {task} from './functional/core/Task';
-(async () => {
-    let getData = await task({uri: './package', body:{a:1, b:2}})
-        .through(post)
-        .unsafeRun();
-    console.log(getData);
-})()
-
-```
-There also available put and delete.
-
-Example, to combining tasks, with post
-
-
-```javascript
-import {post} from './functional/async/Fetch';
-import {task} from './functional/core/Task';
-(async () => {
-    let base =  task({uri: './package'}); 
-    
-    let setParams =  task(opt => Object.assign(opt, {
-                      body: {a: 1, b: 2}
-                  }));
-    
-    let getData = await task()
-                    .through(base)
-                    .through(setParams)
-                    .through(post)
-                    .unsafeRun();
-    
-    console.log(getData);
-})()
-
-```
