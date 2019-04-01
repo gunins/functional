@@ -4,6 +4,8 @@ const {some, Some, none, None} = require('./dist/functional/core/Option');
 const {list, List} = require('./dist/functional/core/List');
 const {match} = require('./dist/functional/core/Match');
 const {fetchTask, get, post, del, put} = require('./dist/functional/async/Fetch');
+const {fileWriteStream, fileReadStream} = require('./dist/functional/nodeStreams/fileReader');
+const {readStream, writeStream, duplexStream} = require('./dist/functional/nodeStreams/nodeStreams');
 
 
 module.exports = {
@@ -22,5 +24,10 @@ module.exports = {
     get,
     post,
     del,
-    put
+    put,
+    fileWriteStream,
+    fileReadStream,
+    readStream,
+    writeStream,
+    duplexStream
 };
