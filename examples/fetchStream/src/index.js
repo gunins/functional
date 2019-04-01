@@ -45,14 +45,13 @@ const writeStream = stream(() => controllerInstance())
 
 
 
-const customStream = (rs) => readerStream(rs)
+const imageReadStream = (rs) => readerStream(rs)
     .through(writeStream)
     .run();
 
 task({uri: './tortoise.png'})
     .map(({uri}) => fetch(uri))
-    .map(({body}) => body)
-    .map((rs) => customStream(rs))
+    .map(({body}) => imageReadStream(body))
     // Create a new response out of the stream
     .map(rs => new Response(rs))
     // Create an object URL for the response

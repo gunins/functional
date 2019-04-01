@@ -264,12 +264,41 @@ Static methods
 
 ### Stream
 
-Streaming IO library. There is helpers to support Nodejs Streams
-The design goal is stream composition, and pull based. All streams is in paused mode.
-Only send signal to parent stream, when  step is finished. Everything is promise based.
+Streaming IO library. 
+The design goal is stream composition, and safe for memory. 
+For example, if read stream is faster than write, after some time, you will be out of memory.
+Solution is paused mode. Each stream is like task, every time finish, notify chilg with new data. 
+If read return data, go step down, if null step up. 
+If null is top step, call stop for all stream chain, and finish read and close one by one.
+Each step is promise, in any step by returning `reject` you hve error. All streams from top are notified.
+
+Stream lifecycle has 3 steps:
+ 
+- `init` instance creation in constructor.
+- `onReady` called every time requesting new data.
+- `onData` called after `onReady` finished. For Duplex and Transform streams, `write()` ->`read()`.
+
+Also support for `error` and `stop` 
+- `onStop` called, when top instance has no data. (Later will be manual stop call support)
+- `onError` called, when on some instance has error. Will notify all pipeline.
+
+Helper methods:
+
+- `map` apply functor on chunk, and pass in to next step.
+- `through` chain two or more streams together.
+- `throughTask` chain stream pipeline with task pipeline.
+
+All stream steps are lazy. To start stream need to call `.run()` method.
+`.run()` and return promise. Success `.then(last context=>...)` Error `.catch(error=>....)`
 
 
-Usage
+There is helpers to support Nodejs Streams `writeStream, readStream, duplexStream`. 
+For transform streams no need for special type, use `duplexStream`.
+
+
+### Usage
+
+**for `fs` read and write**
 
 ```javascript
     import {stream} from 'functional_tasks/src/core/Stream';
@@ -294,7 +323,9 @@ Usage
 ```
 
 In example, we read the file, convert `Buffer` to `utf8` string and convert to UpperCase, then save to new target file.
-Each new chunk only available, when file finish write. Reader is in pause mode.
+Each new chunk only available, when file finish write.
+
+**Simple Array manipulation**
 
 ```javascript
 
@@ -329,14 +360,91 @@ Each new chunk only available, when file finish write. Reader is in pause mode.
 
 ```
 
-Simple javascript example, where you can pair array. 
-Two streams, first shifting aray, and return each item, second split to pairs. Third collecting data.
+Simple javascript example, where you can convert simple to pair array. 
 
-Example is very basic, but, just show the use case, for example, readArray, can be Websocket.
+There is two streams, first shifting aray, and return each item, second split to pairs. Third collecting data.
+
+Example is very basic, but, just show how to use outside Nodejs Streams, for example, readArray, can be Websocket.
+
+
+**Readable Streams in browser**
+
+```javascript
+
+import {stream} from '../../../src/functional/core/Stream';
+import {task} from '../../../src/functional/core/Task';
+
+const image = document.getElementById('target');
+
+const closure = (a, b) => () => {
+    let instance;
+    const c = a((_) => {
+        instance = b(_);
+    });
+    return instance(c)
+};
+
+const setController = (controller) => (_) => ({
+    push(value) {
+        controller.enqueue(value);
+        return _;
+    },
+    close() {
+        controller.close();
+        return _
+    }
+});
+
+const setReadableStream = (cb) => new ReadableStream({
+    start(controller) {
+        cb(controller);
+    }
+});
+
+const controllerInstance = closure(setReadableStream, setController);
+
+const readerStream = (rs) => stream(() => rs.getReader())
+    .onReady(async reader => {
+        const {done, value} = await reader.read();
+        return done ? null : value;
+    })
+    .onStop(reader => {
+        reader.releaseLock();
+    });
+
+const writeStream = stream(() => controllerInstance())
+    .onReady((controller, context) => controller.push(context))
+    .onStop((controller) => controller.close());
 
 
 
-**new Stream(instance||Functor):**  Create Stream with sequence. 
+const imageReadStream = (rs) => readerStream(rs)
+    .through(writeStream)
+    .run();
+
+task({uri: './tortoise.png'})
+    .map(({uri}) => fetch(uri))
+    .map(({body}) => imageReadStream(body))
+    // Create a new response out of the stream
+    .map(rs => new Response(rs))
+    // Create an object URL for the response
+    .map(response => response.blob())
+    .map(blob => URL.createObjectURL(blob))
+    // Update image
+    .map(url => {
+        image.src = url
+    })
+    .unsafeRun();
+
+```
+
+There is example, how to read Images as streams. to using this, need latest browsers. 
+Reason for example is, to show streams in browser.
+
+More examples are available in `examples` directory.
+
+
+**new Stream(instance||Functor):**  Stream Constructor. 
 
 if onReady are not defined, then, `Functor` as argument giving chunk, from parent stream. Same like you use `stream().map()`
 ```javascript
@@ -348,39 +456,65 @@ if onReady are not defined, then, `Functor` as argument giving chunk, from paren
 
 ```
 
-For instance you can give for example 
+For instance you can give for example;
 
-**insert(task):** Adding new Task to the beginning of an Stream.
-  
-**add(task):** Adding new Task to the end of an Stream.
+```javascript
+
+ const readArray = stream(() => {
+        return [1, 2, 3, 4, 5, 6];
+    })
+        .onReady((_) => {
+            return _.shift();
+        })
+
+```
+
+For nodejs file system.
+
+```javascript
+
+import {
+    createReadStream
+} from 'fs';
+
+import {readStream} from 'functional/nodeStreams/nodeStreams';
+
+const src = ...
+
+const fileReadStream = readStream(createReadStream(src));
+
+```
+
+
+
+
+
+**onReady(callback):** Giving callback, to call any time child stream is ready. 
+Callback taking two arguments, Stream instance and data from parent stream.
+As return type taking Promise or any value. `null` will notify stream end.
+
+**onData(callback):** Giving callback, to call after onReady done. For example, when write is finished, and can read.
+Callback taking three arguments, data from previous step, previous data and current stream instance. 
+As return type taking Promise or any value. `null` will notify stream end.
+
+**onStop(callback)** Giving callback, on stream stop. 
+Callback taking two arguments, Stream instance and last data from parent stream.
+
+**onError(callback)** Giving callback, on stream stop. 
+Callback three arguments, Stream instance, last data from parent stream, and error.
 
 **copy():** Returns new Stream, of copy of sequence with all steps.
 
 **map(fn):** Returning new stream with applied functor for all tasks.
 
-**through(Task):** Returning new stream adding another task in each task
+**through(Stream):** Returning new stream by adding Stream on tail.
 
-**resolve(fn):**  Returning new stream adding subscribe on each task.
+**throughTask(Task):** Returning new stream by adding task pipeline on tail.
 
-**reject(fn):**  Returning new stream  adding error on each task.
+**isStream():Boolean** return if is Stream
 
-**isStream():** return if is Stream
 
-**reverse()** Changing compilation order for stream.
-
-**foldLeft(initial,fn)** Apply functors from Left to right, and return Promise.
-
-**foldRight(initial,fn)** Apply functors from Right to left, and return Promise.
-
-**size()** Return size of stream.
-
-**concat(...streams)** Combine multiple streams in one.
-
-**toArray()** Convert stream to array, Return Promise
-
-**toList()** Convert stream to synchronous List and returning Promise.
-
-**unsafeRun(resolve,reject):** run tasks and returning Promise as end result (synchronous List) Alias .toList().
+**run():Promise** run tasks and returning Promise as end result, resolve o stream finish.
 
 Static methods
 

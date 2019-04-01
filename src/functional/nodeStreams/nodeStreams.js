@@ -38,7 +38,10 @@ const writePromise = async (stream, {encoding} = {encoding: 'utf8'}) => {
                 stream.on('data', (_) => {
                     chunks = Buffer.concat([chunks, _]);
                 });
-                stream.on('end', () => resolve(chunks));
+                stream.on('end', () => {
+                    stream.destroy();
+                    resolve(chunks)
+                });
                 stream.on('error', (error) => reject(error));
                 stream.end(chunk);
             })
