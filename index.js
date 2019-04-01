@@ -1,10 +1,12 @@
-import {task, Task} from './dist/functional/core/Task';
-import {stream, Stream} from './dist/functional/core/Stream';
-import {some, Some, none, None} from './dist/functional/core/Option';
-import {list, List} from './dist/functional/core/List';
-import {match} from './dist/functional/core/Match';
+const {task, Task} = require('./dist/functional/core/Task');
+const {stream, Stream} = require('./dist/functional/core/Stream');
+const {some, Some, none, None} = require('./dist/functional/core/Option');
+const {list, List} = require('./dist/functional/core/List');
+const {match} = require('./dist/functional/core/Match');
+const {fetchTask, get, post, del, put} = require('./dist/functional/async/Fetch');
 
-export {
+
+module.exports = {
     task,
     Task,
     stream,
@@ -15,5 +17,10 @@ export {
     None,
     list,
     List,
-    match
-}
+    match,
+    fetchTask,
+    get,
+    post,
+    del,
+    put
+};
