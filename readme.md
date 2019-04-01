@@ -25,9 +25,34 @@ This library usng [**UMD**](https://github.com/umdjs/umd) modules, can be used o
 
 ### Usage examples
 
+you can import directly from package.
 
 ```javascript
-    import {Task, task} from 'functional_tasks/src/core/Task';
+
+import {Task, task} from 'functional_tasks';
+
+```
+
+Old way.
+
+```javascript
+
+const {Task, task} = require('functional_tasks');
+
+
+```
+
+Or, just individual module, when use rollup, or webpack.
+
+```javascript
+
+import {Task, task} from 'functional_tasks/src/core/Task';
+
+```
+
+
+```javascript
+    import {Task, task} from 'functional_tasks';
     //Initialse task
     // Ignore first param, because, task is only initialised, call resolve, with number 3
       let a = task((_, resolve, reject) => resolve(3))
@@ -50,7 +75,7 @@ This library usng [**UMD**](https://github.com/umdjs/umd) modules, can be used o
 Using async es6 functions
     
 ```javascript
-    import {Task, task} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks';
     async ()=>{
     //Initial task
       let a = task((resolve) => resolve(3))
@@ -69,7 +94,7 @@ Using async es6 functions
 Combining Tasks
 
 ```javascript
-    import {Task, task} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks';
 
    let taskA = task({a: 'a', b: 'b'});
    let taskB = task((data, res) => {
@@ -88,7 +113,7 @@ Combining Tasks
 Subscribe for changes using resolve and reject
 
 ```javascript
-    import {Task, task} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks';
     
     task((_, resolve) => resolve(1))
             .resolve(data => {
@@ -118,7 +143,7 @@ Trampolined computation producing an A that may include asynchronous steps. Arbi
 Usage
 
 ```javascript
-    import {Task, task} from 'functional_tasks/src/core/Task';
+    import {Task, task} from 'functional_tasks';
     //Initial task
       let a = task((_, resolve, reject) => resolve(3))
       //apply functor to next step. All data is imutable
@@ -308,8 +333,7 @@ For transform streams no need for special type, use `duplexStream`.
 **for `fs` read and write**
 
 ```javascript
-    import {stream} from 'functional_tasks/src/core/Stream';
-    import {fileReadStream, fileWriteStream} from 'functional_tasks/functional/nodeStreams/fileReader';
+    import {stream, fileReadStream, fileWriteStream} from 'functional_tasks';
     const source = path.resolve('./test/functional/core/data/emojilist.txt');
     const destination = path.resolve(tmpDir, './emojilistUppper.txt');
 
@@ -378,8 +402,7 @@ Example is very basic, but, just show how to use outside Nodejs Streams, for exa
 
 ```javascript
 
-import {stream} from '../../../src/functional/core/Stream';
-import {task} from '../../../src/functional/core/Task';
+import {stream, task} from 'functional_tasks';
 
 const image = document.getElementById('target');
 
@@ -484,7 +507,7 @@ import {
     createReadStream
 } from 'fs';
 
-import {readStream} from 'functional/nodeStreams/nodeStreams';
+import {readStream} from 'functional';
 
 const src = ...
 
@@ -541,7 +564,7 @@ import {
 
 import {createGzip} from 'zlib';
 
-import {readStream, writeStream, duplexStream} from 'functional/nodeStreams/nodeStreams';
+import {readStream, writeStream, duplexStream} from 'functional_tasks';
 
 const fileReadStream = (src, size) => readStream(createReadStream(src), size);
 
@@ -616,7 +639,7 @@ In library already have `{fileReadStream, fileWriteStream}`
 You can import and use them directly.
 
 ```javascript
-import {fileReadStream, fileWriteStream} from 'functional/nodeStreams/fileReader';
+import {fileReadStream, fileWriteStream} from 'functional_tasks';
 
 ```
 
@@ -627,7 +650,7 @@ Option represents optional values. usefoul to avoid if else statements.
 Usage
     
 ```javascript
-    import {some, none} from 'functional_tasks/src/core/Option';
+    import {some, none} from 'functional_tasks';
     
     some(/*some value*/)
     none() //has no Value
@@ -658,7 +681,7 @@ Possible side effects, not use lists for large collections.
 Usage
     
 ```javascript
-   import {List, list} from 'functional_tasks/src/core/List';
+   import {List, list} from 'functional_tasks';
    let a = list(1,2,3)
 
 ```
