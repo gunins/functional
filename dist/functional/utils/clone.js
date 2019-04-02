@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/List.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', '../core/List.js'], factory) :
-	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = {}),global.List_js));
-}(this, (function (exports,List_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/List')) :
+	typeof define === 'function' && define.amd ? define(['exports', '../core/List'], factory) :
+	(factory((global['functional/utils/clone'] = global['functional/utils/clone'] || {}, global['functional/utils/clone'].js = {}),global.List));
+}(this, (function (exports,List) { 'use strict';
 
 const {assign, keys} = Object;
 
@@ -32,7 +32,7 @@ const objectFunctor = pair(isObject, cloneObj);
 const otherFunctor = pair(isOther, cloneSimple);
 
 //take all functors in a list.
-const functors = List_js.list(arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
+const functors = List.list(arrayFunctor, dateFunctor, objectFunctor, otherFunctor);
 const getFunctor = (obj) => functors.find(fn => fn.guard(obj)).action(obj);
 const clone = (obj) => getFunctor(obj)(children => clone(children));
 

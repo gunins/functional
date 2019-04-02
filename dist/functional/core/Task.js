@@ -1,14 +1,14 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./List.js'), require('./Option.js'), require('../utils/clone.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', './List.js', './Option.js', '../utils/clone.js'], factory) :
-	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = {}),global.List_js,global.Option_js,global.clone_js));
-}(this, (function (exports,List_js,Option_js,clone_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./List'), require('./Option'), require('../utils/clone')) :
+	typeof define === 'function' && define.amd ? define(['exports', './List', './Option', '../utils/clone'], factory) :
+	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = {}),global.List,global.Option,global.clone));
+}(this, (function (exports,List,Option,clone) { 'use strict';
 
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => isFunction(job) ? job : () => job;
 const emptyFn = _ => _;
 const setPromise = (job) => (data, success) => new Promise((resolve, reject) => {
-    const dataCopy = clone_js.clone(data);
+    const dataCopy = clone.clone(data);
     const fn = job.getOrElse(emptyFn);
     if (success) {
         return (fn.length <= 1) ? resolve(fn(dataCopy)) : fn(dataCopy, resolve, reject);
@@ -53,15 +53,15 @@ const _copy = Symbol('_copy');
 class Task {
 
     constructor(job, parent) {
-        this[_parent] = Option_js.none();
-        this[_topRef] = Option_js.none();
-        this[_topParent] = Option_js.none();
-        this[_children] = List_js.List.empty();
-        this[_resolvers] = List_js.List.empty();
-        this[_rejecters] = List_js.List.empty();
-        this[_resolve] = Option_js.none();
-        this[_reject] = Option_js.none();
-        this[_bottomRef] = Option_js.none();
+        this[_parent] = Option.none();
+        this[_topRef] = Option.none();
+        this[_topParent] = Option.none();
+        this[_children] = List.List.empty();
+        this[_resolvers] = List.List.empty();
+        this[_rejecters] = List.List.empty();
+        this[_resolve] = Option.none();
+        this[_reject] = Option.none();
+        this[_bottomRef] = Option.none();
         this[_uuid] = Symbol('uuid');
         this[_create](job, parent);
     }
@@ -69,7 +69,7 @@ class Task {
     //private function.
     [_create](job, parent) {
         this[_setParent](parent);
-        this[_task] = job !== undefined ? Option_js.some(toFunction(job)) : Option_js.none();
+        this[_task] = job !== undefined ? Option.some(toFunction(job)) : Option.none();
         return this;
     };
 
@@ -79,9 +79,9 @@ class Task {
 
     [_setParent](parent) {
         if (parent && parent.isTask && parent.isTask()) {
-            this[_parent] = Option_js.some((..._) => parent[_triggerUp](..._));
-            this[_topRef] = Option_js.some((..._) => parent[_getTopRef](..._));
-            this[_topParent] = Option_js.some((..._) => parent[_addParent](..._));
+            this[_parent] = Option.some((..._) => parent[_triggerUp](..._));
+            this[_topRef] = Option.some((..._) => parent[_getTopRef](..._));
+            this[_topParent] = Option.some((..._) => parent[_addParent](..._));
         }
     };
 
@@ -96,25 +96,25 @@ class Task {
     [_setChildren](children) {
         if (children && children.isTask && children.isTask()) {
             this[_children] = this[_children].insert((..._) => children[_run](..._));
-            this[_bottomRef] = Option_js.some((..._) => children[_getBottomRef](..._));
+            this[_bottomRef] = Option.some((..._) => children[_getBottomRef](..._));
         }
 
     };
 
     [_resolveRun](data) {
         this[_resolvers].forEach(fn => fn(data));
-        this[_resolve].getOrElse(emptyFn)(clone_js.clone(data));
-        this[_resolve] = Option_js.none();
+        this[_resolve].getOrElse(emptyFn)(clone.clone(data));
+        this[_resolve] = Option.none();
         this[_triggerDown](data, true);
-        return clone_js.clone(data);
+        return clone.clone(data);
     };
 
     [_rejectRun](data) {
-        this[_rejecters].forEach(fn => fn(clone_js.clone(data)));
-        this[_reject].getOrElse(emptyFn)(clone_js.clone(data));
-        this[_reject] = Option_js.none();
+        this[_rejecters].forEach(fn => fn(clone.clone(data)));
+        this[_reject].getOrElse(emptyFn)(clone.clone(data));
+        this[_reject] = Option.none();
         this[_triggerDown](data, false);
-        return clone_js.clone(data);
+        return clone.clone(data);
     };
 
     [_triggerUp]() {
@@ -216,8 +216,8 @@ class Task {
     };
 
     clear() {
-        this[_resolvers] = List_js.List.empty();
-        this[_rejecters] = List_js.List.empty();
+        this[_resolvers] = List.List.empty();
+        this[_rejecters] = List.List.empty();
         return this;
     }
 
@@ -228,11 +228,11 @@ class Task {
      * */
     unsafeRun(resolve = emptyFn, reject = emptyFn) {
         return new Promise((res, rej) => {
-            this[_resolve] = Option_js.some((data) => {
+            this[_resolve] = Option.some((data) => {
                 resolve(data);
                 res(data);
             });
-            this[_reject] = Option_js.some((data) => {
+            this[_reject] = Option.some((data) => {
                 reject(data);
                 rej(data);
             });

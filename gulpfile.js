@@ -47,8 +47,8 @@ let rollupStream = (srcDir) => chain((chunk) => {
     let dir = srcDir[srcDir.length - 1] === '/' ? srcDir.substring(0, srcDir.length - 1) : srcDir,
         baseDir = process.cwd() + dir + '/',
         {path} = chunk,
-        moduleName = path.replace(baseDir, ''),
-        excluded = excludePaths.filter(file => file !== path);
+        moduleName = path.replace(baseDir, '').replace('.mjs', '.js'),
+        excluded = excludePaths.filter(file => file !== path).map(_=>_.replace('.mjs',''));
     return rollup({
         input:    path,
         format:   'umd',
@@ -66,7 +66,7 @@ gulp.task('clean', () => {
 });
 
 gulp.task('rollup', ['clean'], () => {
-    return gulp.src('./src/**/*.js', {read: false})
+    return gulp.src(['./src/**/*.js', './src/**/*.mjs'], {read: false})
         .pipe(rollupStream('/src/'))
         .pipe(gulp.dest('./dist'));
 });

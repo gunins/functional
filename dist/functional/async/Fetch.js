@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Task.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', '../core/Task.js'], factory) :
-	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.Task_js));
-}(this, (function (exports,Task_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Task')) :
+	typeof define === 'function' && define.amd ? define(['exports', '../core/Task'], factory) :
+	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.Task));
+}(this, (function (exports,Task) { 'use strict';
 
 const {assign} = Object;
 
@@ -19,11 +19,11 @@ const str = obj => Object.keys(obj)
     .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
     .join('&');
 
-const fetchTask = Task_js.task(opt => load(opt));
+const fetchTask = Task.task(opt => load(opt));
 
 const uriPath = ({protocol, host, uri}) => (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri);
 
-const getBase = Task_js.task(opt => {
+const getBase = Task.task(opt => {
     const {uri, body} = opt;
     return assign(
         {credentials: 'include'},
@@ -49,7 +49,7 @@ const del = getBase.copy()
     .through(fetchTask);
 
 
-const postBase = Task_js.task(opt => assign(
+const postBase = Task.task(opt => assign(
     {
         method:      'post',
         credentials: 'include',

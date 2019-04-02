@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Stream.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', '../core/Stream.js'], factory) :
-	(factory((global['functional/nodeStreams/nodeStreams'] = global['functional/nodeStreams/nodeStreams'] || {}, global['functional/nodeStreams/nodeStreams'].js = {}),global.Stream_js));
-}(this, (function (exports,Stream_js) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Stream')) :
+	typeof define === 'function' && define.amd ? define(['exports', '../core/Stream'], factory) :
+	(factory((global['functional/nodeStreams/nodeStreams'] = global['functional/nodeStreams/nodeStreams'] || {}, global['functional/nodeStreams/nodeStreams'].js = {}),global.Stream));
+}(this, (function (exports,Stream) { 'use strict';
 
 const {assign} = Object;
 const readPromise = (stream$$1, {size} = {}) => new Promise((resolve) => stream$$1.on('readable', () => resolve({
@@ -75,18 +75,18 @@ const duplexPromise = (stream$$1, _ = {}) => {
 };
 
 
-const readStream = (instance, options) => Stream_js.stream(() => readPromise(instance, options))
+const readStream = (instance, options) => Stream.stream(() => readPromise(instance, options))
     .onReady((instance) => instance.read())
     .onStop((instance) => instance.destroy())
     .onError((instance) => Promise.reject(instance.destroy()));
 
-const writeStream = (instance) => Stream_js.stream(() => writePromise(instance))
+const writeStream = (instance) => Stream.stream(() => writePromise(instance))
     .onReady((instance, chunk) => instance.write(chunk))
     .onStop((instance, context, data) => instance.end(data))
     .onError((instance) => Promise.reject(instance.destroy()));
 
 
-const duplexStream = (instance, options) => Stream_js.stream(() => duplexPromise(instance, options))
+const duplexStream = (instance, options) => Stream.stream(() => duplexPromise(instance, options))
     .onReady((instance, context) => instance.write(context))
     .onData((chunk, context, instance) => instance.read())
     .onStop((instance, context, data) => instance.readLast(data))

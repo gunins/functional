@@ -1,19 +1,21 @@
-const {fileReadStream, fileWriteStream} = require('../../dist/functional/nodeStreams/fileReader');
-const {stream} = require('../../dist/functional/core/Stream');
-const {duplexStream} = require('../../dist/functional/nodeStreams/nodeStreams');
-const path = require('path');
+import {fileReadStream, fileWriteStream} from '../../src/functional/nodeStreams/fileReader';
+import {duplexStream} from '../../src/functional/nodeStreams/nodeStreams';
+import path from 'path';
 
-const source = path.resolve('./data/divine-comedy.txt');
-const destination = path.resolve('./divine-comedy.txt.gzip');
-const destinationUnzip = path.resolve('./divine-gzip.txt');
 
-const {
+import {
     createCipheriv,
     createDecipheriv,
     randomBytes,
     createHash
-} = require('crypto');
-const {createGzip, createGunzip} = require('zlib');
+} from 'crypto';
+
+import {createGzip, createGunzip} from 'zlib';
+
+
+const source = path.resolve('./data/divine-comedy.txt');
+const destination = path.resolve('./divine-comedy.txt.gzip');
+const destinationUnzip = path.resolve('./divine-gzip.txt');
 
 const getChiperKey = (secret) => createHash('md5')
     .update(secret)

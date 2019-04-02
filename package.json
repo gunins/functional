@@ -27,7 +27,7 @@
     "leakage": "^0.4.0",
     "mocha": "^3.5.0",
     "rollup-plugin-multi-entry": "^2.0.1",
-    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-root-import": "^0.2.2",
     "rollup-stream": "^1.24.1",
     "sinon": "^2.4.1",
