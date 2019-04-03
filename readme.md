@@ -135,7 +135,7 @@ To giving more control, to going to next step, we can wait until both streams ar
 ```
 
 
-Also you can add extra step, on some stream
+Also you can add different steps, on the streams
 
 ```javascript
 
@@ -170,7 +170,7 @@ From example above you want to change string tu uppercase, but file is in memory
 
 ``` 
 
-Of course, this is very simple use case, lets fetch remote data, and convert to upperCase.
+This is very simple use case, lets fetch remote data, and convert to upperCase.
 
 ```javascript
 
@@ -185,10 +185,10 @@ import {task} from './functional/core/Task';
 
 ```
 
-And of course all tasks are composable. There is `async` helper library available, for `get`, `post`, `delete` etc.
+All tasks are composable. There is `async` helper library available, for `get`, `post`, `delete` etc.
 
 
-Also streams, has task support, with `.throughTask` method.
+Our streams, has task support too, with `.throughTask` method.
 
 ```javascript
 
@@ -492,10 +492,10 @@ import {task} from './functional/core/Task';
 Streaming IO library. 
 The design goal is stream composition, and safe for memory. 
 For example, if read stream is faster than write, after some time, you will be out of memory.
-Solution is paused mode. Each stream is like task, every time finish, notify chilg with new data. 
+Solution is paused mode. Each stream is like task, every time finish, notify child with new data. 
 If read return data, go step down, if null step up. 
-If null is top step, call stop for all stream chain, and finish read and close one by one.
-Each step is promise, in any step by returning `reject` you hve error. All streams from top are notified.
+If null is top instance, full stream pipeline will call call stop, finish read and close one by one.
+Each step is promise, in any step by returning `reject` you have error. All streams from top are notified, and you can safely close, all streams.
 
 Stream lifecycle has 3 steps:
  
@@ -503,9 +503,9 @@ Stream lifecycle has 3 steps:
 - `onReady` called every time requesting new data.
 - `onData` called after `onReady` finished. For Duplex and Transform streams, `write()` ->`read()`.
 
-Also support for `error` and `stop` 
+For `error` and `stop` 
 - `onStop` called, when top instance has no data. (Later will be manual stop call support)
-- `onError` called, when on some instance has error. Will notify all pipeline.
+- `onError` called, when on some instance has error. Error has to return `Promise.reject()`
 
 Helper methods:
 
@@ -514,7 +514,7 @@ Helper methods:
 - `throughTask` chain stream pipeline with task pipeline.
 
 All stream steps are lazy. To start stream need to call `.run()` method.
-`.run()` and return promise. Success `.then(last context=>...)` Error `.catch(error=>....)`
+`.run()` will return a promise. Success `.then(last context=>...)` error `.catch(error=>....)`
 
 
 There is helpers to support Nodejs Streams `writeStream, readStream, duplexStream`. 
@@ -588,7 +588,7 @@ Simple javascript example, where you can convert simple to pair array.
 
 There is two streams, first shifting aray, and return each item, second split to pairs. Third collecting data.
 
-Example is very basic, but, just show how to use outside Nodejs Streams, for example, readArray, can be Websocket.
+This example show how to use outside Nodejs Streams, and can be useful in browser, for example, `readArray` can be Websocket.
 
 
 **Readable Streams in browser**
@@ -662,7 +662,6 @@ task({uri: './tortoise.png'})
 ```
 
 There is example, how to read Images as streams. to using this, need latest browsers. 
-Reason for example is, to show streams in browser.
 
 More examples are available in `examples` directory.
 
@@ -700,7 +699,7 @@ import {
     createReadStream
 } from 'fs';
 
-import {readStream} from 'functional';
+import {readStream} from 'functional_tasks';
 
 const src = ...
 
@@ -774,7 +773,7 @@ await fileReadStream(srcFile)
 
 There is example how to read source file, zip  and write to destination.
 
-Kind of no difference with pipes, but with streams you can convert to upperCase, for example.
+There convert to upperCase.
 
 ```javascript
 
@@ -788,7 +787,7 @@ await fileReadStream(srcFile)
 
 ```
 
-Or create separate transform Stream.
+Compose streams together.
 
 ```javascript
 
@@ -806,7 +805,7 @@ await fileReadStream(srcFile)
 
 ```
 
-Or exact same use case, but you have a task, to manipulate buffer.
+Compose streams and tasks
 
 
 ```javascript
@@ -836,9 +835,10 @@ import {fileReadStream, fileWriteStream} from 'functional_tasks';
 
 ```
 
+## Functional helpers
     
-### Option 
-Option represents optional values. usefoul to avoid if else statements.
+### Maybe 
+Maybe represents optional values. 
     
 Usage
     
@@ -851,12 +851,15 @@ Usage
 ```
     
 **new Some(@value):** Returns Option with some value
+
 **new None():** Returns Option with no value  
 
 **some(@value):** Returns Option with some value without `new` 
+
 **none():** Returns Option with no value without `new` 
 
 **some(@value).get()** Returning value   
+
 **(some(@value)|none()).getOrElse(@defaultValue)** Returning value if is Some, else use default Value;
 
 **(some(@value)|none()).isSome()** Returning true if `some` false is `none`
@@ -880,6 +883,7 @@ Usage
 ```
 
 **new List(...elemnts):**  Create immutable list of elements.
+
 **list(...elemnts):**  Create immutable list of elements without `new`.
 
 **insert(element):** Adding new Element to the beginning of an List.
@@ -920,6 +924,7 @@ Static
 
 
 ### Match
+
 Pattern Matching helper.
 
 Example for list 
