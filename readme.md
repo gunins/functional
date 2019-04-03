@@ -1,27 +1,219 @@
 ## Library for working with pull based async Tasks, Nodejs Streams and more [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
 ! Curently this library is on development stage.
-! ES6 Modules recommend to use through rollup or webpack.
 
 ### Why This Library
 
-This library inspired by [**fs2**](https://github.com/functional-streams-for-scala/fs2) Scala Library. Instead of events and callbacks, there introduced promise pull base concept.
+I/O in node is asynchronous, so interacting with the disk and network involves passing callbacks to functions. 
+As streams are EventEmitters, they emit several events at various points.
 
-The design goal is stream composition, and safe for memory. 
-For example, if read stream is faster than write, after some time, you will be out of memory.
-Solution is paused mode. Each stream is like task, every time finish, notify child with new data. 
+One way to read data from a stream is to listen to data event and attach a callback. When a chunk of data is 
+available, the readable stream emits a data event and your callback executes. Take a look at the following snippet:
 
-Also, you can combine tasks together. Tasks and Streams  use [Railway Oriented Programming](http://www.zohaib.me/railway-programming-pattern-in-elixir/).
+```javascript
+
+    import {createReadStream} from 'fs';
+    const readableStream = createReadStream('file.txt');
+    let data = '';
+    
+    readableStream.on('data', (chunk)=> {
+        data+=chunk;
+    });
+    
+    readableStream.on('end', ()=> {
+        console.log(data);
+    });
+
+```
+
+In this example is very easy, you read file and store in to `Buffer`.
+
+And if you want to chain streams together, there is one easy way.
+
+
+```javascript
+import fs from 'fs';
+import zlib from 'zlib';
+
+fs.createReadStream('input.txt.gz')
+  .pipe(zlib.createGunzip())
+  .pipe(fs.createWriteStream('output.txt'));
+
+```
+
+Very simple, and easy. But sometimes, if read is faster than write, after some time you are out of memory.
+
+Solution is, paused mode.
+
+```javascript
+
+    import {createReadStream, createWriteStream} from 'fs';
+    const srcStream = createReadStream('file.txt');
+    const destStream = createWriteStream('output.txt')
+
+   
+    srcStream.on('data', (chunk)=> {
+        const canContinue = destStream.write(chunk);
+          if (!canContinue) {
+            // we are overflowing the destination, we should pause
+            srcStream.pause();
+            // we will resume when the destination stream is drained
+            destStream.once('drain', () => srcStream.resume());
+          }    
+    });
+    
+    srcStream.on('end', ()=> {
+        destStream.destroy();
+    });
+
+```
+
+This solution is safe, but what if you want to compose streams, and transformations. Means for each pipe, you have to create
+stream with some type (readable, writable, transform or duplex).
+
+Here we came to this library solution. This library works in paused mode, is composable, and lazy.
+
+Basic example, transform readable stream to uppercase, and write to destination on the fly.
+
+
+```javascript
+    import {fileReadStream, fileWriteStream} from 'functional_tasks';
+        fileReadStream('./file.txt')
+                .map(chunk => chunk.toString('utf8'))
+                .map(string => string.toUpperCase())
+                .through(fileWriteStream('./destination.txt'))
+                .run()
+    
+
+```
+
+In this example, we read buffer chunk, convert to `utf8` string, convert to UpperCase, and write to destination.
+After pipeline is created, we start stream by calling `.run()`. `run()` return promise. 
+
+To compose multiple streams, we can create steps on the fly.
+
+
+```javascript
+    import {stream, fileReadStream, fileWriteStream} from 'functional_tasks';
+        const toUpperCase = stream()
+            .map(chunk => chunk.toString('utf8'))
+            .map(string => string.toUpperCase())
+        
+        fileReadStream('./fileA.txt')
+                .through(toUpperCase)
+                .through(fileWriteStream('./destinationA.txt'))
+                .run();
+        
+                fileReadStream('./fileB.txt')
+                                .through(toUpperCase)
+                                .through(fileWriteStream('./destinationB.txt'))
+                                .run();
+    
+
+```
+
+To giving more control, to going to next step, we can wait until both streams are finished.
+
+
+```javascript
+    import {stream, fileReadStream, fileWriteStream} from 'functional_tasks';
+        const toUpperCase = stream()
+            .map(chunk => chunk.toString('utf8'))
+            .map(string => string.toUpperCase())
+        
+        const streamA = fileReadStream('./fileA.txt')
+                .through(toUpperCase)
+                .through(fileWriteStream('./destinationA.txt'));
+        
+        const streamB = fileReadStream('./fileB.txt')
+                                .through(toUpperCase)
+                                .through(fileWriteStream('./destinationB.txt'));
+        
+        await Promise.all([streamA.run(), streamB.run()])
+    
+
+```
+
+
+Also you can add extra step, on some stream
+
+```javascript
+
+    import {stream, fileReadStream, fileWriteStream} from 'functional_tasks';
+        const toUpperCase = stream()
+            .map(chunk => chunk.toString('utf8'))
+            .map(string => string.toUpperCase())
+        
+       fileReadStream('./fileA.txt')
+                .through(toUpperCase)
+                .map(string=>string.replace('_','-'))
+                .through(fileWriteStream('./destinationA.txt'))
+                .run();
+
+``` 
+
+
+Sometimes you need only transformations in asynchronous way. Like fetch remote data, or collect data from database etc.
+
+There is `Tasks`.
+
+From example above you want to change string tu uppercase, but file is in memory.
+
+```javascript
+
+  import {task} from 'functional_tasks';
+        const toUpperCase = await task('lorem impsum')
+            .map(string => string.toUpperCase())
+            .unsafeRun();
+            console.log(toUpperCase) //LOREM IPSUM
+            
+
+``` 
+
+Of course, this is very simple use case, lets fetch remote data, and convert to upperCase.
+
+```javascript
+
+import {get} from './functional/async/Fetch';
+import {task} from './functional/core/Task';
+
+    const toUpperCase = await task({uri: './textData'})
+        .through(get)
+        .map(({data})=>data.toUpperCase())
+        .unsafeRun();
+    console.log(toUpperCase) //LOREM IPSUM
+
+```
+
+And of course all tasks are composable. There is `async` helper library available, for `get`, `post`, `delete` etc.
+
+
+Also streams, has task support, with `.throughTask` method.
+
+```javascript
+
+    import {task, fileReadStream, fileWriteStream} from 'functional_tasks';
+        const toUpperCase = task()
+            .map(chunk => chunk.toString('utf8'))
+            .map(string => string.toUpperCase())
+        
+       fileReadStream('./fileA.txt')
+                .throughTask(toUpperCase)
+                .map(string=>string.replace('_','-'))
+                .through(fileWriteStream('./destinationA.txt'))
+                .run();
+
+``` 
+
+You can see many benefits, to use them, when you need file or object transformation pipelines.
+Streams and Tasks are fully asynchronous.  
+
 
 ### Installation
 
 Using npm
 
     npm install functional_tasks
-
-### How it works
-
-This library usng [**UMD**](https://github.com/umdjs/umd) modules, can be used on nodejs and browser. Also if use es6 modules, can compile from source folder, using [**rollup**](https://github.com/rollup/rollup) or webpack.
 
 
 ### Usage examples
@@ -43,7 +235,7 @@ const {Task, task} = require('functional_tasks');
 
 ```
 
-Or, just individual module, when use rollup, or webpack.
+Or, just individual modules.
 
 ```javascript
 
