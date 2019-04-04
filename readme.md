@@ -882,9 +882,9 @@ Usage
 
 ```
 
-**new List(...elemnts):**  Create immutable list of elements.
+**new List(...elements):**  Create immutable list of elements.
 
-**list(...elemnts):**  Create immutable list of elements without `new`.
+**list(...elements):**  Create immutable list of elements without `new`.
 
 **insert(element):** Adding new Element to the beginning of an List.
 
@@ -904,9 +904,9 @@ Usage
 
 **take(count):** Returning count of elements
 
-**foldLeft(init,fn):** Applies function to initialValue and all elements going left to right 
+**foldLeft(acc,fn):** Applies function to initialValue and all elements going left to right 
 
-**foldRight(init,fn):** Applies function to initialValue and all elements going right to left
+**foldRight(acc,fn):** Applies function to initialValue and all elements going right to left
 
 **reverse():** Returning new list in reversing order.
 
