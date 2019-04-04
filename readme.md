@@ -1,4 +1,4 @@
-## Library for working with pull based async Tasks, Nodejs Streams and more [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
+## async Stream and Task library [![Build Status](https://api.travis-ci.org/gunins/stonewall.svg?branch=master)](https://travis-ci.org/gunins/functional)
 
 ! Curently this library is on development stage.
 
@@ -71,7 +71,7 @@ Solution is, paused mode.
 This solution is safe, but what if you want to compose streams, and transformations. Means for each pipe, you have to create
 stream with some type (readable, writable, transform or duplex).
 
-Here we came to this library solution. This library works in paused mode, is composable, and lazy.
+Here is motivation, we need something else, to make things simpler. This library works in paused mode, is composable, and lazy.
 
 Basic example, transform readable stream to uppercase, and write to destination on the fly.
 
@@ -88,9 +88,9 @@ Basic example, transform readable stream to uppercase, and write to destination 
 ```
 
 In this example, we read buffer chunk, convert to `utf8` string, convert to UpperCase, and write to destination.
-After pipeline is created, we start stream by calling `.run()`. `run()` return promise. 
+After pipeline is created, we start stream by calling `.run()`. And `run()` will return promise. 
 
-To compose multiple streams, we can create steps on the fly.
+Stream composition is very simple, you can chain them on the fly.
 
 
 ```javascript
@@ -112,7 +112,7 @@ To compose multiple streams, we can create steps on the fly.
 
 ```
 
-To giving more control, to going to next step, we can wait until both streams are finished.
+You can use `Promise.all` to wait until both streams are finished.
 
 
 ```javascript
@@ -135,7 +135,7 @@ To giving more control, to going to next step, we can wait until both streams ar
 ```
 
 
-Also you can add different steps, on the streams
+Also you can add extra steps, on the same streams
 
 ```javascript
 
@@ -153,9 +153,9 @@ Also you can add different steps, on the streams
 ``` 
 
 
-Sometimes you need only transformations in asynchronous way. Like fetch remote data, or collect data from database etc.
+Sometimes you need transformations in asynchronous way. Like fetch remote data, or collect data from database etc.
 
-There is `Tasks`.
+Solution is `Tasks`.
 
 From example above you want to change string tu uppercase, but file is in memory.
 
