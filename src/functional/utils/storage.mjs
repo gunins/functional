@@ -1,4 +1,4 @@
-import {none, some} from '../core/Option';
+import {none, some} from '../core/Maybe';
 import {option} from './option';
 
 const isMaybe = (_ = {}) => _ && _.isOption && _.isOption();

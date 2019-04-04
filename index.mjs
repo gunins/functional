@@ -1,6 +1,6 @@
 import {task, Task} from './src/functional/core/Task';
 import {stream, Stream} from './src/functional/core/Stream';
-import {some, Some, none, None} from './src/functional/core/Option';
+import {some, Some, none, None} from './src/functional/core/Maybe';
 import {list, List} from './src/functional/core/List';
 import {match} from './src/functional/core/Match';
 import {fetchTask, get, post, del, put} from './src/functional/async/Fetch';

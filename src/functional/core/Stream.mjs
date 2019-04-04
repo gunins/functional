@@ -1,4 +1,4 @@
-import {some} from './Option';
+import {some} from './Maybe';
 import {task} from './Task';
 import {option} from '../utils/option';
 import {storage} from '../utils/storage';

@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./List'), require('./Option'), require('../utils/clone')) :
-	typeof define === 'function' && define.amd ? define(['exports', './List', './Option', '../utils/clone'], factory) :
-	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = {}),global.List,global.Option,global.clone));
-}(this, (function (exports,List,Option,clone) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./List'), require('./Maybe'), require('../utils/clone')) :
+	typeof define === 'function' && define.amd ? define(['exports', './List', './Maybe', '../utils/clone'], factory) :
+	(factory((global['functional/core/Task'] = global['functional/core/Task'] || {}, global['functional/core/Task'].js = {}),global.List,global.Maybe,global.clone));
+}(this, (function (exports,List,Maybe,clone) { 'use strict';
 
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 const toFunction = (job) => isFunction(job) ? job : () => job;
@@ -53,15 +53,15 @@ const _copy = Symbol('_copy');
 class Task {
 
     constructor(job, parent) {
-        this[_parent] = Option.none();
-        this[_topRef] = Option.none();
-        this[_topParent] = Option.none();
+        this[_parent] = Maybe.none();
+        this[_topRef] = Maybe.none();
+        this[_topParent] = Maybe.none();
         this[_children] = List.List.empty();
         this[_resolvers] = List.List.empty();
         this[_rejecters] = List.List.empty();
-        this[_resolve] = Option.none();
-        this[_reject] = Option.none();
-        this[_bottomRef] = Option.none();
+        this[_resolve] = Maybe.none();
+        this[_reject] = Maybe.none();
+        this[_bottomRef] = Maybe.none();
         this[_uuid] = Symbol('uuid');
         this[_create](job, parent);
     }
@@ -69,7 +69,7 @@ class Task {
     //private function.
     [_create](job, parent) {
         this[_setParent](parent);
-        this[_task] = job !== undefined ? Option.some(toFunction(job)) : Option.none();
+        this[_task] = job !== undefined ? Maybe.some(toFunction(job)) : Maybe.none();
         return this;
     };
 
@@ -79,9 +79,9 @@ class Task {
 
     [_setParent](parent) {
         if (parent && parent.isTask && parent.isTask()) {
-            this[_parent] = Option.some((..._) => parent[_triggerUp](..._));
-            this[_topRef] = Option.some((..._) => parent[_getTopRef](..._));
-            this[_topParent] = Option.some((..._) => parent[_addParent](..._));
+            this[_parent] = Maybe.some((..._) => parent[_triggerUp](..._));
+            this[_topRef] = Maybe.some((..._) => parent[_getTopRef](..._));
+            this[_topParent] = Maybe.some((..._) => parent[_addParent](..._));
         }
     };
 
@@ -96,7 +96,7 @@ class Task {
     [_setChildren](children) {
         if (children && children.isTask && children.isTask()) {
             this[_children] = this[_children].insert((..._) => children[_run](..._));
-            this[_bottomRef] = Option.some((..._) => children[_getBottomRef](..._));
+            this[_bottomRef] = Maybe.some((..._) => children[_getBottomRef](..._));
         }
 
     };
@@ -104,7 +104,7 @@ class Task {
     [_resolveRun](data) {
         this[_resolvers].forEach(fn => fn(data));
         this[_resolve].getOrElse(emptyFn)(clone.clone(data));
-        this[_resolve] = Option.none();
+        this[_resolve] = Maybe.none();
         this[_triggerDown](data, true);
         return clone.clone(data);
     };
@@ -112,7 +112,7 @@ class Task {
     [_rejectRun](data) {
         this[_rejecters].forEach(fn => fn(clone.clone(data)));
         this[_reject].getOrElse(emptyFn)(clone.clone(data));
-        this[_reject] = Option.none();
+        this[_reject] = Maybe.none();
         this[_triggerDown](data, false);
         return clone.clone(data);
     };
@@ -228,11 +228,11 @@ class Task {
      * */
     unsafeRun(resolve = emptyFn, reject = emptyFn) {
         return new Promise((res, rej) => {
-            this[_resolve] = Option.some((data) => {
+            this[_resolve] = Maybe.some((data) => {
                 resolve(data);
                 res(data);
             });
-            this[_reject] = Option.some((data) => {
+            this[_reject] = Maybe.some((data) => {
                 reject(data);
                 rej(data);
             });

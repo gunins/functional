@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option')) :
-	typeof define === 'function' && define.amd ? define(['exports', './Option'], factory) :
-	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = {}),global.Option));
-}(this, (function (exports,Option) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Maybe')) :
+	typeof define === 'function' && define.amd ? define(['exports', './Maybe'], factory) :
+	(factory((global['functional/core/List'] = global['functional/core/List'] || {}, global['functional/core/List'].js = {}),global.Maybe));
+}(this, (function (exports,Maybe) { 'use strict';
 
 //Define Private methods;
 const _create = Symbol('_create');
@@ -23,13 +23,13 @@ const flatList = (left, list) => list
 class List {
     constructor(head, ...tail) {
         // split the head and tail pass to new list
-        this[_create](head, tail.length > 0 ? list(...tail) : Option.none());
+        this[_create](head, tail.length > 0 ? list(...tail) : Maybe.none());
     };
 
     //Private Method
     [_create](head, tail) {
-        this.head = head !== undefined ? Option.some(head) : Option.none();
-        this.tail = tailHasSize(tail) ? tail : Option.none();
+        this.head = head !== undefined ? Maybe.some(head) : Maybe.none();
+        this.tail = tailHasSize(tail) ? tail : Maybe.none();
         return this;
     };
 
@@ -52,14 +52,14 @@ class List {
     [_map](fn, i = 0) {
         const {head, tail} = this;
         const empty = List.empty();
-        return hasHead(head) ? empty[_create](fn(head.get(), i), noTail(tail) ? Option.none() : tail[_map](fn, i + 1)) : empty;
+        return hasHead(head) ? empty[_create](fn(head.get(), i), noTail(tail) ? Maybe.none() : tail[_map](fn, i + 1)) : empty;
     };
 
     //private method
     [_take](count, i = 1) {
         const {head, tail} = this;
         const empty = List.empty();
-        return hasHead(head) ? empty[_create](head.get(), (noTail(tail)) || count <= i ? Option.none() : tail[_take](count, i + 1)) : empty;
+        return hasHead(head) ? empty[_create](head.get(), (noTail(tail)) || count <= i ? Maybe.none() : tail[_take](count, i + 1)) : empty;
     }
 
     //private method
@@ -84,7 +84,7 @@ class List {
     };
 
     insert(head) {
-        return List.empty()[_create](head, this.head ? this : Option.none());
+        return List.empty()[_create](head, this.head ? this : Maybe.none());
     }
 
     add(head) {
@@ -137,7 +137,7 @@ class List {
         const {head, tail} = this;
         const value = head.get();
         const comparison = fn(value);
-        return comparison ? value : hasTail(tail) ? tail.find(fn) : Option.none();
+        return comparison ? value : hasTail(tail) ? tail.find(fn) : Maybe.none();
     };
 
 

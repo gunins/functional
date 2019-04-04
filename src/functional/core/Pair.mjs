@@ -1,4 +1,4 @@
-import {some} from './Option';
+import {some} from './Maybe';
 
 const isFunction = (fn) => typeof fn === 'function';
 const isOption = (opt) => opt.isOption && opt.isOption();

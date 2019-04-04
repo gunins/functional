@@ -1,5 +1,5 @@
 import {List} from './List';
-import {some, none} from './Option';
+import {some, none} from './Maybe';
 import {clone} from '../utils/clone';
 
 

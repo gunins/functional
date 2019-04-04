@@ -1,4 +1,4 @@
-import {some, none} from './Option';
+import {some, none} from './Maybe';
 
 //Define Private methods;
 const _create = Symbol('_create');

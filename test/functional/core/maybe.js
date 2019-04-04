@@ -1,4 +1,4 @@
-let {Some, None, some, none} = require('../../../dist/functional/core/Option'),
+let {Some, None, some, none} = require('../../../dist/functional/core/Maybe'),
     {expect} = require('chai');
 describe('Option Tests: ', () => {
     it('Testing Class Some None', () => {

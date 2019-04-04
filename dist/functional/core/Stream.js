@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Option'), require('./Task'), require('../utils/option'), require('../utils/storage')) :
-	typeof define === 'function' && define.amd ? define(['exports', './Option', './Task', '../utils/option', '../utils/storage'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Option,global.Task,global.option,global.storage));
-}(this, (function (exports,Option,Task,option,storage) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Maybe'), require('./Task'), require('../utils/option'), require('../utils/storage')) :
+	typeof define === 'function' && define.amd ? define(['exports', './Maybe', './Task', '../utils/option', '../utils/storage'], factory) :
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Maybe,global.Task,global.option,global.storage));
+}(this, (function (exports,Maybe,Task,option,storage) { 'use strict';
 
 //stream lifecycle types
 const RUN_TYPE = Symbol('RUN_TYPE');
@@ -14,9 +14,9 @@ const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 
 const toFunction = (job) => option.option()
-    .or(isFunction(job), () => Option.some(job))
-    .or(isDefined(job), () => Option.some(() => job))
-    .finally(() => Option.some(_ => _));
+    .or(isFunction(job), () => Maybe.some(job))
+    .or(isDefined(job), () => Maybe.some(() => job))
+    .finally(() => Maybe.some(_ => _));
 
 const emptyFn = _ => _;
 

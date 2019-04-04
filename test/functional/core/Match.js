@@ -1,6 +1,6 @@
 const {list} = require('../../../dist/functional/core/List');
 const {task} = require('../../../dist/functional/core/Task');
-const {some, none} = require('../../../dist/functional/core/Option');
+const {some, none} = require('../../../dist/functional/core/Maybe');
 const {match} = require('../../../dist/functional/core/Match');
 
 const {expect} = require('chai');
