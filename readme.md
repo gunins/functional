@@ -14,14 +14,14 @@ available, the readable stream emits a data event and your callback executes. Ta
 
     import {createReadStream} from 'fs';
     const readableStream = createReadStream('file.txt');
-    let data = '';
+    let chunks = Buffer.alloc(0);
     
     readableStream.on('data', (chunk)=> {
-        data+=chunk;
+        chunks = Buffer.concat([chunks, chunk]);
     });
     
     readableStream.on('end', ()=> {
-        console.log(data);
+        console.log(data.toString('utf8'));
     });
 
 ```
