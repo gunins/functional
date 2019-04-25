@@ -1,5 +1,5 @@
-const {fileReadStream, fileWriteStream} = require('../../dist/functional/nodeStreams/fileReader');
-const {option} = require('../../dist/functional/utils/option');
+const {fileReadStream, fileWriteStream} = require('../../src/functional/nodeStreams/fileReader');
+const {option} = require('../../src/functional/utils/option');
 
 const path = require('path');
 
@@ -8,13 +8,17 @@ const sourcePath = (source = './data/emojilist.txt') => path.resolve(source);
 const destinationPath = (destination = './emojilistUppper.txt') => path.resolve(tmpDir, destination);
 
 //Read File
-const stringToUpperCaseStream = (source, destination) => fileReadStream(source, 10)
+const stringToUpperCaseStream = (source, destination) => fileReadStream(source)
 //Decode chunk
     .map(chunk => chunk.toString('utf8'))
     //Chunk to UpperCase
     .map(string => string.toUpperCase())
     //Write to stream
-    .through(fileWriteStream(destination))
+    .map(_=>{
+        console.log(_);
+        return _;
+    })
+    // .through(fileWriteStream(destination))
     .run();
 
 

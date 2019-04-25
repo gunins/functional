@@ -1,19 +1,57 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Stream')) :
-	typeof define === 'function' && define.amd ? define(['exports', '../core/Stream'], factory) :
-	(factory((global['functional/nodeStreams/nodeStreams'] = global['functional/nodeStreams/nodeStreams'] || {}, global['functional/nodeStreams/nodeStreams'].js = {}),global.Stream));
-}(this, (function (exports,Stream) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Stream'), require('../utils/option')) :
+	typeof define === 'function' && define.amd ? define(['exports', '../core/Stream', '../utils/option'], factory) :
+	(factory((global['functional/nodeStreams/nodeStreams'] = global['functional/nodeStreams/nodeStreams'] || {}, global['functional/nodeStreams/nodeStreams'].js = {}),global.Stream,global.option));
+}(this, (function (exports,Stream,option) { 'use strict';
 
 const {assign} = Object;
-const readPromise = (stream$$1, {size} = {}) => new Promise((resolve) => stream$$1.on('readable', () => resolve({
-    async read() {
-        return stream$$1.read(size);
-    },
-    async destroy() {
-        stream$$1.destroy();
-        return null;
+
+const FINISHED = Symbol('FINISHED');
+
+const isNull = (_) => _ === null;
+const isFinished = (finish) => finish === FINISHED;
+
+const pause = (timeout = 10) => new Promise((resolve) => setTimeout(() => resolve(), timeout));
+
+const reader = (stream$$1) => {
+    let finish = null;
+    stream$$1.once('end', () => {
+        finish = FINISHED;
+    });
+    return (size) => new Promise((resolve) => {
+        const endEvent = () => resolve(stream$$1.read(size));
+        const chunk = stream$$1.read(size);
+
+        option.option()
+            .or(isFinished(finish), () => resolve(null))
+            .or(isNull(chunk), () => stream$$1
+                .once('end', endEvent)
+                .once('readable', async () => {
+                    //hack for readable event, hoopefully node js will fix on V12
+                    await pause(0);
+                    stream$$1.removeListener('end', endEvent);
+                    stream$$1.pause();
+                    const chunk = stream$$1.read(size);
+                    resolve(chunk);
+                })
+            )
+            .finally(() => resolve(chunk));
+    });
+};
+
+const readPromise = async (stream$$1, {size} = {}) => {
+    const read = reader(stream$$1);
+    return {
+        async read() {
+            const reader = await read(size);
+            return reader;
+        },
+        async destroy() {
+            stream$$1.destroy();
+            return null;
+        }
     }
-})));
+};
 
 const writePromise = async (stream$$1, {encoding} = {encoding: 'utf8'}) => {
     return ({

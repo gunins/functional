@@ -1,15 +1,54 @@
 import {stream} from '../core/Stream';
+import {option} from '../utils/option';
 
 const {assign} = Object;
-const readPromise = (stream, {size} = {}) => new Promise((resolve) => stream.on('readable', () => resolve({
-    async read() {
-        return stream.read(size);
-    },
-    async destroy() {
-        stream.destroy();
-        return null;
+
+const FINISHED = Symbol('FINISHED');
+
+const isNull = (_) => _ === null;
+const isFinished = (finish) => finish === FINISHED;
+
+const pause = (timeout = 10) => new Promise((resolve) => setTimeout(() => resolve(), timeout));
+
+const reader = (stream) => {
+    let finish = null;
+    stream.once('end', () => {
+        finish = FINISHED;
+    });
+    return (size) => new Promise((resolve) => {
+        const endEvent = () => resolve(stream.read(size));
+        const chunk = stream.read(size);
+
+        option()
+            .or(isFinished(finish), () => resolve(null))
+            .or(isNull(chunk), () => stream
+                .once('end', endEvent)
+                .once('readable', async () => {
+                    //hack for readable event, hoopefully node js will fix on V12
+                    await pause(0);
+                    stream.removeListener('end', endEvent);
+                    stream.pause();
+                    const chunk = stream.read(size);
+                    resolve(chunk)
+                })
+            )
+            .finally(() => resolve(chunk));
+    });
+};
+
+const readPromise = async (stream, {size} = {}) => {
+    const read = reader(stream);
+    return {
+        async read() {
+            const reader = await read(size);
+            return reader;
+        },
+        async destroy() {
+            stream.destroy();
+            return null;
+        }
     }
-})));
+};
 
 const writePromise = async (stream, {encoding} = {encoding: 'utf8'}) => {
     return ({
