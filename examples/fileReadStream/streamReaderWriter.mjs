@@ -1,7 +1,7 @@
-const {fileReadStream, fileWriteStream} = require('../../src/functional/nodeStreams/fileReader');
-const {option} = require('../../src/functional/utils/option');
+import {fileReadStream, fileWriteStream} from '../../src/functional/nodeStreams/fileReader'
+import {option} from '../../src/functional/utils/option'
 
-const path = require('path');
+import path from 'path'
 
 const tmpDir = path.resolve('./');
 const sourcePath = (source = './data/emojilist.txt') => path.resolve(source);
@@ -14,11 +14,7 @@ const stringToUpperCaseStream = (source, destination) => fileReadStream(source)
     //Chunk to UpperCase
     .map(string => string.toUpperCase())
     //Write to stream
-    .map(_=>{
-        console.log(_);
-        return _;
-    })
-    // .through(fileWriteStream(destination))
+    .through(fileWriteStream(destination))
     .run();
 
 
@@ -37,6 +33,6 @@ option()
     .or(isHelp(source), () => console.log('Add source and destination as arguments. \n For example:\n node streamReaderWriter.js ./data/emojilist.txt ./emojilistUppper.txt \n'))
     .finally(() => console.error('Source and destination are not defined! use --help for more information'))
 
-//example command node streamReaderWriter.js ./data/emojilist.txt ./emojilistUppper.txt
+//example command node --experimental-modules streamReaderWriter.mjs ./data/emojilist.txt ./emojilistUppper.txt
 
 
