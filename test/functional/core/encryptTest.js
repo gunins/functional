@@ -47,7 +47,7 @@ const destinationUnzip = path.resolve(tmpDir, './divine-gzip.txt');
 
 describe('Stream zlib Tests: ', () => {
     beforeEach(() => {
-        rmdirRecursiveSync(tmpDir)
+        rmdirRecursiveSync(tmpDir);
         mkdirSync(tmpDir);
 
     });

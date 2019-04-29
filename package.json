@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://github.com/gunins/functional"
   },
+  "type": "module",
   "dependencies": {
     "requirejs": "^2.3.5",
     "rmdir-recursive": "0.0.1"
