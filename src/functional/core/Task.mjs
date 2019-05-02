@@ -1,6 +1,6 @@
-import {List} from './List';
-import {some, none} from './Maybe';
-import {clone} from '../utils/clone';
+import {List} from './List.mjs';
+import {some, none} from './Maybe.mjs';
+import {clone} from '../utils/clone.mjs';
 
 
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);

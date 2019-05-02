@@ -1,5 +1,5 @@
-import {fileReadStream, fileWriteStream} from '../../src/functional/nodeStreams/fileReader';
-import {duplexStream} from '../../src/functional/nodeStreams/nodeStreams';
+import {fileReadStream, fileWriteStream} from '../../src/functional/nodeStreams/fileReader.mjs';
+import {duplexStream} from '../../src/functional/nodeStreams/nodeStreams.mjs';
 import path from 'path';
 
 

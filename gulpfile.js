@@ -3,7 +3,7 @@ const gulp = require('gulp'),
     git = require('gulp-git'),
     filter = require('gulp-filter'),
     tag_version = require('gulp-tag-version'),
-    rollup = require('rollup-stream'),
+    rollupPipe = require('rollup-stream'),
     source = require('vinyl-source-stream'),
     through = require('through2'),
     del = require('del'),
@@ -12,7 +12,8 @@ const gulp = require('gulp'),
     exec = require('child_process').exec,
     watch = require('gulp-watch'),
     resolve = require('rollup-plugin-node-resolve'),
-    babili = require("gulp-babili");
+    babili = require("gulp-babili"),
+    replace = require('gulp-replace');
 
 //function for taking streams and returning streams;
 let chain = (cb) => {
@@ -48,13 +49,15 @@ let rollupStream = (srcDir) => chain((chunk) => {
         baseDir = process.cwd() + dir + '/',
         {path} = chunk,
         moduleName = path.replace(baseDir, '').replace('.mjs', '.js'),
-        excluded = excludePaths.filter(file => file !== path).map(_=>_.replace('.mjs',''));
-    return rollup({
-        input:    path,
-        format:   'umd',
-        name:     moduleName,
-        external: excluded
-    }).pipe(source(moduleName));
+        external = excludePaths.filter(file => file !== path) //.map(_ => _.replace('.mjs', ''));
+
+    return rollupPipe({
+        input:  path,
+        external,
+        format: 'umd',
+        name:   moduleName
+    })
+        .pipe(source(moduleName));
 });
 
 gulp.task('clean', () => {
@@ -65,14 +68,21 @@ gulp.task('clean', () => {
     ]);
 });
 
-gulp.task('rollup', ['clean'], () => {
-    return gulp.src(['./src/**/*.js', './src/**/*.mjs'], {read: false})
-        .pipe(rollupStream('/src/'))
+gulp.task('replaceMjs', () => {
+    return gulp.src(['./dist/**/*.js', './dist/**/*.mjs'])
+        .pipe(replace('.mjs\'', '\''))
+        .pipe(replace('.js\'', '\''))
         .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('rollup', gulp.series('clean', () => {
+    return gulp.src(['./src/**/*.js', './src/**/*.mjs'], {read: false})
+        .pipe(rollupStream('/src/'))
+        .pipe(gulp.dest('./dist'));
+}, 'replaceMjs'));
+
 let sampleRollup = (name, file = 'index', format = 'umd') => {
-    let roll = rollup({
+    let roll = rollupPipe({
         input:   `./examples/${name}/src/${file}.js`,
         format:  format,
         name:    file,
@@ -92,32 +102,33 @@ let sampleRollup = (name, file = 'index', format = 'umd') => {
         .pipe(gulp.dest(`./examples/${name}/dist`));
 }
 
-let examples = () => {
+let examples = (done) => {
     sampleRollup('basic');
     sampleRollup('workers');
     sampleRollup('workers', 'worker');
     sampleRollup('fetchStream');
+    done();
 };
 gulp.task('sampleRollup', examples);
 
-gulp.task('watch', ['clean', 'rollup'], () => {
+gulp.task('watch', gulp.series('clean', 'rollup', () => {
     return watch('./examples/**/*.js', {ignoreInitial: false}, examples);
-});
+}));
 
-gulp.task('watchSrc', ['clean'], () => {
+gulp.task('watchSrc', gulp.series('clean', () => {
     return watch('./src/**/*.js', {ignoreInitial: false}, () => gulp
         .src('./src/**/*.js', {read: false})
         .pipe(rollupStream('/src/'))
         .pipe(gulp.dest('./dist')));
-});
+}));
 
 
-gulp.task('test', ['rollup', 'sampleRollup'], () => {
+gulp.task('test', gulp.series('rollup', 'sampleRollup', () => {
     return gulp.src([
         './test/functional/**/*.js'
     ], {read: false}).pipe(mocha({reporter: 'list'}));
 
-});
+}));
 
 let inc = (importance) => gulp.src(['./package.json', './bower.json'])
 // bump the version number in those files
@@ -132,13 +143,6 @@ let inc = (importance) => gulp.src(['./package.json', './bower.json'])
     // **tag it in the repository**
     .pipe(tag_version());
 
-gulp.task('pushTags', ['test', 'bump:patch'], (cb) => {
-    exec('git push --tags', (err, stdout, stderr) => {
-        console.log(stdout);
-        console.log(stderr);
-        cb(err);
-    });
-});
 
 gulp.task('compress', () => gulp.src('examples/**/dist/*.js', {base: "./"})
     .pipe(babili({
@@ -156,17 +160,26 @@ gulp.task('compressRequire', () => gulp.src('./node_modules/requirejs/require.js
     }))
     .pipe(gulp.dest("./target")));
 
-gulp.task('publish', ['pushTags'], (cb) => {
-    exec('npm publish ./', (err, stdout, stderr) => {
-        console.log(stdout);
-        console.log(stderr);
-        cb(err);
-    });
-});
 
 gulp.task('bump:patch', () => inc('patch'));
 gulp.task('bump:feature', () => inc('minor'));
 gulp.task('bump:release', () => inc('major'));
 
-gulp.task('default', ['test']);
+gulp.task('pushTags', gulp.series('test', 'bump:patch', (cb) => {
+    exec('git push --tags', (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        cb(err);
+    });
+}));
+
+gulp.task('publish', gulp.series('pushTags', (cb) => {
+    exec('npm publish ./', (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        cb(err);
+    });
+}));
+
+gulp.task('default', gulp.series('test'));
 

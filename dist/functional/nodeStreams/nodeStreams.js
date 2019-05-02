@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Stream'), require('../utils/option')) :
 	typeof define === 'function' && define.amd ? define(['exports', '../core/Stream', '../utils/option'], factory) :
-	(factory((global['functional/nodeStreams/nodeStreams'] = global['functional/nodeStreams/nodeStreams'] || {}, global['functional/nodeStreams/nodeStreams'].js = {}),global.Stream,global.option));
-}(this, (function (exports,Stream,option) { 'use strict';
+	(factory((global['functional/nodeStreams/nodeStreams'] = global['functional/nodeStreams/nodeStreams'] || {}, global['functional/nodeStreams/nodeStreams'].js = {}),global.Stream_mjs,global.option_mjs));
+}(this, (function (exports,Stream_mjs,option_mjs) { 'use strict';
 
 const {assign} = Object;
 
@@ -22,7 +22,7 @@ const reader = (stream$$1) => {
         const endEvent = () => resolve(stream$$1.read(size));
         const chunk = stream$$1.read(size);
 
-        option.option()
+        option_mjs.option()
             .or(isFinished(finish), () => resolve(null))
             .or(isNull(chunk), () => stream$$1
                 .once('end', endEvent)
@@ -113,18 +113,18 @@ const duplexPromise = (stream$$1, _ = {}) => {
 };
 
 
-const readStream = (instance, options) => Stream.stream(() => readPromise(instance, options))
+const readStream = (instance, options) => Stream_mjs.stream(() => readPromise(instance, options))
     .onReady((instance) => instance.read())
     .onStop((instance) => instance.destroy())
     .onError((instance) => Promise.reject(instance.destroy()));
 
-const writeStream = (instance) => Stream.stream(() => writePromise(instance))
+const writeStream = (instance) => Stream_mjs.stream(() => writePromise(instance))
     .onReady((instance, chunk) => instance.write(chunk))
     .onStop((instance, context, data) => instance.end(data))
     .onError((instance) => Promise.reject(instance.destroy()));
 
 
-const duplexStream = (instance, options) => Stream.stream(() => duplexPromise(instance, options))
+const duplexStream = (instance, options) => Stream_mjs.stream(() => duplexPromise(instance, options))
     .onReady((instance, context) => instance.write(context))
     .onData((chunk, context, instance) => instance.read())
     .onStop((instance, context, data) => instance.readLast(data))

@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../core/Task')) :
 	typeof define === 'function' && define.amd ? define(['exports', '../core/Task'], factory) :
-	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.Task));
-}(this, (function (exports,Task) { 'use strict';
+	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.Task_mjs));
+}(this, (function (exports,Task_mjs) { 'use strict';
 
 const {assign} = Object;
 
@@ -19,11 +19,11 @@ const str = obj => Object.keys(obj)
     .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
     .join('&');
 
-const fetchTask = Task.task(opt => load(opt));
+const fetchTask = Task_mjs.task(opt => load(opt));
 
 const uriPath = ({protocol, host, uri}) => (host && protocol ? protocol.replace(':', '') + `://` + host + uri : uri);
 
-const getBase = Task.task(opt => {
+const getBase = Task_mjs.task(opt => {
     const {uri, body} = opt;
     return assign(
         {credentials: 'include'},
@@ -49,7 +49,7 @@ const del = getBase.copy()
     .through(fetchTask);
 
 
-const postBase = Task.task(opt => assign(
+const postBase = Task_mjs.task(opt => assign(
     {
         method:      'post',
         credentials: 'include',

@@ -1,5 +1,5 @@
-import {stream} from '../core/Stream';
-import {option} from '../utils/option';
+import {stream} from '../core/Stream.mjs';
+import {option} from '../utils/option.mjs';
 
 const {assign} = Object;
 

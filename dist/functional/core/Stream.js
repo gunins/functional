@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('./Maybe'), require('./Task'), require('../utils/option'), require('../utils/storage')) :
 	typeof define === 'function' && define.amd ? define(['exports', './Maybe', './Task', '../utils/option', '../utils/storage'], factory) :
-	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Maybe,global.Task,global.option,global.storage));
-}(this, (function (exports,Maybe,Task,option,storage) { 'use strict';
+	(factory((global['functional/core/Stream'] = global['functional/core/Stream'] || {}, global['functional/core/Stream'].js = {}),global.Maybe_mjs,global.Task_mjs,global.option_mjs,global.storage_mjs));
+}(this, (function (exports,Maybe_mjs,Task_mjs,option_mjs,storage_mjs) { 'use strict';
 
 //stream lifecycle types
 const RUN_TYPE = Symbol('RUN_TYPE');
@@ -13,15 +13,15 @@ const isStream = (_ = {}) => _ && _.isStream && _.isStream();
 const isDefined = (_) => _ !== undefined;
 const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
 
-const toFunction = (job) => option.option()
-    .or(isFunction(job), () => Maybe.some(job))
-    .or(isDefined(job), () => Maybe.some(() => job))
-    .finally(() => Maybe.some(_ => _));
+const toFunction = (job) => option_mjs.option()
+    .or(isFunction(job), () => Maybe_mjs.some(job))
+    .or(isDefined(job), () => Maybe_mjs.some(() => job))
+    .finally(() => Maybe_mjs.some(_ => _));
 
 const emptyFn = _ => _;
 
 
-const getRoot = (instance, onReady) => option.option()
+const getRoot = (instance, onReady) => option_mjs.option()
     .or(onReady.isSome(), () => instance.get()())
     .finally(() => instance.get());
 
@@ -123,7 +123,7 @@ const uuid = () => uuuID++;*/
 
 const setContextStorage = (context, contextID) => context
     .get(contextID)
-    .getOrElseLazy(() => context.set(contextID, storage.storage())
+    .getOrElseLazy(() => context.set(contextID, storage_mjs.storage())
         .get());
 
 
@@ -133,11 +133,11 @@ class Stream {
 
     constructor(job, parent) {
         this[_uuid] = Symbol('uuid');
-        this[_refs] = storage.storage();
-        this[_stream] = storage.storage();
-        this[_contextStorage] = storage.storage();
-        this[_onStreamFinishHandlers] = storage.storage();
-        this[_onStreamErrorHandlers] = storage.storage();
+        this[_refs] = storage_mjs.storage();
+        this[_stream] = storage_mjs.storage();
+        this[_contextStorage] = storage_mjs.storage();
+        this[_onStreamFinishHandlers] = storage_mjs.storage();
+        this[_onStreamErrorHandlers] = storage_mjs.storage();
         this[_create](job, parent);
     }
 
@@ -232,7 +232,7 @@ class Stream {
         this[_refs]
             .get(_child)
             .getOrElse(
-                (data, type) => option.option()
+                (data, type) => option_mjs.option()
                     .or(isStop(data, type), () => {
                         const context = this[_clearContext](contextID);
                         this[_onStreamFinishHandlers]
@@ -251,7 +251,7 @@ class Stream {
     };
 
     [_run](data, type, contextID) {
-        option.option()
+        option_mjs.option()
             .or(isError(data, type), () => this[_error](data, type, contextID))
             .or(isStop(data, type), () => this[_stop](data, type, contextID))
             .or(noData(data, type) && !isStop(data, type), () => this[_stepUp](data, type, contextID))
@@ -261,7 +261,7 @@ class Stream {
     [_executeStep](data, type, contextID) {
         setPromise(this[_stream], this[_getContext](contextID))(data, type)
             .then(
-                (_) => option.option()
+                (_) => option_mjs.option()
                     .or(topInstance(data, type) && noData(_, type), () => this[_stop](_, type, contextID))
                     .finally(() => this[_stepDown](_, type, contextID))
             ).catch((_) => this[_triggerUp](_, ERROR_TYPE, contextID));
@@ -331,7 +331,7 @@ class Stream {
     };
     // Will take a task
     throughTask(_task) {
-        return this.map(_ => Task.task(_).through(_task).unsafeRun())
+        return this.map(_ => Task_mjs.task(_).through(_task).unsafeRun())
     };
 
     //OPTIONAL: onReady Means, taking initialisation object, and return promise with new params.

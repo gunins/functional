@@ -1,7 +1,7 @@
-import {some} from './Maybe';
-import {task} from './Task';
-import {option} from '../utils/option';
-import {storage} from '../utils/storage';
+import {some} from './Maybe.mjs';
+import {task} from './Task.mjs';
+import {option} from '../utils/option.mjs';
+import {storage} from '../utils/storage.mjs';
 
 //stream lifecycle types
 const RUN_TYPE = Symbol('RUN_TYPE');

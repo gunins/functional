@@ -1,4 +1,4 @@
-import {list} from '../core/List';
+import {list} from '../core/List.mjs';
 
 const {assign, keys} = Object;
 

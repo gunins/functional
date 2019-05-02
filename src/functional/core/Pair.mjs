@@ -1,4 +1,4 @@
-import {some} from './Maybe';
+import {some} from './Maybe.mjs';
 
 const isFunction = (fn) => typeof fn === 'function';
 const isOption = (opt) => opt.isOption && opt.isOption();

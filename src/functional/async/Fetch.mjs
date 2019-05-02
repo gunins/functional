@@ -1,4 +1,4 @@
-import {task} from '../core/Task';
+import {task} from '../core/Task.mjs';
 
 const {assign} = Object;
 

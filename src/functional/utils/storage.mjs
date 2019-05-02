@@ -1,5 +1,5 @@
-import {none, some} from '../core/Maybe';
-import {option} from './option';
+import {none, some} from '../core/Maybe.mjs';
+import {option} from './option.mjs';
 
 const isMaybe = (_ = {}) => _ && _.isOption && _.isOption();
 const isDefined = (_) => _ !== undefined;

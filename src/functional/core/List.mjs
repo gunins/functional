@@ -1,4 +1,4 @@
-import {some, none} from './Maybe';
+import {some, none} from './Maybe.mjs';
 
 //Define Private methods;
 const _create = Symbol('_create');

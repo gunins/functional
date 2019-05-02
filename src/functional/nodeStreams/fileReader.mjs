@@ -3,7 +3,7 @@ import {
     createWriteStream
 } from 'fs';
 
-import {readStream, writeStream} from './nodeStreams';
+import {readStream, writeStream} from './nodeStreams.mjs';
 
 const fileReadStream = (src, size) => readStream(createReadStream(src), size);
 

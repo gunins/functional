@@ -305,6 +305,7 @@ describe('Task Tests: ', () => {
                     triggerTwo = true;
                     expect(callback.calledThrice).to.be.true;
                 }
+
                 callback();
                 expect(data).to.be.eql(2);
 
@@ -313,18 +314,18 @@ describe('Task Tests: ', () => {
         let dataA = await  a.unsafeRun();
         console.log('run 1');
         expect(dataA).to.be.eql(1);
-        expect(callback.calledTwice).to.be.true;
+        expect(callback.calledOnce).to.be.true;
 
         let dataB = await  a.unsafeRun();
         console.log('run 2');
         expect(dataB).to.be.eql(1);
-        expect(callback.callCount).to.be.eql(4);
+        expect(callback.callCount).to.be.eql(3);
 
 
         let dataC = await  b.unsafeRun();
         console.log('run 3');
         expect(dataC).to.be.eql(2);
-        expect(callback.callCount).to.be.eql(6);
+        expect(callback.callCount).to.be.eql(5);
         console.log('finish');
     });
 
