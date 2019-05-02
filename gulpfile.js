@@ -70,8 +70,7 @@ gulp.task('clean', () => {
 
 gulp.task('replaceMjs', () => {
     return gulp.src(['./dist/**/*.js', './dist/**/*.mjs'])
-        .pipe(replace('.mjs\'', '\''))
-        .pipe(replace('.js\'', '\''))
+        .pipe(replace(/(\.mjs'|\.js')/g, '\''))
         .pipe(gulp.dest('./dist'));
 });
 
@@ -137,7 +136,6 @@ let inc = (importance) => gulp.src(['./package.json', './bower.json'])
     .pipe(gulp.dest('./'))
     // commit the changed version number
     .pipe(git.commit('bumps package version'))
-
     // read only one file to get the version number
     .pipe(filter('package.json'))
     // **tag it in the repository**
