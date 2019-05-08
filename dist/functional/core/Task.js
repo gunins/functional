@@ -101,11 +101,13 @@ class Task {
 
     };
 
-    [_resolveRun](data) {
+    [_resolveRun](data, uuid) {
         this[_resolvers].forEach(fn => fn(data));
         this[_resolve].getOrElse(emptyFn)(clone_mjs.clone(data));
         this[_resolve] = Maybe_mjs.none();
-        this[_triggerDown](data, true);
+        if (uuid !== this[_uuid]) {
+            this[_triggerDown](data, true);
+        }
         return clone_mjs.clone(data);
     };
 
@@ -117,8 +119,8 @@ class Task {
         return clone_mjs.clone(data);
     };
 
-    [_triggerUp]() {
-        return this[_parent].getOrElse(() => this[_run]())();
+    [_triggerUp](uuid) {
+        return this[_parent].getOrElse(() => this[_run](undefined, true, uuid))();
     };
 
 
@@ -126,9 +128,9 @@ class Task {
         this[_children].map(child => child(data, resolve));
     };
 
-    [_run](data, success = true) {
+    [_run](data, success = true, uuid) {
         return this[_setPromise](this[_task])(data, success)
-            .then((_) => this[_resolveRun](_))
+            .then((_) => this[_resolveRun](_, uuid))
             .catch((_) => this[_rejectRun](_));
     };
 
@@ -236,7 +238,7 @@ class Task {
                 reject(data);
                 rej(data);
             });
-            this[_triggerUp]();
+            this[_triggerUp](this[_uuid]);
         });
     };
 

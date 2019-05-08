@@ -284,12 +284,11 @@ describe('Task Tests: ', () => {
     });
 
     it('test complex resolver', async () => {
-        let callback = spy();
-        let triggerOne = false;
-        let triggerTwo = false;
+        let callbackA = spy();
+        let callbackB = spy();
         let a = task((_, resolve) => resolve(1))
             .resolve(data => {
-                callback();
+                callbackA();
                 expect(data).to.be.eql(1);
             });
 
@@ -298,34 +297,29 @@ describe('Task Tests: ', () => {
                 res(d + 1);
             })
             .resolve(data => {
-                if (!triggerOne) {
-                    triggerOne = true;
-                    expect(callback.calledOnce).to.be.true;
-                } else if (!triggerTwo) {
-                    triggerTwo = true;
-                    expect(callback.calledThrice).to.be.true;
-                }
-
-                callback();
+                expect(callbackA.calledThrice).to.be.true;
+                callbackB();
                 expect(data).to.be.eql(2);
 
             });
         console.log('\nstart');
-        let dataA = await  a.unsafeRun();
+        let dataA = await a.unsafeRun();
         console.log('run 1');
         expect(dataA).to.be.eql(1);
-        expect(callback.calledOnce).to.be.true;
-
-        let dataB = await  a.unsafeRun();
+        expect(callbackA.calledOnce).to.be.true;
+        expect(callbackB.callCount).to.be.eql(0);
+        let dataB = await a.unsafeRun();
         console.log('run 2');
         expect(dataB).to.be.eql(1);
-        expect(callback.callCount).to.be.eql(3);
+        expect(callbackA.callCount).to.be.eql(2);
+        expect(callbackB.callCount).to.be.eql(0);
 
 
-        let dataC = await  b.unsafeRun();
+        let dataC = await b.unsafeRun();
         console.log('run 3');
         expect(dataC).to.be.eql(2);
-        expect(callback.callCount).to.be.eql(5);
+        expect(callbackA.callCount).to.be.eql(3);
+        expect(callbackB.callCount).to.be.eql(1);
         console.log('finish');
     });
 
@@ -401,11 +395,11 @@ describe('Task Tests: ', () => {
         expect(callback.calledOnce).to.be.true;
         callback();
 
-        let dataB = await  taskF.unsafeRun()
+        let dataB = await taskF.unsafeRun()
         expect(dataB).to.be.eql({a: 'a', b: 'b', d: 'd'});
         expect(callback.calledThrice).to.be.true;
 
-        let dataC = await  taskE.unsafeRun()
+        let dataC = await taskE.unsafeRun()
         expect(dataC).to.be.eql({a: 'a', b: 'b', c: 'c', e: 'e'});
         expect(callback.callCount).to.be.eql(6);
 
@@ -458,17 +452,18 @@ describe('Task Tests: ', () => {
     });
 
     it('test through complex', async () => {
-        let callback = spy();
+        let callbackA = spy();
+        let callbackB = spy();
 
         let taskA = task({a: 'a', b: 'b'});
         let innerTask = taskA.resolve(data => {
-            callback();
+            callbackA();
             expect(data).to.be.eql({a: 'a', b: 'b'});
         });
 
         let taskB = task((data, res, rej) => {
             expect(data).to.be.eql({a: 'a', b: 'b'});
-            callback();
+            callbackB();
             res(assign(data, {c: 'c'}));
         });
 
@@ -476,20 +471,22 @@ describe('Task Tests: ', () => {
 
         let dataA = await taskC.unsafeRun();
         expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c'});
-        expect(callback.calledTwice).to.be.true;
+        expect(callbackA.calledOnce).to.be.true;
+        expect(callbackB.calledOnce).to.be.true;
 
         let dataB = await taskA.unsafeRun();
         expect(dataB).to.be.eql({a: 'a', b: 'b'});
-        expect(callback.callCount).to.be.eql(4);
+        expect(callbackA.callCount).to.be.eql(2);
 
 
         let dataC = await innerTask.unsafeRun();
         expect(dataC).to.be.eql({a: 'a', b: 'b'});
-        expect(callback.callCount).to.be.eql(6);
+        expect(callbackA.callCount).to.be.eql(3);
 
         let dataD = await taskC.unsafeRun();
         expect(dataD).to.be.eql({a: 'a', b: 'b', c: 'c'});
-        expect(callback.callCount).to.be.eql(8);
+        expect(callbackA.callCount).to.be.eql(4);
+        expect(callbackB.callCount).to.be.eql(2);
 
     });
 
@@ -513,7 +510,7 @@ describe('Task Tests: ', () => {
     it('Test all task Static method', async () => {
         let a = 0;
         let taskB = task(d => {
-            return assign(d, {c: 'c'+(a++)})
+            return assign(d, {c: 'c' + (a++)})
         });
 
 
@@ -525,12 +522,12 @@ describe('Task Tests: ', () => {
 
         let taskD = taskC.flatMap(d => task(assign(d, {d: 'd'})));
 
-        let [dataA,dataB] = await Task.all([taskC, taskD], {a: 'a', b: 'b'}).unsafeRun();
+        let [dataA, dataB] = await Task.all([taskC, taskD], {a: 'a', b: 'b'}).unsafeRun();
         expect(dataA).to.be.eql({a: 'a', b: 'b', c: 'c6'});
         expect(dataB).to.be.eql({a: 'a', b: 'b', c: 'c7', d: 'd'});
 
-        let [dataC,dataD] = await Task.all([task().through(taskB), taskC.flatMap(d => task(assign(d, {d: 'd'})))]).unsafeRun();
-        expect(dataC).to.be.eql({ c: 'c8'});
+        let [dataC, dataD] = await Task.all([task().through(taskB), taskC.flatMap(d => task(assign(d, {d: 'd'})))]).unsafeRun();
+        expect(dataC).to.be.eql({c: 'c8'});
 
         expect(dataD).to.be.eql({c: 'c12', d: 'd'});
 
