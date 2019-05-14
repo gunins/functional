@@ -24,9 +24,9 @@ class Some {
 
     flatMap(fn) {
         const out = fn(this.get());
-        if (out.isOption) {
+        if (out.isOption && out.isOption()) {
             return out;
-        }else{
+        } else {
             throw new ReferenceError('Must return an Option');
         }
 
@@ -44,7 +44,8 @@ class Some {
         return this.isSome() ? this.value : defaultVal
     };
 
-    getOrElseLazy(defaultVal=()=>{}) {
+    getOrElseLazy(defaultVal = () => {
+    }) {
         return this.isSome() ? this.value : defaultVal()
     };
 
@@ -71,6 +72,7 @@ class None extends Some {
     };
 
 }
+
 export
 {
     Some, some, None, none
