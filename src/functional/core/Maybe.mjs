@@ -1,9 +1,10 @@
-const some = (value) => new Some(value)
-const none = () => new None();
+export const some = (value) => new Some(value)
+export const none = () => new None();
 
-class Some {
+const _value = Symbol('_value');
+export class Some {
     constructor(value) {
-        this.value = value;
+        this[_value] = value;
     };
 
     isSome() {
@@ -11,11 +12,14 @@ class Some {
     };
 
     isOption() {
+        return this.isMaybe();
+    }
+    isMaybe() {
         return ['[object Some]', '[object None]'].indexOf(this.toString()) !== -1;
     }
 
     get() {
-        return this.value;
+        return this[_value];
     };
 
     map(fn) {
@@ -37,16 +41,16 @@ class Some {
     };
 
     isEmpty() {
-        return this.value ? false : true;
+        return this[_value] ? false : true;
     };
 
     getOrElse(defaultVal) {
-        return this.isSome() ? this.value : defaultVal
+        return this.isSome() ? this[_value] : defaultVal
     };
 
     getOrElseLazy(defaultVal = () => {
     }) {
-        return this.isSome() ? this.value : defaultVal()
+        return this.isSome() ? this[_value] : defaultVal()
     };
 
     toString() {
@@ -54,7 +58,7 @@ class Some {
     };
 }
 
-class None extends Some {
+export class None extends Some {
     constructor() {
         super();
     };
@@ -73,9 +77,9 @@ class None extends Some {
 
 }
 
-export
+/*export
 {
     Some, some, None, none
-}
+}*/
 
 

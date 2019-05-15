@@ -7,7 +7,8 @@
         "url": "https://github.com/gunins/functional"
     },
     "dependencies": {
-        "requirejs": "^2.3.5"
+        "requirejs": "^2.3.5",
+        "typescript": "^3.4.5"
     },
     "devDependencies": {
         "chai": "^3.5.0",

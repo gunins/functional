@@ -17,7 +17,7 @@ class Pair {
         return ['[object Pair]'].indexOf(this.toString()) !== -1
     }
 
-    merge(m) {
+    merge(fn) {
         return fn(this.left, this.right)
     }
 
