@@ -26,9 +26,7 @@ export class Task<A> {
 
     clear() :Task<A>
 
-
     unsafeRun<B>(resolve?:fn<A,void>, reject?:fn<A,void>) :Promise<B>;
-
 
     static empty():Task<undefined>;
 

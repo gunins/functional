@@ -83,10 +83,15 @@ class None extends Some {
 
 }
 
-exports.Some = Some;
+/*export
+{
+    Some, some, None, none
+}*/
+
 exports.some = some;
-exports.None = None;
 exports.none = none;
+exports.Some = Some;
+exports.None = None;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

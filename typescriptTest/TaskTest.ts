@@ -9,9 +9,7 @@ let innerTask = taskA.resolve(data => {
     console.log(data);
 });
 
-let taskB = task((data, res, rej) => {
-    res(assign(data, {c: 'c'}));
-});
+let taskB = task((data:Object) => assign(data, {c: 'c'}));
 
 let taskC = taskA.through(taskB);
 

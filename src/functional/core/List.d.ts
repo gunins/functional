@@ -16,30 +16,30 @@ export class List<A> {
     reverse(): List<A>;
 
 
-    foldLeft<B, C>(a: B, fn: (a: B, A) => C): B
+    foldLeft<B, C>(a: B, fn: (a: B, b: A) => C): B
 
-    foldRight<B, C>(a: B, fn: (a: B, A) => C): B;
+    foldRight<B, C>(a: B, fn: (a: B, b: A) => C): B;
 
-    find(fn:(a:A)=>boolean):A;
+    find(fn: (a: A) => boolean): A;
 
 
-    filter(fn:(a:A)=>boolean) :List<A>;
+    filter(fn: (a: A) => boolean): List<A>;
 
-    map<B>(fn:fn<A,B>):B
+    map<B>(fn: fn<A, B>): B
 
-    forEach(fn:fn<A,void>) :void
+    forEach(fn: fn<A, void>): void
 
-    flatMap<B>(fn:fn<A,B>):List<B> ;
+    flatMap<B>(fn: fn<A, B>): List<B> ;
 
-    size() :number;
+    size(): number;
 
-    take(count:number) :List<A>;
+    take(count: number): List<A>;
 
-    toString():string;
+    toString(): string;
 
-    isList() :boolean;
+    isList(): boolean;
 
-    toArray() :A[]
+    toArray(): A[]
 
     static empty(): List<undefined>
 

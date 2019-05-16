@@ -2,15 +2,14 @@ import {task} from '../core/Task.mjs';
 
 const {assign} = Object;
 
-const load = async (opt) => {
-    const res = await fetch(opt.uri, assign({}, opt, {
-        headers: assign({
-            'Accept':       'application/json, text/plain, */*',
-            'Content-Type': 'application/json'
-        }, opt && opt.headers ? opt.headers : {})
-    }));
-    return res.json();
-};
+const load = async (opt) => fetch(opt.uri, assign({}, opt, {
+    headers: assign({
+        'Accept':       'application/json, text/plain, */*',
+        'Content-Type': 'application/json'
+    }, opt && opt.headers ? opt.headers : {})
+}))
+    .then(res => res.json());
+
 const str = obj => Object.keys(obj)
     .map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
     .join('&');
@@ -55,6 +54,7 @@ const postBase = task(opt => assign(
         body: JSON.stringify(opt.body || {}),
         uri:  uriPath(opt)
     }));
+
 const post = postBase.copy()
     .map(opt => assign(
         opt,
