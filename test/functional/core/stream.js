@@ -208,6 +208,8 @@ describe('Stream Tests: ', () => {
 
         let c = a
             .through(b)
+            .map(_ => _ + 1)
+            .map(_ => _ + 1)
             .map(_ => _ + 1);
 
         const strA = c.onData((_, context) => {
@@ -223,11 +225,11 @@ describe('Stream Tests: ', () => {
             strA.run()
         ]);
 
-        expect(A).to.be.eql([3, 4, 5]);
-        expect(B).to.be.eql([3, 4, 5]);
-        expect(C).to.be.eql([3, 4, 5]);
-        expect(D).to.be.eql([3, 4, 5]);
-        expect(E).to.be.eql([3, 4, 5]);
+        expect(A).to.be.eql([5, 6, 7]);
+        expect(B).to.be.eql([5, 6, 7]);
+        expect(C).to.be.eql([5, 6, 7]);
+        expect(D).to.be.eql([5, 6, 7]);
+        expect(E).to.be.eql([5, 6, 7]);
 
         expect(instanceSpy.callCount).to.be.eql(5);
 
