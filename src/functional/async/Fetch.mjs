@@ -1,5 +1,6 @@
 import {task} from '../core/Task.mjs';
 
+const isString = (x) => Object.prototype.toString.call(x) === '[object String]';
 const {assign} = Object;
 
 const load = async (opt) => fetch(opt.uri, assign({}, opt, {
@@ -51,7 +52,7 @@ const postBase = task(opt => assign(
     },
     opt,
     {
-        body: JSON.stringify(opt.body || {}),
+        body: isString(opt.body) ? opt.body : JSON.stringify(opt.body || {}),
         uri:  uriPath(opt)
     }));
 
