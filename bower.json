@@ -1,7 +1,7 @@
 {
   "name": "functional_tasks",
   "description": "Library for working with pull based async Tasks",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "repository": {
     "type": "git",
     "url": "https://github.com/gunins/functional"
