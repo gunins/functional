@@ -4,6 +4,7 @@
 	(factory((global['functional/async/Fetch'] = global['functional/async/Fetch'] || {}, global['functional/async/Fetch'].js = {}),global.Task_mjs));
 }(this, (function (exports,Task_mjs) { 'use strict';
 
+const isString = (x) => Object.prototype.toString.call(x) === '[object String]';
 const {assign} = Object;
 
 const load = async (opt) => fetch(opt.uri, assign({}, opt, {
@@ -55,7 +56,7 @@ const postBase = Task_mjs.task(opt => assign(
     },
     opt,
     {
-        body: JSON.stringify(opt.body || {}),
+        body: isString(opt.body) ? opt.body : JSON.stringify(opt.body || {}),
         uri:  uriPath(opt)
     }));
 
