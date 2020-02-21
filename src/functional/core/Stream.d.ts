@@ -1,9 +1,10 @@
 import {Task} from "./Task";
 
 type fn<A, B = void> = (a: A) => B;
+export type streamJob<A> = (_: A) => A | A;
 
 export class Stream<A> {
-    constructor(job: A, parent?: Stream<A>)
+    constructor(job?: streamJob<A>, parent?: Stream<A>)
 
     copy(): Stream<A>;
 
@@ -64,5 +65,5 @@ export class Stream<A> {
     static empty() :Stream<undefined>;
 }
 
-export function stream<A>(job: A, parent?: Stream<A>): Stream<A>;
+export function stream<A>(job?: streamJob<A>, parent?: Stream<A>): Stream<A>;
 

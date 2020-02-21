@@ -1,6 +1,6 @@
 type fn<A, B = void> = (a: A) => B;
 
-export type taskJob<A> = (_: A) => A;
+export type taskJob<A> = (_: A) => A | A;
 
 export class Task<A> {
 
