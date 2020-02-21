@@ -1,37 +1,37 @@
-
 type fn<A, B = void> = (a: A) => B;
 
+export type taskJob<A> = (_: A) => A;
 
 export class Task<A> {
 
-    constructor(job: A, parent?: Task<A>)
+	constructor(job?: taskJob<A>, parent?: Task<A>)
 
-    copy(): Task<A>;
+	copy(): Task<A>;
 
-    map<B>(fn: fn<A, B>): Task<B>;
+	map<B>(fn: fn<A, B>): Task<B>;
 
-    flatMap<B>(fn: fn<A, B>): Task<B>;
+	flatMap<B>(fn: fn<A, B>): Task<B>;
 
-    through<B,C>(joined:Task<B>):Task<C>;
+	through<B, C>(joined: Task<B>): Task<C>;
 
-    forEach(fn:fn<A,void>) :void;
+	forEach(fn: fn<A, void>): void;
 
-    resolve(fn:fn<A, void>): Task<A>;
+	resolve(fn: fn<A, void>): Task<A>;
 
-    reject(fn:fn<A, void>): Task<A>;
+	reject(fn: fn<A, void>): Task<A>;
 
-    isTask():boolean;
+	isTask(): boolean;
 
-    toString():string;
+	toString(): string;
 
-    clear() :Task<A>
+	clear(): Task<A>
 
-    unsafeRun<B>(resolve?:fn<A,void>, reject?:fn<A,void>) :Promise<B>;
+	unsafeRun<B>(resolve?: fn<A, void>, reject?: fn<A, void>): Promise<B>;
 
-    static empty():Task<undefined>;
+	static empty(): Task<undefined>;
 
-    static all<B, C>(tasks:Task<B>[], context:C):Promise<B>
+	static all<B, C>(tasks: Task<B>[], context: C): Promise<B>
 }
 
-export function task<A>(job?:A, parent?: Task<A>): Task<A>
+export function task<A>(job?: taskJob<A>, parent?: Task<A>): Task<A>
 
