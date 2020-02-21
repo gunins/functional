@@ -10,7 +10,7 @@ export class Task<A> {
 
 	map<B>(fn: fn<A, B>): Task<B>;
 
-	flatMap<B>(fn: fn<A, B>): Task<B>;
+	flatMap<B>(fn: fn<A, Task<B>>): Task<B>;
 
 	through<B, C>(joined: Task<B>): Task<C>;
 
