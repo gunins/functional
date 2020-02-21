@@ -1,7 +1,7 @@
 import {Task} from "./Task";
 
 type fn<A, B = void> = (a: A) => B;
-export type streamJob<A> = (_: A) => A | A;
+export type streamJob<A> = ((_: A) => A) | A;
 
 export class Stream<A> {
     constructor(job?: streamJob<A>, parent?: Stream<A>)
