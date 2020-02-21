@@ -35,4 +35,4 @@ export class None extends Some<undefined> {
 
 export function some<A>(a: A): Some<A>
 
-export function none(a: any): None
+export function none(a?: any): None

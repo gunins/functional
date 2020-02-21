@@ -33,5 +33,5 @@ export class Task<A> {
     static all<B, C>(tasks:Task<B>[], context:C):Promise<B>
 }
 
-export function task<A>(job:A, parent?: Task<A>): Task<A>
+export function task<A>(job?:A, parent?: Task<A>): Task<A>
 
